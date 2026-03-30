@@ -7,7 +7,7 @@
   "required": ["name", "version", "source", "stages", "cycles"],
   "properties": {
     "name": { "type": "string", "description": "Alloy name (e.g., qwen3.5-4b-code-balanced)" },
-    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$", "description": "Semver version" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$", "description": "Semver version of this alloy spec" },
     "description": { "type": "string" },
     "author": { "type": "string" },
     "tags": { "type": "array", "items": { "type": "string" } },
@@ -19,7 +19,9 @@
     "hardware": { "$ref": "#/$defs/AlloyHardware" },
     "outputs": { "$ref": "#/$defs/AlloyOutputs" },
 
-    "sourceAlloyId": { "type": "string", "format": "uuid", "description": "Parent alloy for re-forge lineage" },
+    "results": { "$ref": "#/$defs/AlloyResults", "description": "Populated after execution — benchmark scores, hardware verification, samples" },
+
+    "sourceAlloyId": { "type": "string", "description": "Parent alloy for re-forge lineage" },
     "forgedModelIds": { "type": "array", "items": { "type": "string" }, "description": "HF model IDs produced" }
   },
 
@@ -33,6 +35,94 @@
         "revision": { "type": "string" },
         "isMoE": { "type": "boolean", "default": false },
         "totalExperts": { "type": "integer" }
+      }
+    },
+
+    "AlloyResults": {
+      "type": "object",
+      "description": "Complete results from executing an alloy pipeline. Empty in recipe alloys, populated after forging.",
+      "properties": {
+        "completedAt": { "type": "string", "format": "date-time", "description": "When the forge completed" },
+        "durationMinutes": { "type": "number", "minimum": 0, "description": "Total forge wall-clock time" },
+        "baselinePerplexity": { "type": "number", "description": "Perplexity before forging" },
+        "finalPerplexity": { "type": "number", "description": "Perplexity after forging" },
+        "improvementPct": { "type": "number", "description": "Improvement percentage (positive = better)" },
+        "finalSizeGb": { "type": "number", "description": "Model size after forging in GB" },
+        "finalParams": { "type": "string", "description": "Parameter count after forging (e.g., '3.8B')" },
+        "benchmarks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/BenchmarkResult" },
+          "description": "Benchmark results — extensible, each defines its own metrics"
+        },
+        "hardwareVerified": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/HardwareProfile" },
+          "description": "Verified hardware performance for model card device grid"
+        },
+        "samples": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/GenerationSample" },
+          "description": "Raw model output — no cherry-picking"
+        },
+        "integrity": { "$ref": "#/$defs/IntegrityAttestation" }
+      }
+    },
+
+    "BenchmarkResult": {
+      "type": "object",
+      "required": ["name", "metrics"],
+      "description": "A single benchmark result. Metrics are open-ended — each benchmark reports whatever it wants.",
+      "properties": {
+        "name": { "type": "string", "description": "Benchmark name (e.g., humaneval, mmlu-pro, imo-proofbench-advanced)" },
+        "subset": { "type": "string", "description": "Optional benchmark subset" },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": { "oneOf": [{ "type": "number" }, { "type": "string" }, { "type": "boolean" }] },
+          "description": "Open metric bag. Examples: { passing: 63, total: 85, score: 74.1 } for HumanEval, { proofScore: 42.0, difficulty: 'advanced' } for IMO-ProofBench"
+        },
+        "submittedToLeaderboard": { "type": "boolean", "default": false },
+        "resultHash": { "type": "string", "description": "Per-benchmark integrity hash" }
+      }
+    },
+
+    "HardwareProfile": {
+      "type": "object",
+      "required": ["device", "format"],
+      "description": "Verified performance on a specific device — generates model card device grid.",
+      "properties": {
+        "device": { "type": "string", "description": "Device name (e.g., MacBook Air 8GB, RTX 5090, iPhone 17)" },
+        "format": { "type": "string", "description": "Format used (e.g., Q4_K_M, fp16, mlx-4bit)" },
+        "sizeGb": { "type": "number", "description": "Model file size in GB for this format" },
+        "tokensPerSec": { "type": "number", "description": "Inference speed in tokens/second" },
+        "memoryUsageGb": { "type": "number", "description": "RAM/VRAM usage during inference" },
+        "verified": { "type": "boolean", "default": false, "description": "Actually tested (true) or estimated (false)" }
+      }
+    },
+
+    "GenerationSample": {
+      "type": "object",
+      "required": ["label", "prompt", "completion"],
+      "description": "Raw model output sample — no cherry-picking, no post-processing.",
+      "properties": {
+        "label": { "type": "string", "description": "Label (e.g., Merge Sort, Binary Search Tree)" },
+        "prompt": { "type": "string" },
+        "completion": { "type": "string" },
+        "baselineCompletion": { "type": "string", "description": "Base model output for comparison" }
+      }
+    },
+
+    "IntegrityAttestation": {
+      "type": "object",
+      "required": ["modelHash"],
+      "description": "Cryptographic attestation for verified benchmark execution. Foundation for tamper-proof model evaluation.",
+      "properties": {
+        "modelHash": { "type": "string", "description": "SHA-256 of the model weights evaluated" },
+        "alloyHash": { "type": "string", "description": "SHA-256 of the alloy pipeline definition" },
+        "environmentHash": { "type": "string", "description": "Hash of the execution environment" },
+        "environment": { "type": "string", "description": "Description of execution environment" },
+        "signer": { "type": "string", "description": "Who/what signed this attestation" },
+        "signature": { "type": "string", "description": "Digital signature over the results" },
+        "attestedAt": { "type": "string", "format": "date-time" }
       }
     },
 

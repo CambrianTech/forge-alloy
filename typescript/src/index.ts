@@ -15,6 +15,64 @@ export interface AlloySource {
   totalExperts?: number;
 }
 
+// ── Results (populated after execution) ────────────────────────────────────
+
+/** Complete results from executing an alloy pipeline. */
+export interface AlloyResults {
+  completedAt?: string;
+  durationMinutes?: number;
+  baselinePerplexity?: number;
+  finalPerplexity?: number;
+  improvementPct?: number;
+  finalSizeGb?: number;
+  finalParams?: string;
+  benchmarks: BenchmarkResult[];
+  hardwareVerified: HardwareProfile[];
+  samples: GenerationSample[];
+  integrity?: IntegrityAttestation;
+}
+
+/**
+ * A single benchmark result. Metrics are open-ended — each benchmark
+ * reports whatever it wants (passing, total, accuracy, score, etc.)
+ */
+export interface BenchmarkResult {
+  name: string;
+  subset?: string;
+  metrics: Record<string, number | string | boolean>;
+  submittedToLeaderboard?: boolean;
+  resultHash?: string;
+}
+
+/** Verified performance on a specific device — generates model card device grid */
+export interface HardwareProfile {
+  device: string;
+  format: string;
+  sizeGb?: number;
+  tokensPerSec?: number;
+  memoryUsageGb?: number;
+  verified: boolean;
+}
+
+/** Raw model output sample — no cherry-picking, no post-processing */
+export interface GenerationSample {
+  label: string;
+  prompt: string;
+  completion: string;
+  baselineCompletion?: string;
+}
+
+/** Cryptographic attestation for verified benchmark execution */
+export interface IntegrityAttestation {
+  modelHash: string;
+  alloyHash?: string;
+  environmentHash?: string;
+  environment?: string;
+  signer?: string;
+  signature?: string;
+  attestedAt?: string;
+}
+
 // ── Stages ──────────────────────────────────────────────────────────────────
 
 export type AlloyStage =
@@ -176,6 +234,9 @@ export interface ForgeAlloy {
   hardware?: AlloyHardware;
   outputs?: AlloyOutputs;
 
+  /** Populated after execution — benchmark scores, hardware verification, samples */
+  results?: AlloyResults;
+
   sourceAlloyId?: string;
   forgedModelIds?: string[];
 }
@@ -201,4 +262,14 @@ export function validateAlloy(alloy: ForgeAlloy): string[] {
   }
 
   return errors;
+}
+
+/** Check if an alloy has been executed (has results) */
+export function hasResults(alloy: ForgeAlloy): boolean {
+  return alloy.results != null;
+}
+
+/** Check if results have integrity attestation with a signature */
+export function isAttested(alloy: ForgeAlloy): boolean {
+  return alloy.results?.integrity?.signature != null;
 }

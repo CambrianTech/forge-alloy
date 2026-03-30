@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Balanced code forge for Qwen3.5-4B. 30% entropy pruning, 3 cycles, GGUF output for MacBook and iPhone.",
   "author": "continuum-ai",
-  "tags": ["code", "qwen3.5", "4b", "balanced", "macbook", "iphone"],
+  "tags": ["code", "qwen3.5", "4b", "balanced", "macbook", "iphone", "forge-alloy"],
   "license": "apache-2.0",
 
   "source": {

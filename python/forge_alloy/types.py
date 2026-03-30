@@ -3,7 +3,7 @@
 from __future__ import annotations
 import json
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Any, Literal, Optional, Union
 from pydantic import BaseModel, Field
 
 
@@ -15,6 +15,77 @@ class AlloySource(BaseModel):
     total_experts: Optional[int] = Field(default=None, alias="totalExperts")
 
     model_config = {"populate_by_name": True}
+
+
+# ── Results (populated after execution) ────────────────────────────────────
+
+
+class BenchmarkResult(BaseModel):
+    """A single benchmark result. Metrics are open-ended — each benchmark
+    reports whatever it wants (passing, total, accuracy, score, etc.)"""
+    name: str
+    subset: Optional[str] = None
+    metrics: dict[str, Union[int, float, str, bool]] = Field(default_factory=dict)
+    submitted_to_leaderboard: bool = Field(default=False, alias="submittedToLeaderboard")
+    result_hash: Optional[str] = Field(default=None, alias="resultHash")
+
+    model_config = {"populate_by_name": True}
+
+
+class HardwareProfile(BaseModel):
+    """Verified performance on a specific device — generates model card device grid."""
+    device: str
+    format: str
+    size_gb: Optional[float] = Field(default=None, alias="sizeGb")
+    tokens_per_sec: Optional[float] = Field(default=None, alias="tokensPerSec")
+    memory_usage_gb: Optional[float] = Field(default=None, alias="memoryUsageGb")
+    verified: bool = False
+
+    model_config = {"populate_by_name": True}
+
+
+class GenerationSample(BaseModel):
+    """Raw model output sample — no cherry-picking, no post-processing."""
+    label: str
+    prompt: str
+    completion: str
+    baseline_completion: Optional[str] = Field(default=None, alias="baselineCompletion")
+
+    model_config = {"populate_by_name": True}
+
+
+class IntegrityAttestation(BaseModel):
+    """Cryptographic attestation for verified benchmark execution."""
+    model_hash: str = Field(alias="modelHash")
+    alloy_hash: Optional[str] = Field(default=None, alias="alloyHash")
+    environment_hash: Optional[str] = Field(default=None, alias="environmentHash")
+    environment: Optional[str] = None
+    signer: Optional[str] = None
+    signature: Optional[str] = None
+    attested_at: Optional[str] = Field(default=None, alias="attestedAt")
+
+    model_config = {"populate_by_name": True}
+
+
+class AlloyResults(BaseModel):
+    """Complete results from executing an alloy pipeline.
+    Empty in a recipe alloy, populated after forging."""
+    completed_at: Optional[str] = Field(default=None, alias="completedAt")
+    duration_minutes: Optional[float] = Field(default=None, alias="durationMinutes")
+    baseline_perplexity: Optional[float] = Field(default=None, alias="baselinePerplexity")
+    final_perplexity: Optional[float] = Field(default=None, alias="finalPerplexity")
+    improvement_pct: Optional[float] = Field(default=None, alias="improvementPct")
+    final_size_gb: Optional[float] = Field(default=None, alias="finalSizeGb")
+    final_params: Optional[str] = Field(default=None, alias="finalParams")
+    benchmarks: list[BenchmarkResult] = Field(default_factory=list)
+    hardware_verified: list[HardwareProfile] = Field(default_factory=list, alias="hardwareVerified")
+    samples: list[GenerationSample] = Field(default_factory=list)
+    integrity: Optional[IntegrityAttestation] = None
+
+    model_config = {"populate_by_name": True}
+
+
+# ── Stages ──────────────────────────────────────────────────────────────────
 
 
 class PruneStage(BaseModel):
@@ -192,6 +263,9 @@ class ForgeAlloy(BaseModel):
     hardware: Optional[AlloyHardware] = None
     outputs: Optional[AlloyOutputs] = None
 
+    # Populated after execution — benchmark scores, hardware verification, samples
+    results: Optional[AlloyResults] = None
+
     source_alloy_id: Optional[str] = Field(default=None, alias="sourceAlloyId")
     forged_model_ids: Optional[list[str]] = Field(default=None, alias="forgedModelIds")
 
@@ -218,3 +292,17 @@ class ForgeAlloy(BaseModel):
             if isinstance(stage, PruneStage) and (stage.level < 0 or stage.level > 0.9):
                 errors.append(f"stage[{i}] prune level must be 0.0-0.9")
         return errors
+
+    @property
+    def has_results(self) -> bool:
+        """Check if this alloy has been executed."""
+        return self.results is not None
+
+    @property
+    def is_attested(self) -> bool:
+        """Check if results have integrity attestation with a signature."""
+        return (
+            self.results is not None
+            and self.results.integrity is not None
+            and self.results.integrity.signature is not None
+        )
