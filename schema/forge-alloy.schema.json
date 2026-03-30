@@ -1,0 +1,247 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/CambrianTech/forge-alloy/schema/forge-alloy.schema.json",
+  "title": "ForgeAlloy",
+  "description": "Portable pipeline specification for model forging",
+  "type": "object",
+  "required": ["name", "version", "source", "stages", "cycles"],
+  "properties": {
+    "name": { "type": "string", "description": "Alloy name (e.g., qwen3.5-4b-code-balanced)" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$", "description": "Semver version" },
+    "description": { "type": "string" },
+    "author": { "type": "string" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "license": { "type": "string", "default": "apache-2.0" },
+
+    "source": { "$ref": "#/$defs/AlloySource" },
+    "stages": { "type": "array", "items": { "$ref": "#/$defs/AlloyStage" }, "minItems": 1 },
+    "cycles": { "type": "integer", "minimum": 1, "default": 1 },
+    "hardware": { "$ref": "#/$defs/AlloyHardware" },
+    "outputs": { "$ref": "#/$defs/AlloyOutputs" },
+
+    "sourceAlloyId": { "type": "string", "format": "uuid", "description": "Parent alloy for re-forge lineage" },
+    "forgedModelIds": { "type": "array", "items": { "type": "string" }, "description": "HF model IDs produced" }
+  },
+
+  "$defs": {
+    "AlloySource": {
+      "type": "object",
+      "required": ["baseModel", "architecture"],
+      "properties": {
+        "baseModel": { "type": "string", "description": "HuggingFace model ID (e.g., Qwen/Qwen3.5-4B)" },
+        "architecture": { "type": "string", "enum": ["qwen3_5", "qwen3_5_moe", "qwen2", "llama", "mistral", "phi", "gemma", "deepseek"] },
+        "revision": { "type": "string" },
+        "isMoE": { "type": "boolean", "default": false },
+        "totalExperts": { "type": "integer" }
+      }
+    },
+
+    "AlloyStage": {
+      "type": "object",
+      "required": ["type"],
+      "discriminator": { "propertyName": "type" },
+      "oneOf": [
+        { "$ref": "#/$defs/PruneStage" },
+        { "$ref": "#/$defs/TrainStage" },
+        { "$ref": "#/$defs/LoRAStage" },
+        { "$ref": "#/$defs/CompactStage" },
+        { "$ref": "#/$defs/QuantStage" },
+        { "$ref": "#/$defs/EvalStage" },
+        { "$ref": "#/$defs/PublishStage" },
+        { "$ref": "#/$defs/ExpertPruneStage" },
+        { "$ref": "#/$defs/ContextExtendStage" },
+        { "$ref": "#/$defs/ModalityStage" }
+      ]
+    },
+
+    "PruneStage": {
+      "type": "object",
+      "required": ["type", "strategy", "level"],
+      "properties": {
+        "type": { "const": "prune" },
+        "strategy": { "type": "string", "enum": ["entropy", "magnitude", "gradient", "random"] },
+        "level": { "type": "number", "minimum": 0.0, "maximum": 0.9 },
+        "minHeadsPerLayer": { "type": "integer", "minimum": 1, "default": 4 },
+        "minKvHeadsPerLayer": { "type": "integer", "minimum": 1, "default": 2 },
+        "analysisSteps": { "type": "integer", "minimum": 10, "default": 200 }
+      }
+    },
+
+    "TrainStage": {
+      "type": "object",
+      "required": ["type", "domain", "steps", "learningRate"],
+      "properties": {
+        "type": { "const": "train" },
+        "domain": { "type": "string" },
+        "dataset": { "type": "string" },
+        "steps": { "type": "integer", "minimum": 1 },
+        "learningRate": { "type": "string" },
+        "batchSize": { "type": "integer", "minimum": 1, "maximum": 64, "default": 4 },
+        "gradientAccumulation": { "type": "integer", "minimum": 1, "maximum": 16, "default": 1 },
+        "scheduler": { "type": "string", "enum": ["cosine", "linear", "constant", "constant_with_warmup", "polynomial"], "default": "cosine" },
+        "warmupRatio": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.03 },
+        "weightDecay": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.01 },
+        "maxGradientNorm": { "type": "number", "minimum": 0.0, "maximum": 10.0, "default": 1.0 },
+        "precision": { "type": "string", "enum": ["bf16", "fp16", "fp32"], "default": "bf16" },
+        "sequenceLength": { "type": "integer", "minimum": 128, "maximum": 131072, "default": 2048 },
+        "optimizations": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["flash_attention", "gradient_checkpointing", "optimizer_8bit", "paged_optimizer", "fused_kernels", "sequence_packing", "dynamic_padding", "activation_offloading"] }
+        }
+      }
+    },
+
+    "LoRAStage": {
+      "type": "object",
+      "required": ["type", "rank"],
+      "properties": {
+        "type": { "const": "lora" },
+        "rank": { "type": "integer", "minimum": 1, "maximum": 256, "default": 32 },
+        "alpha": { "type": "integer", "minimum": 1, "maximum": 512 },
+        "dropout": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.05 },
+        "targetModules": { "type": "array", "items": { "type": "string" }, "default": ["q_proj", "k_proj", "v_proj", "o_proj"] },
+        "quantize": { "type": "boolean", "default": true },
+        "quantizeBits": { "type": "integer", "enum": [4, 8], "default": 4 },
+        "dataset": { "type": "string" },
+        "epochs": { "type": "integer", "minimum": 1, "maximum": 20, "default": 3 },
+        "learningRate": { "type": "string", "default": "1e-4" },
+        "batchSize": { "type": "integer", "minimum": 1, "maximum": 64, "default": 4 },
+        "mergeAfter": { "type": "boolean", "default": false }
+      }
+    },
+
+    "CompactStage": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "compact" },
+        "deadThreshold": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.1 },
+        "dormantThreshold": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.2 },
+        "lowThreshold": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.3 },
+        "mediumThreshold": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.5 },
+        "highThreshold": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.7 },
+        "targetSizeGb": { "type": "number", "minimum": 0.1 },
+        "enableQuantization": { "type": "boolean", "default": true }
+      }
+    },
+
+    "QuantStage": {
+      "type": "object",
+      "required": ["type", "format", "quantTypes"],
+      "properties": {
+        "type": { "const": "quant" },
+        "format": { "type": "string", "enum": ["gguf", "mlx", "safetensors", "onnx"] },
+        "quantTypes": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["Q2_K", "Q3_K_S", "Q3_K_M", "Q3_K_L", "IQ4_XS", "Q4_K_S", "Q4_K_M", "Q5_K_S", "Q5_K_M", "Q6_K", "Q8_0", "F16", "F32"] }
+        },
+        "deviceTargets": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "EvalStage": {
+      "type": "object",
+      "required": ["type", "benchmarks"],
+      "properties": {
+        "type": { "const": "eval" },
+        "benchmarks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "subset": { "type": "string" },
+              "nShot": { "type": "integer", "minimum": 0 },
+              "submitToLeaderboard": { "type": "boolean", "default": false }
+            }
+          }
+        },
+        "passingThreshold": { "type": "number", "minimum": 0, "maximum": 100 },
+        "compareToBase": { "type": "boolean", "default": true }
+      }
+    },
+
+    "PublishStage": {
+      "type": "object",
+      "required": ["type", "org"],
+      "properties": {
+        "type": { "const": "publish" },
+        "org": { "type": "string" },
+        "repoNameTemplate": { "type": "string", "default": "{base}-{domain}-forged" },
+        "includeAlloy": { "type": "boolean", "default": true },
+        "cardFromBenchmarks": { "type": "boolean", "default": true },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "private": { "type": "boolean", "default": false }
+      }
+    },
+
+    "ExpertPruneStage": {
+      "type": "object",
+      "required": ["type", "keepExperts"],
+      "properties": {
+        "type": { "const": "expert-prune" },
+        "keepExperts": { "type": "integer", "minimum": 1 },
+        "selectionStrategy": { "type": "string", "enum": ["activation", "gradient", "random"], "default": "activation" },
+        "profileDataset": { "type": "string" },
+        "profileSteps": { "type": "integer", "minimum": 1, "default": 100 }
+      }
+    },
+
+    "ContextExtendStage": {
+      "type": "object",
+      "required": ["type", "targetLength", "method"],
+      "properties": {
+        "type": { "const": "context-extend" },
+        "targetLength": { "type": "integer", "minimum": 1024 },
+        "method": { "type": "string", "enum": ["yarn", "ntk", "linear", "dynamic-ntk"] },
+        "trainingDataset": { "type": "string" },
+        "trainingSteps": { "type": "integer", "minimum": 1 }
+      }
+    },
+
+    "ModalityStage": {
+      "type": "object",
+      "required": ["type", "modality", "encoderModel"],
+      "properties": {
+        "type": { "const": "modality" },
+        "modality": { "type": "string", "enum": ["vision", "audio", "multimodal"] },
+        "encoderModel": { "type": "string" },
+        "projectionArch": { "type": "string", "enum": ["mlp", "cross-attention", "linear"], "default": "mlp" },
+        "freezeBase": { "type": "boolean", "default": true },
+        "freezeEncoder": { "type": "boolean", "default": true },
+        "trainingDataset": { "type": "string" },
+        "trainingSteps": { "type": "integer", "minimum": 1 },
+        "projectionDim": { "type": "integer" }
+      }
+    },
+
+    "AlloyHardware": {
+      "type": "object",
+      "properties": {
+        "minVramGb": { "type": "number", "minimum": 0 },
+        "recommendedVramGb": { "type": "number", "minimum": 0 },
+        "estimatedDurationMinutes": { "type": "number", "minimum": 0 },
+        "supportsCPU": { "type": "boolean", "default": false },
+        "testedOn": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "AlloyOutputs": {
+      "type": "object",
+      "properties": {
+        "produces": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": { "type": "string", "enum": ["safetensors", "gguf", "mlx", "lora-adapter", "model-card", "alloy"] },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

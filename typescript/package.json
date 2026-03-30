@@ -1,0 +1,17 @@
+{
+  "name": "@continuum-ai/forge-alloy",
+  "version": "0.1.0",
+  "description": "Portable pipeline format for model forging",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/CambrianTech/forge-alloy",
+  "keywords": ["ai", "model", "forging", "pipeline", "quantization"],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

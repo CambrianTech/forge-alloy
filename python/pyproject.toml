@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "forge-alloy"
+version = "0.1.0"
+description = "Portable pipeline format for model forging"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.9"
+dependencies = ["pydantic>=2.0"]
+keywords = ["ai", "model", "forging", "pipeline", "quantization"]
+
+[project.urls]
+Homepage = "https://github.com/CambrianTech/forge-alloy"
