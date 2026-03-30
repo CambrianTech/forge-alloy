@@ -113,16 +113,70 @@
 
     "IntegrityAttestation": {
       "type": "object",
-      "required": ["modelHash"],
-      "description": "Cryptographic attestation for verified benchmark execution. Foundation for tamper-proof model evaluation.",
+      "required": ["code", "modelHash", "attestedAt"],
+      "description": "Cryptographic attestation modeled after FIDO2/WebAuthn. Proves WHAT code ran, on WHAT data, in WHAT environment.",
       "properties": {
+        "trustLevel": {
+          "type": "string",
+          "enum": ["self-attested", "verified", "enclave"],
+          "default": "self-attested",
+          "description": "Trust tier: self-attested (signer vouches), verified (third-party audited), enclave (TEE hardware-bound)"
+        },
+        "code": { "$ref": "#/$defs/CodeAttestation" },
         "modelHash": { "type": "string", "description": "SHA-256 of the model weights evaluated" },
         "alloyHash": { "type": "string", "description": "SHA-256 of the alloy pipeline definition" },
-        "environmentHash": { "type": "string", "description": "Hash of the execution environment" },
-        "environment": { "type": "string", "description": "Description of execution environment" },
-        "signer": { "type": "string", "description": "Who/what signed this attestation" },
-        "signature": { "type": "string", "description": "Digital signature over the results" },
+        "datasets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/DatasetAttestation" },
+          "description": "Hashes of benchmark datasets — proves eval used unmodified data"
+        },
+        "signature": { "$ref": "#/$defs/AttestationSignature" },
         "attestedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "CodeAttestation": {
+      "type": "object",
+      "required": ["runner", "version", "binaryHash"],
+      "description": "Attestation of the code that produced results — proves the forge runner is genuine.",
+      "properties": {
+        "runner": { "type": "string", "description": "Runner identifier (e.g., sentinel-ai/forge_model)" },
+        "version": { "type": "string", "description": "Runner version (semver)" },
+        "binaryHash": { "type": "string", "description": "SHA-256 of the runner binary or entry script" },
+        "sourceHash": { "type": "string", "description": "SHA-256 of the source repository at build time" },
+        "commit": { "type": "string", "description": "Git commit hash of the runner source" },
+        "environment": { "type": "string", "description": "Execution environment description" },
+        "environmentHash": { "type": "string", "description": "SHA-256 of the container image or environment" }
+      }
+    },
+
+    "DatasetAttestation": {
+      "type": "object",
+      "required": ["name", "hash"],
+      "description": "Attestation of a benchmark dataset — proves eval used unmodified data.",
+      "properties": {
+        "name": { "type": "string", "description": "Dataset name (e.g., humaneval, mmlu-pro)" },
+        "version": { "type": "string", "description": "Dataset version or commit hash" },
+        "hash": { "type": "string", "description": "SHA-256 of the dataset files" },
+        "source": { "type": "string", "description": "Source URL or repository" }
+      }
+    },
+
+    "AttestationSignature": {
+      "type": "object",
+      "required": ["algorithm", "publicKey", "value"],
+      "description": "ECDSA signature over the attestation payload. ES256 (P-256 + SHA-256) — same as WebAuthn/FIDO2.",
+      "properties": {
+        "algorithm": { "type": "string", "description": "Signing algorithm (e.g., ES256)" },
+        "publicKey": { "type": "string", "description": "Base64url-encoded public key" },
+        "value": { "type": "string", "description": "Base64url-encoded signature" },
+        "credentialId": { "type": "string", "description": "WebAuthn credential ID for passkey-based signing" },
+        "certificateChain": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "PEM-encoded certificate chain for CA-attested signers"
+        },
+        "keyRegistry": { "type": "string", "format": "uri", "description": "URL where this public key can be verified" }
       }
     },
 

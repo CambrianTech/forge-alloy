@@ -54,15 +54,51 @@ class GenerationSample(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class CodeAttestation(BaseModel):
+    """Attestation of the code that produced results — proves the forge runner is genuine."""
+    runner: str
+    version: str
+    binary_hash: str = Field(alias="binaryHash")
+    source_hash: Optional[str] = Field(default=None, alias="sourceHash")
+    commit: Optional[str] = None
+    environment: Optional[str] = None
+    environment_hash: Optional[str] = Field(default=None, alias="environmentHash")
+
+    model_config = {"populate_by_name": True}
+
+
+class DatasetAttestation(BaseModel):
+    """Attestation of a benchmark dataset — proves eval used unmodified data."""
+    name: str
+    version: Optional[str] = None
+    hash: str
+    source: Optional[str] = None
+
+    model_config = {"populate_by_name": True}
+
+
+class AttestationSignature(BaseModel):
+    """ECDSA signature over the attestation payload. ES256 (P-256 + SHA-256)."""
+    algorithm: str
+    public_key: str = Field(alias="publicKey")
+    value: str
+    credential_id: Optional[str] = Field(default=None, alias="credentialId")
+    certificate_chain: list[str] = Field(default_factory=list, alias="certificateChain")
+    key_registry: Optional[str] = Field(default=None, alias="keyRegistry")
+
+    model_config = {"populate_by_name": True}
+
+
 class IntegrityAttestation(BaseModel):
-    """Cryptographic attestation for verified benchmark execution."""
+    """Cryptographic attestation for verified benchmark execution.
+    Modeled after FIDO2/WebAuthn attestation."""
+    trust_level: Literal["self-attested", "verified", "enclave"] = Field(default="self-attested", alias="trustLevel")
+    code: CodeAttestation
     model_hash: str = Field(alias="modelHash")
     alloy_hash: Optional[str] = Field(default=None, alias="alloyHash")
-    environment_hash: Optional[str] = Field(default=None, alias="environmentHash")
-    environment: Optional[str] = None
-    signer: Optional[str] = None
-    signature: Optional[str] = None
-    attested_at: Optional[str] = Field(default=None, alias="attestedAt")
+    datasets: list[DatasetAttestation] = Field(default_factory=list)
+    signature: Optional[AttestationSignature] = None
+    attested_at: str = Field(alias="attestedAt")
 
     model_config = {"populate_by_name": True}
 
@@ -299,10 +335,17 @@ class ForgeAlloy(BaseModel):
         return self.results is not None
 
     @property
-    def is_attested(self) -> bool:
-        """Check if results have integrity attestation with a signature."""
+    def is_signed(self) -> bool:
+        """Check if results have a signed integrity attestation."""
         return (
             self.results is not None
             and self.results.integrity is not None
             and self.results.integrity.signature is not None
         )
+
+    @property
+    def trust_level(self) -> Optional[str]:
+        """Get the trust level of the attestation."""
+        if self.results and self.results.integrity:
+            return self.results.integrity.trust_level
+        return None

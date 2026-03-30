@@ -212,37 +212,123 @@ pub struct GenerationSample {
 }
 
 /// Cryptographic attestation for verified benchmark execution.
-/// Foundation for tamper-proof model evaluation.
+/// Modeled after FIDO2/WebAuthn attestation: prove WHAT code ran,
+/// on WHAT data, in WHAT environment, and sign the whole chain.
+///
+/// Trust tiers (like WebAuthn attestation types):
+/// - `self-attested`: signer vouches for itself (no third-party verification)
+/// - `verified`: third-party verified the environment (audited runner)
+/// - `enclave`: TEE execution, hardware-bound proof (tamper-proof)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "typescript", derive(TS), ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct IntegrityAttestation {
-    /// Hash of the model weights that were evaluated (SHA-256)
+    /// Trust tier — how much should you trust this attestation?
+    #[serde(default = "default_trust_level")]
+    pub trust_level: String,
+
+    /// The code that produced these results
+    pub code: CodeAttestation,
+
+    /// SHA-256 hash of the model weights that were evaluated
     pub model_hash: String,
 
-    /// Hash of the alloy pipeline definition (SHA-256 of stages JSON)
+    /// SHA-256 hash of the alloy pipeline definition (stages JSON)
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub alloy_hash: Option<String>,
 
-    /// Hash of the execution environment (container image, binary hash, etc.)
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub environment_hash: Option<String>,
+    /// Hashes of benchmark datasets used — proves eval wasn't run on modified data
+    #[serde(default)]
+    pub datasets: Vec<DatasetAttestation>,
 
-    /// Description of the execution environment
+    /// Cryptographic signature over the attestation payload
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub signature: Option<AttestationSignature>,
+
+    /// ISO 8601 timestamp of attestation
+    pub attested_at: String,
+}
+
+fn default_trust_level() -> String { "self-attested".to_string() }
+
+/// Attestation of the code that produced results.
+/// Like WebAuthn authenticator attestation — proves the forge runner is genuine.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct CodeAttestation {
+    /// Runner identifier (e.g. "forge-alloy/forge-runner", "sentinel-ai/forge_model")
+    pub runner: String,
+
+    /// Runner version (semver)
+    pub version: String,
+
+    /// SHA-256 of the runner binary or entry script
+    pub binary_hash: String,
+
+    /// SHA-256 of the source repository at build time
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_hash: Option<String>,
+
+    /// Git commit hash of the runner source
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub commit: Option<String>,
+
+    /// Execution environment description
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub environment: Option<String>,
 
-    /// Who/what signed this attestation
+    /// SHA-256 of the container image or environment (for reproducibility)
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub signer: Option<String>,
+    pub environment_hash: Option<String>,
+}
 
-    /// Digital signature over the results (algorithm + value)
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub signature: Option<String>,
+/// Attestation of a benchmark dataset — proves eval used unmodified data.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct DatasetAttestation {
+    /// Dataset name (e.g. "humaneval", "mmlu-pro", "imo-proofbench-advanced")
+    pub name: String,
 
-    /// Timestamp of attestation (ISO 8601)
+    /// Dataset version or commit hash
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub attested_at: Option<String>,
+    pub version: Option<String>,
+
+    /// SHA-256 of the dataset files
+    pub hash: String,
+
+    /// Source URL or repository
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<String>,
+}
+
+/// ECDSA signature over the attestation payload.
+/// Uses ES256 (P-256 + SHA-256) — same algorithm as WebAuthn/FIDO2.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct AttestationSignature {
+    /// Signing algorithm (e.g. "ES256" for ECDSA P-256 with SHA-256)
+    pub algorithm: String,
+
+    /// Base64url-encoded public key of the signer
+    pub public_key: String,
+
+    /// Base64url-encoded signature over SHA-256(attestation payload)
+    pub value: String,
+
+    /// Credential ID — for passkey-based signing (WebAuthn credential)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub credential_id: Option<String>,
+
+    /// Certificate chain for CA-attested signers (PEM-encoded)
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub certificate_chain: Vec<String>,
+
+    /// Key registry URL where this public key can be verified
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub key_registry: Option<String>,
 }
 
 // ── Stages (discriminated union via serde tag) ──────────────────────────────
@@ -563,13 +649,21 @@ impl ForgeAlloy {
         self.results.is_some()
     }
 
-    /// Check if results have integrity attestation
-    pub fn is_attested(&self) -> bool {
+    /// Check if results have a signed integrity attestation
+    pub fn is_signed(&self) -> bool {
         self.results
             .as_ref()
             .and_then(|r| r.integrity.as_ref())
             .map(|i| i.signature.is_some())
             .unwrap_or(false)
+    }
+
+    /// Get the trust level of the attestation (if present)
+    pub fn trust_level(&self) -> Option<&str> {
+        self.results
+            .as_ref()
+            .and_then(|r| r.integrity.as_ref())
+            .map(|i| i.trust_level.as_str())
     }
 
     /// Serialize to JSON string
@@ -636,11 +730,58 @@ mod tests {
     fn test_integrity_attestation() {
         let json = include_str!("../../examples/qwen3.5-4b-code-balanced-executed.alloy.json");
         let alloy: ForgeAlloy = serde_json::from_str(json).unwrap();
-        // Example has integrity but no signature yet
-        assert!(!alloy.is_attested());
+
+        // Example has integrity but no signature yet (self-attested, unsigned)
+        assert!(!alloy.is_signed());
+        assert_eq!(alloy.trust_level(), Some("self-attested"));
 
         let integrity = alloy.results.as_ref().unwrap().integrity.as_ref().unwrap();
         assert!(!integrity.model_hash.is_empty());
+
+        // Code attestation
+        assert_eq!(integrity.code.runner, "sentinel-ai/forge_model");
+        assert_eq!(integrity.code.version, "0.9.2");
+        assert!(!integrity.code.binary_hash.is_empty());
+        assert!(integrity.code.commit.is_some());
+
+        // Dataset attestations
+        assert_eq!(integrity.datasets.len(), 3);
+        let humaneval = &integrity.datasets[0];
+        assert_eq!(humaneval.name, "humaneval");
+        assert!(!humaneval.hash.is_empty());
+        assert!(humaneval.source.is_some());
+    }
+
+    #[test]
+    fn test_signed_attestation() {
+        // Build an attestation with a signature
+        let signed_json = r#"{
+            "trustLevel": "verified",
+            "code": {
+                "runner": "forge-alloy/runner",
+                "version": "1.0.0",
+                "binaryHash": "sha256:aabb"
+            },
+            "modelHash": "sha256:ccdd",
+            "datasets": [],
+            "signature": {
+                "algorithm": "ES256",
+                "publicKey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...",
+                "value": "MEUCIQD...",
+                "credentialId": "passkey-abc123",
+                "keyRegistry": "https://keys.forge-alloy.dev/v1"
+            },
+            "attestedAt": "2026-03-28T14:32:00Z"
+        }"#;
+        let attestation: IntegrityAttestation = serde_json::from_str(signed_json).unwrap();
+        assert_eq!(attestation.trust_level, "verified");
+        assert!(attestation.signature.is_some());
+
+        let sig = attestation.signature.as_ref().unwrap();
+        assert_eq!(sig.algorithm, "ES256");
+        assert!(sig.credential_id.is_some());
+        assert!(sig.key_registry.is_some());
+        assert!(sig.certificate_chain.is_empty());
     }
 
     #[test]

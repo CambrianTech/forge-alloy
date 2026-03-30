@@ -62,15 +62,56 @@ export interface GenerationSample {
   baselineCompletion?: string;
 }
 
-/** Cryptographic attestation for verified benchmark execution */
+/**
+ * Cryptographic attestation for verified benchmark execution.
+ * Modeled after FIDO2/WebAuthn attestation: prove WHAT code ran,
+ * on WHAT data, in WHAT environment, and sign the whole chain.
+ *
+ * Trust tiers (like WebAuthn attestation types):
+ * - "self-attested": signer vouches for itself
+ * - "verified": third-party verified the environment
+ * - "enclave": TEE execution, hardware-bound proof
+ */
 export interface IntegrityAttestation {
+  trustLevel: 'self-attested' | 'verified' | 'enclave';
+  code: CodeAttestation;
   modelHash: string;
   alloyHash?: string;
-  environmentHash?: string;
+  datasets: DatasetAttestation[];
+  signature?: AttestationSignature;
+  attestedAt: string;
+}
+
+/** Attestation of the code that produced results — proves the forge runner is genuine */
+export interface CodeAttestation {
+  runner: string;
+  version: string;
+  binaryHash: string;
+  sourceHash?: string;
+  commit?: string;
   environment?: string;
-  signer?: string;
-  signature?: string;
-  attestedAt?: string;
+  environmentHash?: string;
+}
+
+/** Attestation of a benchmark dataset — proves eval used unmodified data */
+export interface DatasetAttestation {
+  name: string;
+  version?: string;
+  hash: string;
+  source?: string;
+}
+
+/**
+ * ECDSA signature over the attestation payload.
+ * Uses ES256 (P-256 + SHA-256) — same algorithm as WebAuthn/FIDO2.
+ */
+export interface AttestationSignature {
+  algorithm: string;
+  publicKey: string;
+  value: string;
+  credentialId?: string;
+  certificateChain?: string[];
+  keyRegistry?: string;
 }
 
 // ── Stages ──────────────────────────────────────────────────────────────────
@@ -269,7 +310,12 @@ export function hasResults(alloy: ForgeAlloy): boolean {
   return alloy.results != null;
 }
 
-/** Check if results have integrity attestation with a signature */
-export function isAttested(alloy: ForgeAlloy): boolean {
+/** Check if results have a signed integrity attestation */
+export function isSigned(alloy: ForgeAlloy): boolean {
   return alloy.results?.integrity?.signature != null;
+}
+
+/** Get the trust level of the attestation */
+export function trustLevel(alloy: ForgeAlloy): string | undefined {
+  return alloy.results?.integrity?.trustLevel;
 }
