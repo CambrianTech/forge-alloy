@@ -1,10 +1,10 @@
 # ForgeAlloy
 
-Portable pipeline format for model forging. Define, share, and execute model transformation pipelines across any hardware.
+Portable pipeline format for model forging. Define, share, execute, and **verify** model transformation pipelines across any hardware.
 
-## What Is An Alloy?
+A `.alloy.json` is a **Dockerfile for models** — the complete, typed specification for transforming a base model into a specialized one. It's both the recipe (before execution) and the report card (after execution), with cryptographic attestation so nobody can fake the results.
 
-An alloy is a complete, typed specification for transforming a base model into a specialized one. It's a JSON pipeline of stages — pruning, training, compaction, quantization, evaluation, publishing — that any compatible tool can execute.
+## Quick Example
 
 ```json
 {
@@ -22,15 +22,15 @@ An alloy is a complete, typed specification for transforming a base model into a
 }
 ```
 
+After execution, the same file gains a `results` section with benchmark scores, hardware performance profiles, generation samples, and an integrity attestation — everything needed to generate a high-quality model card.
+
 ## Packages
 
-| Package | Language | Install |
-|---------|----------|---------|
-| `forge-alloy` | Rust | `cargo add forge-alloy` |
-| `forge-alloy` | Python | `pip install forge-alloy` |
-| `@continuum-ai/forge-alloy` | TypeScript | `npm install @continuum-ai/forge-alloy` |
-
-All three are generated from the same Rust source of truth.
+| Package | Language | Source of Truth |
+|---------|----------|----------------|
+| `forge-alloy` | Rust | **Yes** — all types originate here |
+| `forge-alloy` | Python | Generated from Rust (Pydantic models) |
+| `@continuum-ai/forge-alloy` | TypeScript | Generated from Rust (ts-rs) |
 
 ## Stage Types
 
@@ -41,37 +41,96 @@ All three are generated from the same Rust source of truth.
 | `lora` | LoRA adapter training (QLoRA, rank, alpha, dropout) |
 | `compact` | Plasticity-based mixed-precision compaction |
 | `quant` | Output quantization (GGUF, MLX, ONNX) |
-| `eval` | Benchmarking (HumanEval, MMLU, GSM8K, custom) |
+| `eval` | Benchmarking (HumanEval, MMLU, GSM8K, IMO-ProofBench, custom) |
 | `publish` | Push to HuggingFace with generated model card |
 | `expert-prune` | MoE expert pruning by activation profile |
 | `context-extend` | RoPE rescaling (YaRN, NTK) for longer context |
 | `modality` | Add vision/audio encoder (LLaVA-style, Whisper-style) |
 
-## Schema
+## Results & Benchmarks
 
-The complete JSON Schema is at [`schema/forge-alloy.schema.json`](schema/forge-alloy.schema.json).
+After execution, the alloy carries its own evidence:
+
+```json
+{
+  "results": {
+    "baselinePerplexity": 3.04,
+    "finalPerplexity": 2.31,
+    "improvementPct": 24.0,
+    "benchmarks": [
+      {
+        "name": "humaneval",
+        "metrics": { "passing": 63, "total": 85, "score": 74.1 }
+      }
+    ],
+    "hardwareVerified": [
+      { "device": "iPhone 17", "format": "Q4_K_M", "sizeGb": 2.6, "tokensPerSec": 8.0, "verified": true },
+      { "device": "RTX 5090", "format": "fp16", "sizeGb": 8.0, "tokensPerSec": 174.0, "verified": true }
+    ],
+    "samples": [
+      { "label": "Merge Sort", "prompt": "def merge_sort(arr):", "completion": "..." }
+    ]
+  }
+}
+```
+
+Benchmark metrics are **open-ended** — each benchmark reports whatever it wants. HumanEval has `passing`/`total`/`score`. MMLU has `accuracy`/`nShot`. IMO-ProofBench has `proofScore`/`difficulty`. The format doesn't constrain what benchmarks can express.
+
+## Integrity Attestation
+
+Modeled after **FIDO2/WebAuthn attestation**. Proves what code ran, on what data, in what environment — and signs the whole chain with ES256 (ECDSA P-256).
+
+```json
+{
+  "results": {
+    "integrity": {
+      "trustLevel": "self-attested",
+      "code": {
+        "runner": "sentinel-ai/forge_model",
+        "version": "0.9.2",
+        "binaryHash": "sha256:a1b2c3...",
+        "commit": "09bb60f"
+      },
+      "modelHash": "sha256:7f8a9b...",
+      "datasets": [
+        { "name": "humaneval", "hash": "sha256:abc123...", "source": "https://github.com/openai/human-eval" }
+      ],
+      "signature": {
+        "algorithm": "ES256",
+        "publicKey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...",
+        "value": "MEUCIQD...",
+        "keyRegistry": "https://keys.forge-alloy.dev/v1"
+      },
+      "attestedAt": "2026-03-28T14:32:00Z"
+    }
+  }
+}
+```
+
+**Trust tiers** (like WebAuthn attestation types):
+
+| Tier | What It Proves | Verification |
+|------|---------------|-------------|
+| `self-attested` | Signer vouches for itself | Public key in registry |
+| `verified` | Third-party audited the runner | Certificate chain |
+| `enclave` | TEE execution, hardware-bound proof | Hardware attestation |
+
+**What it prevents:** fabricated benchmarks, modified eval code, cherry-picked datasets, model swaps, replay attacks. See [docs/ATTESTATION.md](docs/ATTESTATION.md) for the full design.
 
 ## Usage
-
-### Python
-
-```python
-from forge_alloy import ForgeAlloy
-
-alloy = ForgeAlloy.from_file("my-alloy.json")
-alloy.validate()
-
-for stage in alloy.stages:
-    print(f"{stage.type}: {stage}")
-```
 
 ### Rust
 
 ```rust
-use forge_alloy::ForgeAlloy;
+use forge_alloy::{ForgeAlloy, AlloyStage};
 
-let alloy: ForgeAlloy = serde_json::from_str(&json)?;
+let alloy = ForgeAlloy::from_file("my-alloy.json")?;
 alloy.validate()?;
+
+if alloy.has_results() {
+    println!("Trust: {:?}", alloy.trust_level());
+    println!("Signed: {}", alloy.is_signed());
+}
 
 for stage in &alloy.stages {
     match stage {
@@ -82,14 +141,41 @@ for stage in &alloy.stages {
 }
 ```
 
+### Python
+
+```python
+from forge_alloy import ForgeAlloy
+
+alloy = ForgeAlloy.from_file("my-alloy.json")
+errors = alloy.validate_alloy()
+
+if alloy.has_results:
+    print(f"Trust: {alloy.trust_level}")
+    for b in alloy.results.benchmarks:
+        print(f"  {b.name}: {b.metrics}")
+```
+
 ### TypeScript
 
 ```typescript
-import { ForgeAlloy, validateAlloy } from '@continuum-ai/forge-alloy';
+import { ForgeAlloy, validateAlloy, isSigned, trustLevel } from '@continuum-ai/forge-alloy';
 
 const alloy: ForgeAlloy = JSON.parse(fs.readFileSync('alloy.json', 'utf-8'));
-validateAlloy(alloy);
+const errors = validateAlloy(alloy);
+
+if (alloy.results) {
+  console.log(`Trust: ${trustLevel(alloy)}, Signed: ${isSigned(alloy)}`);
+}
 ```
+
+## Schema
+
+The complete JSON Schema is at [`schema/forge-alloy.schema.json`](schema/forge-alloy.schema.json).
+
+## Examples
+
+- [`qwen3.5-4b-code-balanced.alloy.json`](examples/qwen3.5-4b-code-balanced.alloy.json) — Recipe (before execution)
+- [`qwen3.5-4b-code-balanced-executed.alloy.json`](examples/qwen3.5-4b-code-balanced-executed.alloy.json) — Executed (with results, benchmarks, hardware profiles, attestation)
 
 ## Design Principles
 
@@ -98,7 +184,16 @@ validateAlloy(alloy);
 - **Composable** — stages are ordered, optional, mix and match
 - **Portable** — the JSON contains everything needed to reproduce
 - **Lineage** — `sourceAlloyId` tracks re-forge chains
-- **Community** — publish alongside models on HuggingFace, import others' alloys
+- **Verifiable** — cryptographic attestation proves results are genuine
+- **Extensible** — open metric bags, arbitrary benchmarks, progressive trust tiers
+
+## HuggingFace Integration
+
+Published models tagged with `forge-alloy` include the alloy file. The `results` section contains everything needed to auto-generate model cards: benchmark tables, hardware device grids, generation samples, and reproducibility commands.
+
+## Documentation
+
+- [docs/ATTESTATION.md](docs/ATTESTATION.md) — Full attestation architecture and design
 
 ## License
 
