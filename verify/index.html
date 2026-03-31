@@ -244,6 +244,17 @@ async function fetchWithProxy(url) {
   return fetch('https://corsproxy.io/?' + encodeURIComponent(url));
 }
 
+async function generateQRDataUrl(text) {
+  // Minimal QR using a free API — replace with client-side lib later
+  try {
+    const url = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(text);
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    return URL.createObjectURL(blob);
+  } catch { return null; }
+}
+
 async function sha256hex(text) {
   const data = new TextEncoder().encode(text);
   const buf = await crypto.subtle.digest('SHA-256', data);
@@ -262,12 +273,18 @@ async function showChain(text, expectedHash) {
     let hashOk = null;
     if (expectedHash) hashOk = actualHash.startsWith(expectedHash);
 
+    // Generate QR code client-side for the verified box
+    const thisUrl = window.location.origin + window.location.pathname + '#' + actualHash.slice(0, 16);
+    const qrDataUrl = await generateQRDataUrl(thisUrl);
+
     if (hashOk === false) {
       statusEl.className = 'status failed';
       statusEl.innerHTML = '<div class="status-icon">❌</div><div class="status-text">HASH MISMATCH — chain may be compromised</div><div class="status-detail">Expected ' + expectedHash + '… got ' + actualHash.slice(0, expectedHash.length) + '…</div>';
     } else {
       statusEl.className = 'status verified';
-      statusEl.innerHTML = '<div class="status-icon">✅</div><div class="status-text">' + (hashOk ? 'CHAIN VERIFIED' : 'CHAIN LOADED') + '</div><div class="status-detail">sha256:' + actualHash.slice(0, 24) + '…</div>';
+      statusEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap">' +
+        (qrDataUrl ? '<img src="' + qrDataUrl + '" width="80" height="80" style="border-radius:4px;background:white;padding:4px">' : '') +
+        '<div><div class="status-icon">✅</div><div class="status-text">' + (hashOk ? 'CHAIN VERIFIED' : 'CHAIN LOADED') + '</div><div class="status-detail">sha256:' + actualHash.slice(0, 24) + '…</div></div></div>';
     }
 
     // Build visual chain
