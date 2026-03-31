@@ -1,4 +1,4 @@
-# ForgeAlloy — Trustless AI Compute
+# ForgeAlloy — Trustless AI Compute Contract
 
 Cryptographically verified model forging. Define, share, execute, and prove transformation pipelines across any hardware.
 
