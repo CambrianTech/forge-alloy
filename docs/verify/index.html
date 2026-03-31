@@ -279,21 +279,30 @@ async function showChain(text, expectedHash) {
     const code = i.code || {};
     const receipt = alloy.receipt || {};
 
+    const hfBase = 'https://huggingface.co/';
+    const ghBase = 'https://github.com/CambrianTech/';
+
     // Source — link to HF model page
     const baseModel = alloy.source?.baseModel || '?';
-    nodeRaw(chainEl, 'info', 'Source Model', '<a href="https://huggingface.co/' + baseModel + '" target="_blank">' + baseModel + '</a>');
-    node(chainEl, 'info', 'Architecture', alloy.source?.architecture || '?', '');
+    nodeRaw(chainEl, 'info', 'Source Model', '<a href="' + hfBase + baseModel + '" target="_blank">' + baseModel + '</a>');
+
+    // Architecture — link to HF docs for the arch
+    const arch = alloy.source?.architecture || '?';
+    nodeRaw(chainEl, 'info', 'Architecture', '<a href="' + hfBase + 'docs/transformers/model_doc/' + arch.replace('_', '') + '" target="_blank">' + arch + '</a>');
 
     // Target (if present)
     if (alloy.target) {
-      const deltas = Object.entries(alloy.target).filter(([k,v]) => v != null).map(([k]) => k).join(', ');
-      node(chainEl, 'info', 'Target Delta', deltas, 'good');
+      const deltas = Object.entries(alloy.target).filter(([k,v]) => v != null);
+      const deltaHtml = deltas.map(([k,v]) => '<span style="color:#00ffc8">' + k + '</span>').join(', ');
+      nodeRaw(chainEl, 'info', 'Target Delta', deltaHtml);
     }
 
-    // Stages
+    // Stages — each links to forge-alloy spec
     if (alloy.stages?.length) {
-      const pipeline = alloy.stages.map(s => s.type).join(' → ');
-      node(chainEl, 'info', 'Pipeline', pipeline + ' (' + alloy.cycles + ' cycles)', '');
+      const stageHtml = alloy.stages.map(s =>
+        '<a href="' + ghBase + 'forge-alloy#stage-types" target="_blank" style="color:#e0e6ed">' + s.type + '</a>'
+      ).join(' → ');
+      nodeRaw(chainEl, 'info', 'Pipeline', stageHtml + ' (' + alloy.cycles + ' cycles)');
     }
 
     // Results
@@ -302,43 +311,75 @@ async function showChain(text, expectedHash) {
         r.baselinePerplexity.toFixed(2) + ' → ' + r.finalPerplexity.toFixed(2) + ' (+' + r.improvementPct.toFixed(1) + '%)', 'good');
     }
 
-    // Benchmarks
+    // Benchmarks — link to benchmark source
+    const benchLinks = {
+      'perplexity': null,
+      'humaneval': 'https://github.com/openai/human-eval',
+      'mmlu': 'https://huggingface.co/datasets/cais/mmlu',
+      'gsm8k': 'https://huggingface.co/datasets/openai/gsm8k',
+      'arc': 'https://huggingface.co/datasets/allenai/ai2_arc',
+      'hellaswag': 'https://huggingface.co/datasets/Rowan/hellaswag',
+    };
     if (r.benchmarks?.length) {
       for (const b of r.benchmarks) {
         const score = b.metrics?.score || b.metrics?.accuracy || b.metrics?.passing || JSON.stringify(b.metrics);
-        node(chainEl, 'verified', 'Benchmark: ' + b.name, String(score), 'good');
+        const link = benchLinks[b.name];
+        if (link) {
+          nodeRaw(chainEl, 'verified', 'Benchmark: ' + b.name,
+            '<a href="' + link + '" target="_blank" style="color:#00ffc8">' + score + '</a>');
+        } else {
+          node(chainEl, 'verified', 'Benchmark: ' + b.name, String(score), 'good');
+        }
       }
     }
 
-    // Hardware
+    // Hardware — link to GPU specs
     if (r.hardwareVerified?.length) {
-      for (const h of r.hardwareVerified) {
-        node(chainEl, h.verified ? 'verified' : 'info', 'Hardware', h.device + ' · ' + h.format, '');
+      for (const hw of r.hardwareVerified) {
+        const gpuSearch = 'https://www.google.com/search?q=' + encodeURIComponent(hw.device + ' specs');
+        nodeRaw(chainEl, hw.verified ? 'verified' : 'info', 'Hardware',
+          '<a href="' + gpuSearch + '" target="_blank">' + hw.device + '</a> · ' + hw.format);
       }
     }
 
-    // Integrity
+    // Trust level — link to attestation docs
     if (i.trustLevel) {
-      node(chainEl, 'trust', 'Trust Level', i.trustLevel, 'trust');
+      nodeRaw(chainEl, 'trust', 'Trust Level',
+        '<a href="' + ghBase + 'forge-alloy/blob/main/docs/ATTESTATION.md" target="_blank" style="color:#ffaa00">' + i.trustLevel + '</a>');
     }
-    if (code.runner) {
-      // Link runner to its repo
-      const runnerRepo = code.runner.includes('sentinel') ? 'sentinel-ai' : code.runner.includes('continuum') ? 'continuum' : 'forge-alloy';
-      nodeRaw(chainEl, 'info', 'Runner', '<a href="https://github.com/CambrianTech/' + runnerRepo + '" target="_blank">' + code.runner + ' v' + code.version + '</a>');
-    }
-    if (code.binaryHash) {
-      node(chainEl, 'info', 'Code Hash', code.binaryHash, 'hash');
-    }
-    if (i.modelHash) {
-      node(chainEl, 'verified', 'Model Hash', i.modelHash, 'hash');
-    }
-    nodeRaw(chainEl, 'verified', 'Alloy Hash', '<span class="chain-value hash">sha256:' + actualHash.slice(0, 32) + '…</span> · <a href="https://github.com/CambrianTech/forge-alloy" target="_blank">spec</a>');
 
+    // Runner — link to repo
+    if (code.runner) {
+      const runnerRepo = code.runner.includes('sentinel') ? 'sentinel-ai' : code.runner.includes('continuum') ? 'continuum' : 'forge-alloy';
+      nodeRaw(chainEl, 'info', 'Runner',
+        '<a href="' + ghBase + runnerRepo + '" target="_blank">' + code.runner + ' v' + code.version + '</a>');
+    }
+
+    // Code hash — link to the script in the repo
+    if (code.binaryHash) {
+      const scriptPath = code.runner?.includes('alloy_executor') ? 'blob/main/scripts/alloy_executor.py' : 'blob/main/scripts/forge_model.py';
+      const runnerRepo = code.runner?.includes('sentinel') ? 'sentinel-ai' : 'forge-alloy';
+      nodeRaw(chainEl, 'info', 'Code Hash',
+        '<a href="' + ghBase + runnerRepo + '/' + scriptPath + '" target="_blank" class="chain-value hash">' + code.binaryHash + '</a>');
+    }
+
+    // Model hash — link to model files on HF
+    if (i.modelHash) {
+      const modelRepo = alloy.receipt?.publications?.[0]?.url || (hfBase + 'continuum-ai/' + alloy.name);
+      nodeRaw(chainEl, 'verified', 'Model Hash',
+        '<a href="' + modelRepo + '/tree/main" target="_blank" class="chain-value hash">' + i.modelHash + '</a>');
+    }
+
+    // Alloy hash — link to spec
+    nodeRaw(chainEl, 'verified', 'Alloy Hash',
+      '<span class="chain-value hash">sha256:' + actualHash.slice(0, 32) + '…</span> · <a href="' + ghBase + 'forge-alloy" target="_blank">spec</a>');
+
+    // Attested timestamp
     if (i.attestedAt) {
       node(chainEl, 'info', 'Attested', i.attestedAt, '');
     }
 
-    // Receipt / Publications
+    // Publications — each links to where it was published
     if (receipt.publications?.length) {
       let pubHtml = '<div class="pub-list">';
       for (const p of receipt.publications) {
@@ -352,9 +393,12 @@ async function showChain(text, expectedHash) {
       node(chainEl, 'verified', 'Receipt Issued', receipt.issuedAt, '');
     }
 
-    // Tags
+    // Tags — link to HF tag filter
     if (alloy.tags?.length) {
-      node(chainEl, 'info', 'Tags', alloy.tags.join(', '), '');
+      const tagHtml = alloy.tags.map(t =>
+        '<a href="' + hfBase + 'models?other=' + t + '" target="_blank">' + t + '</a>'
+      ).join(', ');
+      nodeRaw(chainEl, 'info', 'Tags', tagHtml);
     }
 
   } catch (err) {
