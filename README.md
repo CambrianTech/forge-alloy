@@ -286,7 +286,7 @@ The Merkle chain secures it. The attestation proves it. The QR makes it accessib
 
 An executed alloy is self-contained and self-verifying. The signature survives any transport:
 
-- **HuggingFace** — upload with `forge-alloy` tag, auto-generate model card from results
+- **[HuggingFace](https://huggingface.co/models?other=forge-alloy)** — upload with `forge-alloy` tag, auto-generate model card from results
 - **IPFS** — content-addressed, immutable by design
 - **Grid transfer** — node-to-node via mesh network
 - **HTTP / S3 / torrent** — any file transfer
