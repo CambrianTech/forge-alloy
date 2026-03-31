@@ -262,8 +262,11 @@
 </div>
 
 <script>
-// Known alloys for hash-based lookup — add your own published alloy URLs here
-const KNOWN_ALLOYS = [];
+// Known alloys for hash-based lookup from QR codes.
+// Publishers: add your executed alloy URLs here so QR scan verification works.
+const KNOWN_ALLOYS = [
+  'https://huggingface.co/continuum-ai/qwen3.5-4b-code-forged/resolve/main/qwen3.5-4b-code-forged.alloy.json',
+];
 
 const ghBase = 'https://github.com/CambrianTech/';
 const hfBase = 'https://huggingface.co/';
