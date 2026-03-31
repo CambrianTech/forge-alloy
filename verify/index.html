@@ -27,42 +27,7 @@
   }
   .header p { color: #8a92a5; font-size: 13px; margin-top: 6px; }
 
-  .layout {
-    display: flex;
-    gap: 24px;
-    max-width: 1100px;
-    width: 100%;
-    align-items: flex-start;
-  }
-  .layout .qr-col {
-    flex-shrink: 0;
-    width: 180px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    position: sticky;
-    top: 30px;
-  }
-  .layout .qr-col img {
-    border-radius: 8px;
-    background: white;
-    padding: 8px;
-  }
-  .layout .qr-col .qr-label {
-    font-size: 10px;
-    color: #5a6070;
-    text-align: center;
-    line-height: 1.4;
-  }
-  .layout .qr-col .qr-hash {
-    font-size: 9px;
-    font-family: monospace;
-    color: #8a92a5;
-    word-break: break-all;
-    text-align: center;
-  }
-  .layout .chain-col { flex: 1; min-width: 0; }
+  .chain-wrapper { max-width: 720px; width: 100%; }
 
   .card {
     background: rgba(255,255,255,0.03);
@@ -73,17 +38,25 @@
   }
 
   /* Status banner */
-  .status { text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+  .status { padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+  .status.has-qr { text-align: left; display: flex; gap: 20px; align-items: flex-start; }
   .status.loading { background: rgba(0,212,255,0.06); border: 1px solid rgba(0,212,255,0.15); }
   .status.verified { background: rgba(0,255,200,0.06); border: 1px solid rgba(0,255,200,0.2); }
   .status.failed { background: rgba(255,68,68,0.06); border: 1px solid rgba(255,68,68,0.2); }
   .status.idle { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); }
+  .status-qr { flex-shrink: 0; }
+  .status-qr img { border-radius: 8px; background: white; padding: 8px; display: block; }
+  .status-qr .qr-caption { font-size: 9px; color: #5a6070; text-align: center; margin-top: 6px; }
+  .status-info { flex: 1; min-width: 0; }
   .status-icon { font-size: 36px; }
   .status-text { font-size: 16px; font-weight: 700; margin-top: 6px; }
   .status.verified .status-text { color: #00ffc8; }
   .status.failed .status-text { color: #ff4444; }
   .status.loading .status-text { color: #00d4ff; }
   .status-detail { font-size: 11px; color: #8a92a5; margin-top: 4px; font-family: monospace; }
+  .status-meta { font-size: 11px; color: #8a92a5; margin-top: 8px; line-height: 1.6; }
+  .status-meta a { color: #00d4ff; }
+  .status-meta .label { color: #5a6070; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; }
 
   /* Input */
   .input-row { display: flex; gap: 8px; margin-bottom: 16px; }
@@ -205,7 +178,7 @@
     border: 1px solid rgba(0,255,200,0.1); border-radius: 4px;
   }
 
-  .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #5a6070; max-width: 1100px; width: 100%; }
+  .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #5a6070; max-width: 720px; width: 100%; }
 
   /* Summary card at bottom of chain */
   .trust-summary {
@@ -242,9 +215,9 @@
     transition: width 0.4s ease;
   }
 
-  @media (max-width: 700px) {
-    .layout { flex-direction: column; }
-    .layout .qr-col { width: 100%; flex-direction: row; justify-content: center; position: static; flex-wrap: wrap; }
+  @media (max-width: 500px) {
+    .status.has-qr { flex-direction: column; align-items: center; text-align: center; }
+    .status-info { text-align: center; }
   }
 </style>
 </head>
@@ -255,7 +228,7 @@
   <p>Cryptographic verification of the complete model forging pipeline</p>
 </div>
 
-<div class="card" style="max-width:1100px;">
+<div class="card" style="max-width:720px;">
   <div id="status" class="status idle">
     <div class="status-icon">&#x1f517;</div>
     <div class="status-text">Verify a ForgeAlloy chain</div>
@@ -273,12 +246,9 @@
     <input type="file" id="fileInput" accept=".json" style="display:none">
   </div>
 
-  <div id="chainLayout" class="layout" style="display:none">
-    <div id="qrCol" class="qr-col"></div>
-    <div class="chain-col">
-      <div id="chain" class="chain"></div>
-      <div id="trustSummary"></div>
-    </div>
+  <div id="chainWrapper" class="chain-wrapper" style="display:none">
+    <div id="chain" class="chain"></div>
+    <div id="trustSummary"></div>
   </div>
 </div>
 
@@ -573,8 +543,7 @@ function trustAnalysisHtml(def) {
 async function showChain(text, expectedHash) {
   const statusEl = document.getElementById('status');
   const chainEl = document.getElementById('chain');
-  const qrCol = document.getElementById('qrCol');
-  const chainLayout = document.getElementById('chainLayout');
+  const chainWrapper = document.getElementById('chainWrapper');
   const summaryEl = document.getElementById('trustSummary');
 
   resetTrustTally();
@@ -591,29 +560,42 @@ async function showChain(text, expectedHash) {
     const thisUrl = window.location.origin + window.location.pathname + '#' + actualHash.slice(0, 16);
     const qrDataUrl = await generateQRDataUrl(thisUrl);
 
-    // Status
+    // Status — QR inside, article-style (image left, text right)
+    const alloyName = alloy.name || 'unknown';
+    const trustLvl = i.trustLevel || 'none';
+    const benchCount = (r.benchmarks || []).length;
+    const certCount = (i.certifications || []).length;
+    const hwCount = (r.hardwareVerified || []).length;
+
     if (hashOk === false) {
       statusEl.className = 'status failed';
       statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">HASH MISMATCH — chain may be compromised</div><div class="status-detail">Expected ' + expectedHash + '... got ' + actualHash.slice(0, expectedHash.length) + '...</div>';
     } else {
-      statusEl.className = 'status verified';
-      statusEl.innerHTML =
-        '<div class="status-icon">&#x2705;</div>' +
-        '<div class="status-text">' + (hashOk ? 'CHAIN OF CUSTODY VERIFIED' : 'CHAIN LOADED') + '</div>' +
-        '<div class="status-detail">sha256:' + actualHash.slice(0, 24) + '...</div>';
+      statusEl.className = 'status verified has-qr';
+      const qrHtml = qrDataUrl
+        ? '<div class="status-qr"><img src="' + qrDataUrl + '" width="140" height="140" alt="Verification QR"><div class="qr-caption">Scan to verify</div></div>'
+        : '';
+      const statusTitle = hashOk ? 'CHAIN OF CUSTODY VERIFIED' : 'CHAIN LOADED';
+
+      let metaHtml = '';
+      metaHtml += '<div class="status-meta">';
+      metaHtml += '<div><span class="label">Model</span> <strong style="color:#e0e6ed">' + alloyName + '</strong></div>';
+      metaHtml += '<div><span class="label">Trust</span> <span style="color:#ffaa00">' + trustLvl + '</span></div>';
+      if (benchCount) metaHtml += '<div><span class="label">Benchmarks</span> ' + benchCount + ' recorded</div>';
+      if (certCount) metaHtml += '<div><span class="label">Certifications</span> ' + certCount + ' independent</div>';
+      if (hwCount) metaHtml += '<div><span class="label">Hardware</span> ' + hwCount + ' device' + (hwCount > 1 ? 's' : '') + ' verified</div>';
+      metaHtml += '<div><span class="label">Hash</span> <span style="font-family:monospace;font-size:10px">sha256:' + actualHash.slice(0, 20) + '...</span></div>';
+      metaHtml += '</div>';
+
+      statusEl.innerHTML = qrHtml +
+        '<div class="status-info">' +
+        '<div class="status-text">' + statusTitle + '</div>' +
+        metaHtml +
+        '</div>';
     }
 
-    // QR column (left side)
-    qrCol.innerHTML = '';
-    if (qrDataUrl) {
-      qrCol.innerHTML =
-        '<img src="' + qrDataUrl + '" width="140" height="140" alt="Verification QR">' +
-        '<div class="qr-label">Scan to verify this chain independently</div>' +
-        '<div class="qr-hash">sha256:' + actualHash.slice(0, 16) + '...</div>';
-    }
-
-    // Show layout
-    chainLayout.style.display = 'flex';
+    // Show chain
+    chainWrapper.style.display = 'block';
     chainEl.className = 'chain visible';
     chainEl.innerHTML = '';
 
