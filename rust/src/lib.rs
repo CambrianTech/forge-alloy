@@ -42,6 +42,15 @@ pub struct ForgeAlloy {
     pub license: String,
 
     pub source: AlloySource,
+
+    /// Target capabilities — what the model should BECOME after forging.
+    /// The delta between source (introspected) and target (desired) defines the work.
+    /// Stages can be auto-derived from this delta or manually specified.
+    /// If target is None, stages must be explicitly provided (legacy/manual mode).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target: Option<AlloyTarget>,
+
+    /// Pipeline stages to execute. Either manually specified or derived from source→target delta.
     pub stages: Vec<AlloyStage>,
     #[serde(default = "default_cycles")]
     pub cycles: u32,
@@ -54,6 +63,10 @@ pub struct ForgeAlloy {
     /// Populated after execution — benchmark scores, hardware verification, samples
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub results: Option<AlloyResults>,
+
+    /// Populated after delivery — where it was published, verification URLs, QR
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub receipt: Option<AlloyReceipt>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_alloy_id: Option<String>,
@@ -78,6 +91,61 @@ pub struct AlloySource {
     pub is_moe: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub total_experts: Option<u32>,
+}
+
+// ── Target (desired state — the delta from source defines the work) ────────
+
+/// What the model should BECOME after forging.
+/// Each field is optional — only set the fields you want to CHANGE.
+/// Unset fields mean "keep as-is" (no work needed for that capability).
+/// The system compares source (introspected) vs target (desired) to derive stages.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct AlloyTarget {
+    /// Desired context window length (tokens). Triggers context-extend if > source.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context_length: Option<u32>,
+
+    /// Desired input modalities. Adding new ones triggers modality stages.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub modalities: Option<Vec<String>>,
+
+    /// Target domain specialization (code, reasoning, chat, science). Triggers train stage.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub domain: Option<String>,
+
+    /// Target parameter reduction (0.0-0.9). Triggers prune + defrag stages.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prune_ratio: Option<f32>,
+
+    /// Target expert count for MoE models. Triggers expert-prune if < source.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub experts: Option<u32>,
+
+    /// Target output formats (gguf, mlx, onnx, coreml). Triggers quant/package stages.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub output_formats: Option<Vec<String>>,
+
+    /// Target quantization types per format (e.g. ["Q4_K_M", "Q8_0"]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub quant_types: Option<Vec<String>>,
+
+    /// Target devices this model should run on. Drives quant/package decisions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_devices: Option<Vec<String>>,
+
+    /// Target deployment node. Triggers deploy stage.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deploy_to: Option<String>,
+
+    /// Benchmarks to run. Triggers eval stage.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub benchmarks: Option<Vec<String>>,
+
+    /// Whether to publish to HuggingFace. Triggers publish stage.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub publish: Option<bool>,
 }
 
 // ── Results (populated after execution) ────────────────────────────────────
@@ -807,6 +875,53 @@ pub struct DeployStage {
     pub auto_scale: Option<bool>,
 }
 
+// ── Receipt (populated after delivery) ──────────────────────────────────────
+
+/// The receipt — proof of delivery. Populated after publish/deploy stages complete.
+/// The alloy is the work order. The results are the work product. The receipt is the delivery confirmation.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct AlloyReceipt {
+    /// Where the model was published (HuggingFace URL, IPFS CID, grid node ID)
+    #[serde(default)]
+    pub publications: Vec<Publication>,
+
+    /// QR code verification URL (links to verification page with alloy hash)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub verify_url: Option<String>,
+
+    /// SHA-256 of the alloy at time of publication
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub alloy_hash: Option<String>,
+
+    /// SHA-256 of the generated model card
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub card_hash: Option<String>,
+
+    /// When the receipt was issued
+    pub issued_at: String,
+}
+
+/// A single publication record — one per delivery target
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct Publication {
+    /// Target platform (huggingface, ipfs, grid, github)
+    pub target: String,
+
+    /// URL or identifier where the model can be found
+    pub url: String,
+
+    /// When it was published
+    pub published_at: String,
+
+    /// Download count at time of receipt (for tracking)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub downloads: Option<u64>,
+}
+
 // ── Hardware & Outputs ──────────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -899,6 +1014,16 @@ impl ForgeAlloy {
             .as_ref()
             .and_then(|r| r.integrity.as_ref())
             .map(|i| &i.trust_level)
+    }
+
+    /// Check if this alloy has a target (delta-based mode)
+    pub fn has_target(&self) -> bool {
+        self.target.is_some()
+    }
+
+    /// Check if stages are empty (needs derivation from target delta)
+    pub fn needs_stage_derivation(&self) -> bool {
+        self.target.is_some() && self.stages.is_empty()
     }
 
     /// Serialize to JSON string
