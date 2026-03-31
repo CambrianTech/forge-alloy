@@ -1,0 +1,21 @@
+{
+  "name": "qwen3.5-4b-multimodal-code",
+  "version": "1.0.0",
+  "description": "Full pipeline: source config → vision → context extend → prune → train → quant → eval → deploy",
+  "author": "continuum-ai",
+  "tags": ["code", "vision", "multimodal", "forge-alloy"],
+  "license": "apache-2.0",
+  "source": { "baseModel": "Qwen/Qwen3.5-4B", "architecture": "qwen3_5" },
+  "stages": [
+    { "type": "source-config", "contextLength": 32768, "inputModalities": ["text", "vision"], "targetDevices": ["iPhone", "MacBook Air 8GB", "RTX 5090"] },
+    { "type": "modality", "modality": "vision", "encoderModel": "openai/clip-vit-large-patch14", "projectionArch": "mlp", "freezeBase": true, "freezeEncoder": true, "trainingSteps": 5000 },
+    { "type": "context-extend", "targetLength": 32768, "method": "yarn" },
+    { "type": "prune", "strategy": "entropy", "level": 0.3 },
+    { "type": "train", "domain": "code", "steps": 1000, "learningRate": "2e-4" },
+    { "type": "quant", "format": "gguf", "quantTypes": ["Q4_K_M", "Q8_0"] },
+    { "type": "eval", "benchmarks": [{ "name": "humaneval" }, { "name": "mmlu", "subset": "mmlu-pro" }], "passingThreshold": 60 },
+    { "type": "publish", "org": "continuum-ai", "includeAlloy": true, "tags": ["continuum", "forged", "multimodal", "forge-alloy"] },
+    { "type": "deploy", "target": "bigmama", "healthCheck": true, "warmup": true }
+  ],
+  "cycles": 3
+}
