@@ -257,14 +257,13 @@
   <a href="https://github.com/CambrianTech/continuum">Continuum</a> ·
   <a href="https://github.com/CambrianTech/sentinel-ai">Sentinel-AI</a> ·
   <a href="https://huggingface.co/continuum-ai">HuggingFace</a>
-  <br><br>pip install forge-alloy · cargo add forge-alloy · npm i @continuum-ai/forge-alloy
+  <br><br>pip install forge-alloy &middot; cargo add forge-alloy &middot; npm i forge-alloy
   <br><span id="verifier-hash"></span>
 </div>
 
 <script>
-const KNOWN_ALLOYS = [
-  'https://huggingface.co/continuum-ai/qwen3.5-4b-code-forged/resolve/main/qwen3.5-4b-code-forged.alloy.json',
-];
+// Known alloys for hash-based lookup — add your own published alloy URLs here
+const KNOWN_ALLOYS = [];
 
 const ghBase = 'https://github.com/CambrianTech/';
 const hfBase = 'https://huggingface.co/';
@@ -735,40 +734,48 @@ async function showChain(text, expectedHash) {
     if (code.runner) {
       const codeTrust = assessNodeTrust('code', alloy);
       tallyTrust(codeTrust);
-      const runnerRepo = code.runner.includes('sentinel') ? 'sentinel-ai' : code.runner.includes('continuum') ? 'continuum' : 'forge-alloy';
       const codeDef = code.binaryHash ? TRUST_DEFS.code : TRUST_DEFS.codeNoHash;
+      const repoUrl = code.sourceRepo || '';
+      const runnerLink = repoUrl
+        ? '<a href="' + repoUrl + '" target="_blank">' + code.runner + ' v' + code.version + '</a>'
+        : code.runner + ' v' + code.version;
 
       nodeRaw(chainEl, codeTrust === 'none' ? 'warning' : 'info', 'Runner',
-        '<a href="' + ghBase + runnerRepo + '" target="_blank">' + code.runner + ' v' + code.version + '</a>' +
+        runnerLink +
         trustBadgeHtml(codeTrust) +
         trustAnalysisHtml(codeDef));
     }
 
-    // --- Code Hash → GitHub link ---
-    if (code.binaryHash) {
-      const runnerRepo = code.runner?.includes('sentinel') ? 'sentinel-ai' : code.runner?.includes('continuum') ? 'continuum' : 'forge-alloy';
-      const scriptFile = code.runner?.includes('alloy_executor') ? 'scripts/alloy_executor.py' : 'scripts/forge_model.py';
+    // --- Code Hash → source link ---
+    if (code.binaryHash && code.sourceRepo) {
       const commitRef = code.commit || 'main';
-      const codeUrl = ghBase + runnerRepo + '/blob/' + commitRef + '/' + scriptFile;
+      // Link to the repo at the commit — don't guess the script path
+      const codeUrl = code.sourceRepo + '/tree/' + commitRef;
       nodeRaw(chainEl, 'info', 'Code Hash',
         '<a href="' + codeUrl + '" target="_blank" class="chain-value hash">' + code.binaryHash.slice(0, 40) + '...</a>' +
-        '<span class="chain-goto">&#x2192; verify: hash this file at that commit</span>');
+        '<span class="chain-goto">&#x2192; verify: hash the runner at this commit</span>');
+    } else if (code.binaryHash) {
+      nodeRaw(chainEl, 'info', 'Code Hash',
+        '<span class="chain-value hash">' + code.binaryHash.slice(0, 40) + '...</span>' +
+        '<span class="chain-goto">no source repo declared</span>');
     }
 
     // --- Git Commit → repo state ---
     if (code.commit) {
-      const runnerRepo = code.runner?.includes('sentinel') ? 'sentinel-ai' : 'forge-alloy';
+      const commitLink = code.sourceRepo
+        ? '<a href="' + code.sourceRepo + '/commit/' + code.commit + '" target="_blank">' + code.commit.slice(0, 12) + '</a>'
+        : code.commit.slice(0, 12);
       nodeRaw(chainEl, 'verified', 'Git Commit',
-        '<a href="' + ghBase + runnerRepo + '/commit/' + code.commit + '" target="_blank">' + code.commit.slice(0, 12) + '</a>' +
+        commitLink +
         (code.sourceRepo ? ' &middot; <a href="' + code.sourceRepo + '" target="_blank">repo</a>' : '') +
-        '<span class="chain-goto">&#x2192; GitHub is the authority for this state</span>');
+        '<span class="chain-goto">&#x2192; source host is the authority for this state</span>');
     }
 
     // --- Model Hash ---
     if (i.modelHash) {
       const mhTrust = assessNodeTrust('modelHash', alloy);
       tallyTrust(mhTrust);
-      const modelRepo = alloy.receipt?.publications?.[0]?.url || (hfBase + 'continuum-ai/' + alloy.name);
+      const modelRepo = alloy.receipt?.publications?.[0]?.url || (alloy.author ? hfBase + alloy.author + '/' + alloy.name : '');
       nodeRaw(chainEl, mhTrust === 'low' ? 'warning' : 'verified', 'Model Hash',
         '<a href="' + modelRepo + '/tree/main" target="_blank" class="chain-value hash">' + i.modelHash + '</a>' +
         trustBadgeHtml(mhTrust) +
