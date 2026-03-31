@@ -187,9 +187,17 @@ The complete JSON Schema is at [`schema/forge-alloy.schema.json`](schema/forge-a
 - **Verifiable** — cryptographic attestation proves results are genuine
 - **Extensible** — open metric bags, arbitrary benchmarks, progressive trust tiers
 
-## HuggingFace Integration
+## Delivery
 
-Published models tagged with `forge-alloy` include the alloy file. The `results` section contains everything needed to auto-generate model cards: benchmark tables, hardware device grids, generation samples, and reproducibility commands.
+An executed alloy is self-contained and self-verifying. The signature survives any transport:
+
+- **HuggingFace** — upload with `forge-alloy` tag, auto-generate model card from results
+- **IPFS** — content-addressed, immutable by design
+- **Grid transfer** — node-to-node via mesh network
+- **HTTP / S3 / torrent** — any file transfer
+- **USB / local copy** — airgapped delivery
+
+No central authority required. The verifier checks the alloy's hashes and signature, not where it came from. The alloy IS the proof.
 
 ## Documentation
 

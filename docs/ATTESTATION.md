@@ -159,6 +159,57 @@ Dataset hash must be deterministic and cover exactly the subset used:
 
 If a subset was used (e.g., MMLU-Pro subset of MMLU), the hash covers ONLY the subset files, not the full dataset. The `name` field reflects the subset.
 
+## Pipeline Lifecycle: Forge → Attest → Verify → Deliver → Anchor
+
+The alloy is a full contract. The recipe is the work order, the executed alloy is the receipt, the attestation is the notarized proof. Each phase has its own trust guarantee and they compose.
+
+```
+FORGE (compute node)          DELIVER (any path)             ANCHOR (immutable)
+─────────────────────         ──────────────────             ──────────────────
+1. Load alloy recipe          4. Receive executed alloy      7. Hash attestation
+2. Execute pipeline           5. VERIFY all hashes:          8. Publish to anchor:
+   ├── prune                     ├── model weights match?       ├── blockchain tx
+   ├── train (cycles)            ├── code hash match?           ├── Merkle batch
+   ├── eval (benchmarks)         └── ABORT if mismatch          ├── RFC 3161 TSA
+   └── generate samples       6. Deliver via ANY path:          └── IPFS pin
+3. ATTEST:                       ├── HuggingFace upload      9. Record anchor in alloy
+   ├── hash model (full)         ├── IPFS pin
+   ├── hash code (runner)        ├── Grid transfer
+   ├── hash datasets             ├── USB / local copy
+   ├── sign (if Phase 2+)        ├── HTTP / S3 / torrent
+   └── write executed alloy      └── literally anything
+                                  (signature survives transport)
+```
+
+### Phase 1 (Now): Forge + Deliver
+
+Forge produces hashes. Publish verifies hashes before upload. No signature. Trust: accidental corruption detection. Anyone can modify the alloy between forge and publish — the hash verification catches it.
+
+### Phase 2: Forge + Sign + Deliver
+
+Forge signs the attestation with hardware-bound key. Publish verifies signature AND hashes. Tampering between forge and publish breaks the signature. Trust: identity proven (who forged), integrity proven (what was forged).
+
+### Phase 3: Forge + Sign + Deliver + Anchor
+
+Same as Phase 2, plus the attestation is anchored to an immutable ledger. Trust: identity + integrity + existence (when it was forged, provably). Prevents backdating.
+
+### Phase 4: Enclave Forge + Sign + Deliver + Anchor
+
+Forge runs inside TEE. Hardware proves code integrity. Signature is hardware-bound. Anchor is immutable. Trust: complete. The ONLY phase where every claim is cryptographically proven from compute through delivery. Required for marketplace payments.
+
+## Model Card Integrity
+
+HuggingFace lets repo owners edit README.md. The card can claim anything. **The alloy is the source of truth, the card is a render.**
+
+Protection:
+1. **cardHash** — SHA-256 of the generated model card, stored in the alloy's PublishStage. If the card is edited after publish, the hash breaks.
+2. **Verification tools** — Download the .alloy.json, recompute SHA-256 of the README.md, compare to cardHash. Mismatch = card was edited.
+3. **The alloy file in the HF repo** — the contract. Anyone can download it and verify every claim independently.
+
+The card is like a certificate printout — nice to look at, but the real proof is the signed document behind it. You wouldn't trust a photocopy of a diploma without checking with the university.
+
+At enclave tier, the card is generated and hashed inside the TEE before upload. Maximum integrity.
+
 ## Known Limitations (Not Solvable by Attestation)
 
 | Attack | Status | Notes |
