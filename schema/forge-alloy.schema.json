@@ -113,23 +113,24 @@
 
     "IntegrityAttestation": {
       "type": "object",
-      "required": ["code", "modelHash", "attestedAt"],
-      "description": "Cryptographic attestation modeled after FIDO2/WebAuthn. Proves WHAT code ran, on WHAT data, in WHAT environment.",
+      "required": ["trustLevel", "code", "modelHash", "attestedAt"],
+      "description": "Cryptographic attestation modeled after FIDO2/WebAuthn. Self-attested prevents accidental corruption only. Enclave required for tamper-proof.",
       "properties": {
         "trustLevel": {
           "type": "string",
           "enum": ["self-attested", "verified", "enclave"],
-          "default": "self-attested",
-          "description": "Trust tier: self-attested (signer vouches), verified (third-party audited), enclave (TEE hardware-bound)"
+          "description": "Trust tier. Self-attested: signer vouches (NOT adversary-proof). Verified: third-party audited. Enclave: TEE hardware-bound."
         },
         "code": { "$ref": "#/$defs/CodeAttestation" },
-        "modelHash": { "type": "string", "description": "SHA-256 of the model weights evaluated" },
-        "alloyHash": { "type": "string", "description": "SHA-256 of the alloy pipeline definition" },
+        "modelHash": { "type": "string", "description": "SHA-256 of FULL model weights (every byte, not partial)" },
+        "alloyHash": { "type": "string", "description": "SHA-256 of alloy pipeline (required when signed)" },
         "datasets": {
           "type": "array",
           "items": { "$ref": "#/$defs/DatasetAttestation" },
-          "description": "Hashes of benchmark datasets — proves eval used unmodified data"
+          "description": "Hashes of benchmark datasets (cover exactly the subset used)"
         },
+        "nonce": { "type": "string", "description": "Verifier-provided challenge for replay prevention (like WebAuthn challenge)" },
+        "audience": { "type": "string", "description": "Audience binding — prevents cross-marketplace replay" },
         "signature": { "$ref": "#/$defs/AttestationSignature" },
         "attestedAt": { "type": "string", "format": "date-time" }
       }
@@ -165,18 +166,23 @@
     "AttestationSignature": {
       "type": "object",
       "required": ["algorithm", "publicKey", "value"],
-      "description": "ECDSA signature over the attestation payload. ES256 (P-256 + SHA-256) — same as WebAuthn/FIDO2.",
+      "description": "Signature over RFC 8785 JCS-canonical attestation payload. Extensible to post-quantum.",
       "properties": {
-        "algorithm": { "type": "string", "description": "Signing algorithm (e.g., ES256)" },
-        "publicKey": { "type": "string", "description": "Base64url-encoded public key" },
-        "value": { "type": "string", "description": "Base64url-encoded signature" },
-        "credentialId": { "type": "string", "description": "WebAuthn credential ID for passkey-based signing" },
+        "algorithm": {
+          "type": "string",
+          "enum": ["ES256", "ES384", "EdDSA", "ML-DSA-65", "ML-DSA-87", "SLH-DSA-128s"],
+          "description": "Signing algorithm. ES256 default. PQC variants for quantum-safe migration."
+        },
+        "publicKey": { "type": "string", "description": "Base64url public key — verifiers MUST check against registry" },
+        "value": { "type": "string", "description": "Base64url signature over SHA-256(JCS payload)" },
+        "keyId": { "type": "string", "description": "Key ID in registry for lookup and revocation" },
+        "credentialId": { "type": "string", "description": "WebAuthn credential ID (see passkey signing gap in docs)" },
         "certificateChain": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "PEM-encoded certificate chain for CA-attested signers"
+          "description": "PEM-encoded certificate chain (leaf first) for verified tier"
         },
-        "keyRegistry": { "type": "string", "format": "uri", "description": "URL where this public key can be verified" }
+        "keyRegistry": { "type": "string", "format": "uri", "description": "Registry URL for key verification and revocation" }
       }
     },
 

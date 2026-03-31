@@ -211,45 +211,76 @@ pub struct GenerationSample {
     pub baseline_completion: Option<String>,
 }
 
+/// Trust tier — how much should you trust this attestation?
+/// Maps to WebAuthn attestation types.
+///
+/// IMPORTANT: Self-attested only prevents accidental corruption, NOT adversarial
+/// modification. A compromised runner can fake self-attestation. Only `enclave`
+/// tier (TEE execution) provides actual tamper-proof guarantees.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+#[serde(rename_all = "kebab-case")]
+pub enum TrustLevel {
+    /// Signer vouches for itself. Prevents accidental corruption only.
+    /// A compromised runner can forge this. Honest about its limitations.
+    SelfAttested,
+    /// Third-party verified the environment (audited runner, certificate chain).
+    /// Requires certificate_chain in AttestationSignature.
+    Verified,
+    /// TEE execution (SGX, Nitro Enclaves, TrustZone). Hardware-bound proof.
+    /// The ONLY tier that prevents input-output binding attacks.
+    Enclave,
+}
+
 /// Cryptographic attestation for verified benchmark execution.
 /// Modeled after FIDO2/WebAuthn attestation: prove WHAT code ran,
 /// on WHAT data, in WHAT environment, and sign the whole chain.
 ///
-/// Trust tiers (like WebAuthn attestation types):
-/// - `self-attested`: signer vouches for itself (no third-party verification)
-/// - `verified`: third-party verified the environment (audited runner)
-/// - `enclave`: TEE execution, hardware-bound proof (tamper-proof)
+/// Canonicalization: signed payload MUST use RFC 8785 (JSON Canonicalization
+/// Scheme / JCS) — deterministic key ordering, number formatting, and Unicode
+/// normalization. Without this, cross-language verification breaks.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "typescript", derive(TS), ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct IntegrityAttestation {
     /// Trust tier — how much should you trust this attestation?
-    #[serde(default = "default_trust_level")]
-    pub trust_level: String,
+    pub trust_level: TrustLevel,
 
     /// The code that produced these results
     pub code: CodeAttestation,
 
-    /// SHA-256 hash of the model weights that were evaluated
+    /// SHA-256 hash of the FULL model weights (not partial — every byte).
+    /// Partial hashing is trivially bypassed by swapping tensor data after headers.
     pub model_hash: String,
 
-    /// SHA-256 hash of the alloy pipeline definition (stages JSON)
+    /// SHA-256 hash of the alloy pipeline definition (stages + source, excluding results).
+    /// REQUIRED when signature is present — proves what pipeline was executed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub alloy_hash: Option<String>,
 
-    /// Hashes of benchmark datasets used — proves eval wasn't run on modified data
+    /// Hashes of benchmark datasets used — proves eval wasn't run on modified data.
+    /// Hash spec: sort filenames lexicographically, hash each file fully, combine via Merkle tree.
+    /// Must cover exactly the subset used, not the full dataset.
     #[serde(default)]
     pub datasets: Vec<DatasetAttestation>,
 
-    /// Cryptographic signature over the attestation payload
+    /// Verifier-provided nonce for replay prevention (like WebAuthn challenge).
+    /// Required for marketplace transactions — the marketplace issues this before forge begins.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub nonce: Option<String>,
+
+    /// Audience binding — who this attestation is intended for (marketplace URL, requester ID).
+    /// Prevents cross-marketplace replay.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audience: Option<String>,
+
+    /// Cryptographic signature over the attestation payload (RFC 8785 JCS canonical form)
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub signature: Option<AttestationSignature>,
 
     /// ISO 8601 timestamp of attestation
     pub attested_at: String,
 }
-
-fn default_trust_level() -> String { "self-attested".to_string() }
 
 /// Attestation of the code that produced results.
 /// Like WebAuthn authenticator attestation — proves the forge runner is genuine.
@@ -303,30 +334,69 @@ pub struct DatasetAttestation {
     pub source: Option<String>,
 }
 
+/// Signing algorithm for attestation signatures.
+/// Extensible to post-quantum algorithms when standards mature.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+pub enum SigningAlgorithm {
+    /// ECDSA with P-256 and SHA-256 (WebAuthn default, universal hardware support)
+    ES256,
+    /// ECDSA with P-384 and SHA-384 (higher security margin)
+    ES384,
+    /// EdDSA with Ed25519 (fast, but less hardware attestation support)
+    EdDSA,
+    /// CRYSTALS-Dilithium (NIST PQC standard, FIPS 204 / ML-DSA)
+    /// Post-quantum lattice-based signatures. Add when libraries stabilize.
+    #[serde(rename = "ML-DSA-65")]
+    MlDsa65,
+    /// CRYSTALS-Dilithium higher security level
+    #[serde(rename = "ML-DSA-87")]
+    MlDsa87,
+    /// SPHINCS+ (NIST PQC standard, FIPS 205 / SLH-DSA)
+    /// Hash-based post-quantum signatures. Stateless, conservative choice.
+    #[serde(rename = "SLH-DSA-128s")]
+    SlhDsa128s,
+}
+
 /// ECDSA signature over the attestation payload.
-/// Uses ES256 (P-256 + SHA-256) — same algorithm as WebAuthn/FIDO2.
+/// Payload MUST be canonicalized via RFC 8785 (JCS) before signing.
+///
+/// NOTE on passkeys: WebAuthn credentials sign `clientDataJSON` (which includes
+/// a relying party challenge), NOT arbitrary payloads. To use passkeys for
+/// forge attestation, the attestation hash must be embedded in the WebAuthn
+/// challenge field, or the raw Secure Enclave key must be accessed outside the
+/// WebAuthn ceremony (which standard passkeys don't allow — the key is bound
+/// to the RP ID). Phase 2 needs a signing service that bridges this gap.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "typescript", derive(TS), ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct AttestationSignature {
-    /// Signing algorithm (e.g. "ES256" for ECDSA P-256 with SHA-256)
-    pub algorithm: String,
+    /// Signing algorithm
+    pub algorithm: SigningAlgorithm,
 
-    /// Base64url-encoded public key of the signer
+    /// Base64url-encoded public key of the signer.
+    /// CRITICAL: verifiers MUST fetch the key from the registry and compare,
+    /// NOT trust this embedded key directly. A naive verifier using only this
+    /// field defeats the entire registry.
     pub public_key: String,
 
-    /// Base64url-encoded signature over SHA-256(attestation payload)
+    /// Base64url-encoded signature over SHA-256(JCS-canonicalized attestation payload)
     pub value: String,
 
-    /// Credential ID — for passkey-based signing (WebAuthn credential)
+    /// Key ID in the registry (for lookup and revocation checking)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub key_id: Option<String>,
+
+    /// Credential ID — for passkey-based signing (see NOTE above on limitations)
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub credential_id: Option<String>,
 
-    /// Certificate chain for CA-attested signers (PEM-encoded)
+    /// Certificate chain for CA-attested signers (PEM-encoded, leaf first)
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub certificate_chain: Vec<String>,
 
-    /// Key registry URL where this public key can be verified
+    /// Key registry URL where this public key can be verified and revocation checked.
+    /// Registry MUST support: key lookup, revocation status, key rotation (supersededBy).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub key_registry: Option<String>,
 }
@@ -659,11 +729,11 @@ impl ForgeAlloy {
     }
 
     /// Get the trust level of the attestation (if present)
-    pub fn trust_level(&self) -> Option<&str> {
+    pub fn trust_level(&self) -> Option<&TrustLevel> {
         self.results
             .as_ref()
             .and_then(|r| r.integrity.as_ref())
-            .map(|i| i.trust_level.as_str())
+            .map(|i| &i.trust_level)
     }
 
     /// Serialize to JSON string
@@ -733,7 +803,7 @@ mod tests {
 
         // Example has integrity but no signature yet (self-attested, unsigned)
         assert!(!alloy.is_signed());
-        assert_eq!(alloy.trust_level(), Some("self-attested"));
+        assert_eq!(alloy.trust_level(), Some(&TrustLevel::SelfAttested));
 
         let integrity = alloy.results.as_ref().unwrap().integrity.as_ref().unwrap();
         assert!(!integrity.model_hash.is_empty());
@@ -754,7 +824,6 @@ mod tests {
 
     #[test]
     fn test_signed_attestation() {
-        // Build an attestation with a signature
         let signed_json = r#"{
             "trustLevel": "verified",
             "code": {
@@ -763,22 +832,30 @@ mod tests {
                 "binaryHash": "sha256:aabb"
             },
             "modelHash": "sha256:ccdd",
+            "alloyHash": "sha256:eeff",
             "datasets": [],
+            "nonce": "dGVzdC1ub25jZQ",
+            "audience": "https://marketplace.forge-alloy.dev",
             "signature": {
                 "algorithm": "ES256",
                 "publicKey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...",
                 "value": "MEUCIQD...",
+                "keyId": "continuum-ai/forge-runner-001",
                 "credentialId": "passkey-abc123",
                 "keyRegistry": "https://keys.forge-alloy.dev/v1"
             },
             "attestedAt": "2026-03-28T14:32:00Z"
         }"#;
         let attestation: IntegrityAttestation = serde_json::from_str(signed_json).unwrap();
-        assert_eq!(attestation.trust_level, "verified");
+        assert_eq!(attestation.trust_level, TrustLevel::Verified);
         assert!(attestation.signature.is_some());
+        assert_eq!(attestation.nonce, Some("dGVzdC1ub25jZQ".into()));
+        assert_eq!(attestation.audience, Some("https://marketplace.forge-alloy.dev".into()));
+        assert_eq!(attestation.alloy_hash, Some("sha256:eeff".into()));
 
         let sig = attestation.signature.as_ref().unwrap();
-        assert_eq!(sig.algorithm, "ES256");
+        assert_eq!(sig.algorithm, SigningAlgorithm::ES256);
+        assert_eq!(sig.key_id, Some("continuum-ai/forge-runner-001".into()));
         assert!(sig.credential_id.is_some());
         assert!(sig.key_registry.is_some());
         assert!(sig.certificate_chain.is_empty());

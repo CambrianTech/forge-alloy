@@ -78,10 +78,12 @@ class DatasetAttestation(BaseModel):
 
 
 class AttestationSignature(BaseModel):
-    """ECDSA signature over the attestation payload. ES256 (P-256 + SHA-256)."""
-    algorithm: str
+    """Signature over attestation payload (RFC 8785 JCS canonical form).
+    Verifiers MUST check publicKey against registry, not trust it directly."""
+    algorithm: Literal["ES256", "ES384", "EdDSA", "ML-DSA-65", "ML-DSA-87", "SLH-DSA-128s"]
     public_key: str = Field(alias="publicKey")
     value: str
+    key_id: Optional[str] = Field(default=None, alias="keyId")
     credential_id: Optional[str] = Field(default=None, alias="credentialId")
     certificate_chain: list[str] = Field(default_factory=list, alias="certificateChain")
     key_registry: Optional[str] = Field(default=None, alias="keyRegistry")
@@ -90,13 +92,16 @@ class AttestationSignature(BaseModel):
 
 
 class IntegrityAttestation(BaseModel):
-    """Cryptographic attestation for verified benchmark execution.
-    Modeled after FIDO2/WebAuthn attestation."""
+    """Cryptographic attestation modeled after FIDO2/WebAuthn.
+    Self-attested only prevents accidental corruption, NOT adversarial modification.
+    Only enclave tier provides tamper-proof guarantees."""
     trust_level: Literal["self-attested", "verified", "enclave"] = Field(default="self-attested", alias="trustLevel")
     code: CodeAttestation
     model_hash: str = Field(alias="modelHash")
     alloy_hash: Optional[str] = Field(default=None, alias="alloyHash")
     datasets: list[DatasetAttestation] = Field(default_factory=list)
+    nonce: Optional[str] = None
+    audience: Optional[str] = None
     signature: Optional[AttestationSignature] = None
     attested_at: str = Field(alias="attestedAt")
 

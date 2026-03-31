@@ -1,245 +1,204 @@
 # ForgeAlloy Attestation Model
 
-Cryptographic integrity for model forging pipelines. Proves what code ran, on what data, in what environment — and that nobody tampered with any of it.
+Cryptographic integrity for model forging pipelines. Proves what code ran, on what data, in what environment — and signs the whole chain.
 
 ## Why This Matters
 
-AI model benchmarks are trivially spoofable today. Anyone can claim any score. There's no standard way to verify:
-- Was the eval actually run, or were the numbers fabricated?
-- Was the benchmark dataset modified to make the model score higher?
-- Was the evaluation code patched to skip hard cases?
-- Is this model actually the one that was evaluated, or was a better model swapped in?
-
-ForgeAlloy attestation solves this by binding cryptographic proof to every claim.
+AI model benchmarks are trivially spoofable. Anyone can claim any score. There's no standard way to verify that an eval was actually run, that the data wasn't modified, or that the model is the one that was evaluated.
 
 ## Architecture
 
-Modeled after **FIDO2/WebAuthn attestation** — the same framework used for passwordless authentication. The pattern is proven at global scale (billions of passkeys deployed).
+Modeled after **FIDO2/WebAuthn attestation**. Proven at global scale (billions of passkeys deployed).
 
 ### The Attestation Chain
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                  IntegrityAttestation                │
-│                                                     │
-│  trustLevel: "self-attested" | "verified" | "enclave"│
-│                                                     │
-│  ┌─────────────────────────────────────────────┐    │
-│  │  CodeAttestation                             │    │
-│  │  runner: "sentinel-ai/forge_model"           │    │
-│  │  version: "0.9.2"                            │    │
-│  │  binaryHash: sha256(runner binary)           │    │
-│  │  sourceHash: sha256(source repo)             │    │
-│  │  commit: "09bb60f"                           │    │
-│  │  environmentHash: sha256(container image)    │    │
-│  └─────────────────────────────────────────────┘    │
-│                                                     │
-│  modelHash: sha256(model weights)                   │
-│  alloyHash: sha256(alloy pipeline definition)       │
-│                                                     │
-│  ┌─────────────────────────────────────────────┐    │
-│  │  DatasetAttestation[] (one per benchmark)    │    │
-│  │  name: "humaneval"                           │    │
-│  │  hash: sha256(dataset files)                 │    │
-│  │  source: "https://github.com/openai/..."     │    │
-│  └─────────────────────────────────────────────┘    │
-│                                                     │
-│  ┌─────────────────────────────────────────────┐    │
-│  │  AttestationSignature (ES256)                │    │
-│  │  algorithm: "ES256" (P-256 + SHA-256)        │    │
-│  │  publicKey: base64url(EC public key)         │    │
-│  │  value: base64url(signature)                 │    │
-│  │  credentialId: "passkey-abc123" (optional)   │    │
-│  │  keyRegistry: "https://keys.forge-alloy.dev" │    │
-│  └─────────────────────────────────────────────┘    │
-│                                                     │
-│  attestedAt: "2026-03-28T14:32:00Z"                 │
-└─────────────────────────────────────────────────────┘
+IntegrityAttestation
+├── trustLevel: self-attested | verified | enclave
+├── code: CodeAttestation
+│   ├── runner + version + binaryHash
+│   ├── sourceHash + commit
+│   └── environment + environmentHash
+├── modelHash: SHA-256(FULL model weights — every byte)
+├── alloyHash: SHA-256(pipeline definition)
+├── datasets[]: DatasetAttestation
+│   ├── name + version + hash
+│   └── source URL
+├── nonce: verifier-provided challenge (replay prevention)
+├── audience: who this is for (cross-marketplace binding)
+├── signature: AttestationSignature
+│   ├── algorithm: ES256 | ES384 | EdDSA | ML-DSA-65 | ML-DSA-87 | SLH-DSA-128s
+│   ├── publicKey (MUST verify against registry, not trust directly)
+│   ├── value: sign(SHA-256(JCS-canonical payload))
+│   ├── keyId (registry lookup + revocation)
+│   └── certificateChain (for verified tier)
+└── attestedAt: ISO 8601
 ```
-
-### What Gets Hashed
-
-The signature covers a canonical JSON payload containing ALL hashes:
-
-```json
-{
-  "modelHash": "sha256:...",
-  "alloyHash": "sha256:...",
-  "codeHash": "sha256:...",
-  "datasetHashes": ["sha256:...", "sha256:..."],
-  "benchmarkResults": { ... },
-  "attestedAt": "2026-03-28T14:32:00Z"
-}
-```
-
-`signature.value = ES256(SHA-256(canonical_json))`
-
-Anyone with the public key can verify: if any hash doesn't match, the signature breaks.
 
 ## Trust Tiers
 
-Inspired by WebAuthn attestation types:
-
-| Tier | WebAuthn Analog | What It Proves | Verification |
+| Tier | WebAuthn Analog | What It Proves | Limitations |
 |------|----------------|---------------|-------------|
-| **self-attested** | Self attestation | Signer vouches for itself | Check public key against registry |
-| **verified** | Basic attestation | Third-party audited the runner | Verify certificate chain |
-| **enclave** | AttCA / TPM | Hardware-bound, tamper-proof execution | Hardware attestation certificate |
+| **self-attested** | Self attestation | Prevents accidental corruption | **Does NOT prevent adversarial modification.** A compromised runner can fake this. |
+| **verified** | Basic/AttCA | Third-party audited the runner | Requires trust in the auditor's certificate chain |
+| **enclave** | TPM/hardware | TEE execution, hardware-bound | **Only tier that prevents input-output binding attacks.** Required for marketplace. |
 
-### Self-Attested (Starting Point)
+### Honest Limitations of Self-Attestation
 
-The forge runner generates its own keypair and signs results. Trust comes from the public key being registered in a known registry (like a JSON file on GitHub or HuggingFace).
+Self-attestation means the signer vouches for itself. This is the "who watches the watchmen" problem:
+- A compromised runner can patch the self-check to return the expected hash
+- The code attestation records what hash was computed, but a modified script computes its own (different) hash truthfully
+- FIPS modules solve this because the hash is verified by the OS loader or hardware root of trust, not by the code itself
 
+**Self-attestation is useful for:**
+- Preventing accidental corruption (wrong version deployed)
+- Audit trails (what code was running when)
+- Stepping stone to verified/enclave tiers
+
+**Self-attestation does NOT prevent:**
+- A malicious runner forging attestations
+- Running correct code to get real results, then substituting better results
+- Cherry-picking the best of N evaluation runs
+
+**The real fix is enclave execution (Phase 4)**, where hardware guarantees code integrity.
+
+## Canonicalization: RFC 8785 (JCS)
+
+The signed payload MUST use **RFC 8785 JSON Canonicalization Scheme (JCS)**:
+- Deterministic key ordering (lexicographic)
+- No whitespace
+- Specific number formatting
+- Specific Unicode normalization
+
+Without this, the same payload produces different SHA-256 hashes across Rust, Python, and TypeScript — cross-language verification breaks.
+
+The signed payload contains:
+```json
+{
+  "alloyHash": "sha256:...",
+  "attestedAt": "2026-03-28T14:32:00Z",
+  "audience": "https://marketplace.forge-alloy.dev",
+  "benchmarkResults": { ... },
+  "codeHash": "sha256:...",
+  "datasetHashes": ["sha256:...", "sha256:..."],
+  "modelHash": "sha256:...",
+  "nonce": "base64url-random-bytes"
+}
 ```
-Runner generates ES256 keypair → registers public key → signs results
-Verifier fetches public key from registry → verifies signature
-```
 
-This prevents casual fraud (can't claim someone else's results) but doesn't prevent a compromised runner from lying.
+`signature.value = ES256(SHA-256(JCS(payload)))`
 
-### Verified (Production)
+## Signing Algorithms
 
-A third party (e.g., a CI system, an auditor) verifies the runner code matches its claimed hash before allowing it to sign. The verifier issues a certificate that chains to a known CA.
+| Algorithm | Type | Status | Use Case |
+|-----------|------|--------|----------|
+| **ES256** | ECDSA P-256 + SHA-256 | Production | Default. Universal hardware support (passkeys, Secure Enclave, TPM) |
+| **ES384** | ECDSA P-384 + SHA-384 | Production | Higher security margin |
+| **EdDSA** | Ed25519 | Production | Fast verification, less hardware support |
+| **ML-DSA-65** | CRYSTALS-Dilithium (FIPS 204) | Future | Post-quantum lattice-based. Add when libraries stabilize. |
+| **ML-DSA-87** | CRYSTALS-Dilithium (FIPS 204) | Future | Higher security post-quantum |
+| **SLH-DSA-128s** | SPHINCS+ (FIPS 205) | Future | Hash-based post-quantum. Stateless, conservative choice. |
 
-```
-Auditor hashes runner binary → issues certificate → runner signs with certified key
-Verifier checks certificate chain → trusts the CA → trusts the results
-```
+The algorithm enum is extensible. When quantum-safe standards mature, add new variants without breaking existing attestations.
 
-### Enclave (Maximum Trust)
+## Passkey Signing (Phase 2 — Gap Identified)
 
-The evaluation runs inside a TEE (Trusted Execution Environment) like Intel SGX, ARM TrustZone, or AWS Nitro Enclaves. The hardware itself attests that the code running inside is genuine and unmodified.
+WebAuthn credentials sign `clientDataJSON` (which includes a relying party challenge), **NOT** arbitrary payloads. Standard passkeys bind the key to the RP ID.
 
-```
-Runner executes inside TEE → hardware generates attestation → signs with hardware-bound key
-Verifier checks hardware attestation certificate → code provably unmodified → results provably genuine
-```
+To use passkeys for forge attestation:
+1. **Hacky but works**: Embed attestation hash in the WebAuthn challenge field
+2. **Proper but complex**: Use a signing service that holds the Secure Enclave key and signs on behalf of the credential
+3. **Alternative**: Use the platform's raw key access (Apple CryptoKit on macOS/iOS gives direct Secure Enclave access outside WebAuthn)
 
-## Signing Algorithm: ES256
-
-**ECDSA with P-256 and SHA-256** — the same algorithm used by WebAuthn/FIDO2, Apple's Secure Enclave, and most modern authentication systems.
-
-- **Why not RSA?** Smaller keys (32 bytes vs 256+ bytes), faster verification, modern standard.
-- **Why not Ed25519?** P-256 has broader hardware support (every passkey, every Secure Enclave, every HSM). Ed25519 is great but less universal for hardware attestation.
-- **Why not blockchain?** Expensive, slow, overkill. Signed attestations with a public key registry achieve the same integrity guarantees without the overhead. If immutable anchoring is needed later, batch-publish Merkle roots.
+The `credentialId` field links to a WebAuthn credential. The signing mechanism bridges the gap.
 
 ## Key Registry
 
-Public keys are published at a well-known URL so anyone can verify signatures without trusting a blockchain or centralized authority.
-
-```
-https://keys.forge-alloy.dev/v1/{key-id}.json
-
+```json
 {
   "keyId": "continuum-ai/forge-runner-001",
   "algorithm": "ES256",
   "publicKey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...",
   "owner": "continuum-ai",
   "registeredAt": "2026-03-01T00:00:00Z",
-  "revokedAt": null
+  "expiresAt": "2027-03-01T00:00:00Z",
+  "revokedAt": null,
+  "supersededBy": null,
+  "registrationAuthority": "forge-alloy-maintainers"
 }
 ```
 
-Initially this can be a JSON file in the forge-alloy repo itself. Later, a proper hosted registry with revocation support.
+**Critical verification requirement:** Verifiers MUST fetch the key from the registry and compare, NOT trust the `publicKey` embedded in the signature. A naive verifier using only the embedded key defeats the entire system.
 
-## Self-Verification (OpenSSL FIPS Pattern)
+**Revocation propagation:** Short-lived keys (90-day expiry) + registry polling. Verifiers cache keys with max-age matching the key's remaining validity. On revocation, verifiers see `revokedAt` on next cache refresh. For marketplace payments: hold funds for a grace period (24-48h) before release, allowing revocation to propagate.
 
-Before signing anything, the forge runner verifies its own integrity:
+**Registration authority:** Initially the forge-alloy repo maintainers (anyone with write access). Phase 3 introduces certificate-based registration where an auditor must sign the key before it's accepted.
 
-```python
-# 1. Hash own binary/source
-own_hash = sha256(open(sys.argv[0], 'rb').read())
+## Replay Prevention
 
-# 2. Compare to expected hash (compiled in or fetched from registry)
-if own_hash != EXPECTED_HASH:
-    raise IntegrityError("Runner binary has been modified")
+- **nonce**: Verifier-provided random bytes (like WebAuthn challenge). Required for marketplace. The marketplace issues a nonce before forge begins — the nonce is included in the signed payload.
+- **audience**: Binds the attestation to a specific verifier. An attestation for marketplace A is invalid on marketplace B.
+- **timestamp**: `attestedAt` provides ordering but NOT freshness. A replayed attestation from a year ago is still valid without nonce/audience checks.
 
-# 3. Hash benchmark datasets
-for dataset in datasets:
-    actual_hash = sha256_dir(dataset.path)
-    if actual_hash != dataset.expected_hash:
-        raise IntegrityError(f"Dataset {dataset.name} has been modified")
+## Dataset Hashing Specification
 
-# 4. Only THEN proceed with evaluation and signing
-results = run_benchmarks(model, datasets)
-attestation = sign_attestation(results, private_key)
-```
+Dataset hash must be deterministic and cover exactly the subset used:
 
-This is the "check yourself before you wreck yourself" pattern from FIPS-validated crypto modules. The code validates its own integrity before performing security-critical operations.
+1. List all files in the dataset directory
+2. Sort filenames lexicographically
+3. For each file: SHA-256(contents)
+4. Combine via Merkle tree (sorted leaves)
+5. Record the root hash, plus the number of items evaluated
 
-## Marketplace Integration
+If a subset was used (e.g., MMLU-Pro subset of MMLU), the hash covers ONLY the subset files, not the full dataset. The `name` field reflects the subset.
 
-The attestation chain enables a trustworthy compute marketplace:
+## Known Limitations (Not Solvable by Attestation)
 
-```
-1. User submits alloy.json (forge recipe)
-2. Factory node executes the pipeline
-3. Node signs results with its registered key
-4. Marketplace verifies:
-   - Signature is valid (ES256 check)
-   - Public key is registered (registry lookup)
-   - Code hash matches known runner version (code attestation)
-   - Dataset hashes match canonical versions (dataset attestation)
-   - Model hash matches the published weights (model attestation)
-5. Payment released (proof of genuine work)
-```
-
-Nobody gets paid for compute they didn't do. Nobody gets credit for benchmarks they didn't run. Nobody can swap in a better model and claim the training improved it.
-
-## Anti-Exploitation
-
-The attestation model prevents several classes of exploitation:
-
-| Attack | Prevention |
-|--------|-----------|
-| **Fabricated benchmarks** | Signature binds results to model hash — can't claim scores for a different model |
-| **Modified eval code** | Code attestation includes binary hash — modified runner produces wrong hash |
-| **Cherry-picked datasets** | Dataset attestation includes file hash — modified data produces wrong hash |
-| **Model swap** | Model hash is signed — can't substitute a better model post-eval |
-| **Replay attacks** | Timestamp + model hash + alloy hash = unique per evaluation |
-| **Sybil (fake nodes)** | Key registry with registration requirements — can't generate unlimited identities |
-| **Mathematical exploitation** | Deterministic eval harness + dataset hashing — can't game the math |
+| Attack | Status | Notes |
+|--------|--------|-------|
+| **Training on test set** | Out of scope | The biggest benchmark fraud. Attestation proves eval integrity, not training integrity. |
+| **Cherry-picking best of N** | Mitigated by nonce | Without verifier nonce, attacker runs N times, signs best. With nonce, only one attempt per challenge. |
+| **Eval harness gaming** | Out of scope | Model specifically trained to overfit on eval set — ML problem, not crypto problem. |
+| **Hardware profile fabrication** | Partial | Hardware profiles are in results but not inside the signed attestation scope. Future: include in signed payload. |
 
 ## Implementation Phases
 
 ### Phase 1: Self-Attested (Now)
-- Forge runner hashes itself, model, datasets
-- Signs with self-generated ES256 key
-- Public key in forge-alloy repo as JSON
-- Verifiable but trust-on-first-use
+- Runner hashes itself, model, datasets
+- Records hashes in attestation (no signature yet)
+- Honest: prevents accidental corruption only
+- Public key infrastructure not required
 
-### Phase 2: Passkey-Based Signing
-- Runner uses WebAuthn credential (passkey) for signing
-- Hardware-bound key (Secure Enclave, TPM) — can't be exported
-- `credentialId` field links to the WebAuthn credential
-- Joel's day job expertise directly applies here
+### Phase 2: Signed Self-Attestation
+- ES256 signing with self-generated keys
+- Key registry (JSON in repo, then hosted)
+- RFC 8785 canonical payload
+- Verifier implementation in all three languages
 
 ### Phase 3: Verified Runners
-- CI/CD pipeline builds runner from audited source
-- Build system issues certificate for the binary hash
-- Certificate chain verifiable by anyone
-- Third-party audit trail
+- CI/CD builds runner from audited source
+- Auditor issues certificate for binary hash
+- Certificate chain in signature
+- Registration authority for key approval
 
-### Phase 4: Enclave Execution
-- Benchmark evaluation runs in TEE (Nitro Enclaves, SGX)
+### Phase 4: Enclave Execution (Required for Marketplace)
+- TEE: AWS Nitro Enclaves, Intel SGX, ARM TrustZone
 - Hardware attestation proves code integrity
-- Maximum trust — results are provably from unmodified code on unmodified data
-- Required for high-stakes marketplace transactions
+- Nonce from marketplace for freshness
+- The ONLY tier that prevents all identified attacks
+- Required before real money flows through the system
 
-## Relation to Persona/LoRA Attestation
-
-The same attestation model applies to:
-
-- **LoRA adapters**: prove training data, base model, training code, resulting adapter weights
-- **Persona genomes**: prove the lineage of adapter combinations (which adapters, which order, which merge)
-- **Marketplace work**: prove GPU compute was actually performed (proof of work without blockchain waste)
-- **Model lineage**: `sourceAlloyId` chain becomes a certificate chain — each link signed
-
-The `IntegrityAttestation` struct is designed to be reusable across all these contexts. The same ES256 signing, the same key registry, the same trust tiers.
+### Phase 5: Post-Quantum Migration
+- Monitor NIST PQC standard maturity (ML-DSA, SLH-DSA)
+- Algorithm field already supports PQC variants
+- Dual-sign (classical + PQC) during transition period
+- No format changes needed — just new enum values
 
 ## References
 
-- [WebAuthn Attestation](https://www.w3.org/TR/webauthn-3/#sctn-attestation) — W3C specification
-- [FIDO2 Attestation Types](https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-v2.1-ps-20210615.html#sctn-attestation-types) — FIDO Alliance
-- [FIPS 140-3 Self-Tests](https://csrc.nist.gov/pubs/fips/140-3/final) — NIST module integrity verification
-- [AWS Nitro Enclaves](https://aws.amazon.com/ec2/nitro/nitro-enclaves/) — TEE for confidential computing
+- [RFC 8785 — JSON Canonicalization Scheme](https://www.rfc-editor.org/rfc/rfc8785) — JCS
+- [WebAuthn Level 3](https://www.w3.org/TR/webauthn-3/) — W3C attestation model
+- [FIDO2 Attestation Types](https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-v2.1-ps-20210615.html#sctn-attestation-types)
+- [FIPS 204 — ML-DSA](https://csrc.nist.gov/pubs/fips/204/final) — Post-quantum signatures (Dilithium)
+- [FIPS 205 — SLH-DSA](https://csrc.nist.gov/pubs/fips/205/final) — Post-quantum signatures (SPHINCS+)
+- [AWS Nitro Enclaves](https://aws.amazon.com/ec2/nitro/nitro-enclaves/) — TEE

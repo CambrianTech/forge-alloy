@@ -62,27 +62,36 @@ export interface GenerationSample {
   baselineCompletion?: string;
 }
 
+/** Trust tier — maps to WebAuthn attestation types */
+export type TrustLevel = 'self-attested' | 'verified' | 'enclave';
+
+/** Signing algorithm — extensible to post-quantum */
+export type SigningAlgorithm = 'ES256' | 'ES384' | 'EdDSA' | 'ML-DSA-65' | 'ML-DSA-87' | 'SLH-DSA-128s';
+
 /**
  * Cryptographic attestation for verified benchmark execution.
- * Modeled after FIDO2/WebAuthn attestation: prove WHAT code ran,
- * on WHAT data, in WHAT environment, and sign the whole chain.
+ * Modeled after FIDO2/WebAuthn attestation.
  *
- * Trust tiers (like WebAuthn attestation types):
- * - "self-attested": signer vouches for itself
- * - "verified": third-party verified the environment
- * - "enclave": TEE execution, hardware-bound proof
+ * IMPORTANT: Self-attested only prevents accidental corruption, NOT adversarial
+ * modification. Only enclave tier provides tamper-proof guarantees.
+ *
+ * Canonicalization: signed payload MUST use RFC 8785 (JCS).
  */
 export interface IntegrityAttestation {
-  trustLevel: 'self-attested' | 'verified' | 'enclave';
+  trustLevel: TrustLevel;
   code: CodeAttestation;
   modelHash: string;
   alloyHash?: string;
   datasets: DatasetAttestation[];
+  /** Verifier-provided nonce for replay prevention (like WebAuthn challenge) */
+  nonce?: string;
+  /** Audience binding — who this attestation is for (prevents cross-marketplace replay) */
+  audience?: string;
   signature?: AttestationSignature;
   attestedAt: string;
 }
 
-/** Attestation of the code that produced results — proves the forge runner is genuine */
+/** Attestation of the code that produced results */
 export interface CodeAttestation {
   runner: string;
   version: string;
@@ -93,7 +102,7 @@ export interface CodeAttestation {
   environmentHash?: string;
 }
 
-/** Attestation of a benchmark dataset — proves eval used unmodified data */
+/** Attestation of a benchmark dataset — hash covers exactly the subset used */
 export interface DatasetAttestation {
   name: string;
   version?: string;
@@ -102,13 +111,17 @@ export interface DatasetAttestation {
 }
 
 /**
- * ECDSA signature over the attestation payload.
- * Uses ES256 (P-256 + SHA-256) — same algorithm as WebAuthn/FIDO2.
+ * Signature over the attestation payload (RFC 8785 JCS canonical form).
+ *
+ * NOTE on passkeys: WebAuthn signs clientDataJSON, not arbitrary payloads.
+ * Phase 2 needs a signing service that bridges this gap.
  */
 export interface AttestationSignature {
-  algorithm: string;
+  algorithm: SigningAlgorithm;
+  /** Base64url public key — verifiers MUST check against registry, not trust this directly */
   publicKey: string;
   value: string;
+  keyId?: string;
   credentialId?: string;
   certificateChain?: string[];
   keyRegistry?: string;
@@ -316,6 +329,6 @@ export function isSigned(alloy: ForgeAlloy): boolean {
 }
 
 /** Get the trust level of the attestation */
-export function trustLevel(alloy: ForgeAlloy): string | undefined {
+export function trustLevel(alloy: ForgeAlloy): TrustLevel | undefined {
   return alloy.results?.integrity?.trustLevel;
 }
