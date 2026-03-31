@@ -326,10 +326,13 @@ async function showChain(text, expectedHash) {
       nodeRaw(chainEl, 'info', 'Pipeline', stageHtml + ' (' + alloy.cycles + ' cycles)');
     }
 
-    // Results
+    // Results — with context about what the numbers mean
     if (r.baselinePerplexity) {
-      node(chainEl, 'verified', 'Forge Result',
-        r.baselinePerplexity.toFixed(2) + ' → ' + r.finalPerplexity.toFixed(2) + ' (+' + r.improvementPct.toFixed(1) + '%)', 'good');
+      const imp = r.improvementPct || 0;
+      const quality = imp > 20 ? 'exceptional' : imp > 10 ? 'strong' : imp > 5 ? 'moderate' : imp > 0 ? 'marginal' : 'no improvement';
+      nodeRaw(chainEl, 'verified', 'Forge Result',
+        '<span class="chain-value good">' + r.baselinePerplexity.toFixed(2) + ' → ' + r.finalPerplexity.toFixed(2) + ' (+' + imp.toFixed(1) + '%)</span>' +
+        '<span class="chain-goto">' + quality + ' improvement · lower = better</span>');
     }
 
     // Benchmarks — link to benchmark source
@@ -376,10 +379,17 @@ async function showChain(text, expectedHash) {
       }
     }
 
-    // Trust level — link to attestation docs
+    // Trust level — with explanation of what the level means
     if (i.trustLevel) {
-      nodeLink(chainEl, 'trust', 'Trust Level', i.trustLevel,
-        ghBase + 'forge-alloy/blob/main/docs/ATTESTATION.md', 'attestation spec');
+      const trustExplain = {
+        'self-attested': 'signer vouches for itself · prevents accidental corruption',
+        'verified': 'third-party audited the runner · certificate chain verified',
+        'enclave': 'hardware TEE execution · tamper-proof · highest trust',
+      };
+      const explain = trustExplain[i.trustLevel] || '';
+      nodeRaw(chainEl, 'trust', 'Trust Level',
+        '<a href="' + ghBase + 'forge-alloy/blob/main/docs/ATTESTATION.md" target="_blank" style="color:#ffaa00">' + i.trustLevel + '</a>' +
+        '<span class="chain-goto">→ attestation spec · ' + explain + '</span>');
     }
 
     // Runner — link to repo
