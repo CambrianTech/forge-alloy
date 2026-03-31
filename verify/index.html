@@ -262,11 +262,7 @@
 </div>
 
 <script>
-// Known alloys for hash-based lookup from QR codes.
-// Publishers: add your executed alloy URLs here so QR scan verification works.
-const KNOWN_ALLOYS = [
-  'https://huggingface.co/continuum-ai/qwen3.5-4b-code-forged/resolve/main/qwen3.5-4b-code-forged.alloy.json',
-];
+// No lookup table needed — QR codes encode the full alloy URL in the hash fragment.
 
 const ghBase = 'https://github.com/CambrianTech/';
 const hfBase = 'https://huggingface.co/';
@@ -380,10 +376,14 @@ fetch('https://api.github.com/repos/CambrianTech/forge-alloy/commits/main', {hea
     }
   }).catch(() => {});
 
-// Auto-load from URL hash (QR code)
+// Auto-load from URL hash — QR codes encode the full alloy URL as the fragment
+// e.g. verify/#https://huggingface.co/.../model.alloy.json
 window.addEventListener('load', () => {
   const h = window.location.hash.slice(1);
-  if (h) { document.getElementById('alloyUrl').value = h; verify(); }
+  if (h) {
+    document.getElementById('alloyUrl').value = decodeURIComponent(h);
+    verify();
+  }
 });
 
 async function verify() {
@@ -394,44 +394,22 @@ async function verify() {
   statusEl.className = 'status loading';
   statusEl.innerHTML = '<div class="status-icon">&#x23F3;</div><div class="status-text">Verifying chain...</div>';
 
-  let url = null;
-  let expectedHash = null;
-
-  if (input.startsWith('http')) {
-    if (input.includes('#')) {
-      url = input.split('#')[0];
-      expectedHash = input.split('#').pop();
-    } else { url = input; }
-  } else if (/^[0-9a-f]{8,64}$/.test(input)) {
-    expectedHash = input;
+  if (!input.startsWith('http')) {
+    statusEl.className = 'status failed';
+    statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Paste a full URL</div><div class="status-detail">Direct URL to an .alloy.json file, or drop the file below.</div>';
+    return;
   }
 
-  if (!url && expectedHash) {
-    for (const known of KNOWN_ALLOYS) {
-      try {
-        const resp = await fetchWithProxy(known);
-        const txt = await resp.text();
-        const h = await sha256hex(txt);
-        if (h.startsWith(expectedHash)) { url = known; break; }
-      } catch { continue; }
-    }
-    if (!url) {
-      statusEl.className = 'status failed';
-      statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Alloy not found</div><div class="status-detail">Hash ' + expectedHash + ' not in known models. Paste the full URL.</div>';
-      return;
-    }
-  }
+  let url = input;
+  if (url.includes('/blob/')) url = url.replace('/blob/', '/resolve/');
 
   try {
-    if (url) {
-      if (url.includes('/blob/')) url = url.replace('/blob/', '/resolve/');
-      const resp = await fetchWithProxy(url);
-      const text = await resp.text();
-      await showChain(text, expectedHash);
-    }
+    const resp = await fetchWithProxy(url);
+    const text = await resp.text();
+    await showChain(text, null);
   } catch (err) {
     statusEl.className = 'status failed';
-    statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Failed</div><div class="status-detail">' + err.message + '</div>';
+    statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Failed to fetch</div><div class="status-detail">' + err.message + '</div>';
   }
 }
 
@@ -571,9 +549,15 @@ async function showChain(text, expectedHash) {
     let hashOk = null;
     if (expectedHash) hashOk = actualHash.startsWith(expectedHash);
 
-    // QR code
-    const thisUrl = window.location.origin + window.location.pathname + '#' + actualHash.slice(0, 16);
-    const qrDataUrl = await generateQRDataUrl(thisUrl);
+    // QR code — encodes the alloy's publication URL so ANY verify page can fetch it
+    const pubUrl = receipt.publications?.[0]?.url;
+    const alloyFileUrl = pubUrl
+      ? pubUrl.replace(/\/?$/, '') + '/resolve/main/' + (alloy.name || 'model') + '.alloy.json'
+      : null;
+    const qrTarget = alloyFileUrl
+      ? window.location.origin + window.location.pathname + '#' + encodeURIComponent(alloyFileUrl)
+      : null;
+    const qrDataUrl = qrTarget ? await generateQRDataUrl(qrTarget) : null;
 
     // Status — QR inside, article-style (image left, text right)
     const alloyName = alloy.name || 'unknown';
