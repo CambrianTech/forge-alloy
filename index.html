@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ForgeAlloy — Trustless AI Compute Contract</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'SF Mono', 'Fira Code', monospace;
+    background: #0a1520;
+    color: #e0e6ed;
+    min-height: 100vh;
+  }
+  a { color: #00d4ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .hero {
+    text-align: center;
+    padding: 60px 20px 40px;
+    background: linear-gradient(180deg, rgba(0,212,255,0.05) 0%, transparent 100%);
+  }
+  .hero h1 {
+    font-size: 36px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #00d4ff, #00ffc8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .hero .tagline {
+    font-size: 16px;
+    color: #8a92a5;
+    max-width: 600px;
+    margin: 0 auto 24px;
+    line-height: 1.5;
+  }
+  .hero .links {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .hero .links a {
+    padding: 8px 20px;
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .hero .links a:hover {
+    background: rgba(0,212,255,0.1);
+    border-color: #00d4ff;
+    text-decoration: none;
+  }
+  .hero .links a.primary {
+    background: linear-gradient(135deg, rgba(0,212,255,0.2), rgba(0,255,200,0.2));
+    border-color: #00d4ff;
+  }
+
+  .section {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+  .section h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #00ffc8;
+  }
+  .section p {
+    font-size: 14px;
+    color: #8a92a5;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .models {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .model-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 16px;
+    transition: border-color 0.15s;
+  }
+  .model-card:hover { border-color: rgba(0,212,255,0.3); }
+  .model-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .model-meta { font-size: 11px; color: #8a92a5; }
+  .model-stats { display: flex; gap: 16px; margin-top: 8px; }
+  .stat { font-size: 12px; }
+  .stat b { color: #00ffc8; }
+
+  .cases {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .case {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .case h3 { font-size: 14px; margin-bottom: 6px; color: #e0e6ed; }
+  .case p { font-size: 11px; color: #5a6070; line-height: 1.5; }
+
+  .verify-section {
+    text-align: center;
+    padding: 40px 20px;
+    background: rgba(0,255,200,0.03);
+    border-top: 1px solid rgba(0,255,200,0.1);
+    border-bottom: 1px solid rgba(0,255,200,0.1);
+  }
+  .verify-section h2 { color: #00ffc8; }
+  .verify-btn {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 12px 32px;
+    background: linear-gradient(135deg, rgba(0,255,200,0.2), rgba(0,212,255,0.2));
+    border: 1px solid #00ffc8;
+    border-radius: 8px;
+    color: #00ffc8;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .verify-btn:hover { box-shadow: 0 0 20px rgba(0,255,200,0.3); text-decoration: none; }
+
+  .footer {
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 11px;
+    color: #5a6070;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>ForgeAlloy</h1>
+  <div class="tagline">
+    End-to-end cryptographically secured workflow — chain of custody from creation through delivery, tracked and verified, corruption prevented by technology.
+  </div>
+  <div class="links">
+    <a class="primary" href="https://github.com/CambrianTech/forge-alloy">GitHub</a>
+    <a href="https://huggingface.co/continuum-ai">Models on HuggingFace</a>
+    <a href="https://github.com/CambrianTech/continuum">Continuum</a>
+    <a href="https://github.com/CambrianTech/sentinel-ai">Sentinel-AI</a>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Published Models</h2>
+  <p>Forged with cryptographic chain of custody. Every claim is verifiable. Every model carries its alloy contract.</p>
+  <div class="models">
+    <a href="https://huggingface.co/continuum-ai/qwen3.5-4b-code-forged" class="model-card">
+      <div class="model-name">qwen3.5-4b-code-forged</div>
+      <div class="model-meta">Qwen3.5-4B · Code Domain · 3 Cycles</div>
+      <div class="model-stats">
+        <span class="stat"><b>+22.7%</b> improvement</span>
+        <span class="stat"><b>1.9K</b> downloads</span>
+      </div>
+    </a>
+    <a href="https://huggingface.co/continuum-ai/qwen3.5-27b-code-forged" class="model-card">
+      <div class="model-name">qwen3.5-27b-code-forged</div>
+      <div class="model-meta">Qwen3.5-27B · Code Domain · 4-bit</div>
+      <div class="model-stats">
+        <span class="stat"><b>+3.5%</b> improvement</span>
+        <span class="stat"><b>1.7K</b> downloads</span>
+      </div>
+    </a>
+    <a href="https://huggingface.co/continuum-ai/qwen3.5-35b-a3b-compacted" class="model-card">
+      <div class="model-name">qwen3.5-35b-a3b-compacted</div>
+      <div class="model-meta">256→16 experts · 49GB→11GB</div>
+      <div class="model-stats">
+        <span class="stat"><b>4.5x</b> smaller</span>
+        <span class="stat"><b>2.5K</b> downloads</span>
+      </div>
+    </a>
+    <a href="https://huggingface.co/continuum-ai" class="model-card">
+      <div class="model-name">+ 10 more models</div>
+      <div class="model-meta">15,000+ total downloads across 13 models</div>
+      <div class="model-stats">
+        <span class="stat">View all on <b>HuggingFace</b> →</span>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="verify-section">
+  <h2>Verify Any Model</h2>
+  <p style="color:#8a92a5;max-width:500px;margin:0 auto;">Scan a QR code or paste an alloy URL. Client-side verification — no server, no trust required.</p>
+  <a class="verify-btn" href="docs/verify/">Verify an Alloy →</a>
+</div>
+
+<div class="section">
+  <h2>Beyond AI — The Pattern is Universal</h2>
+  <p>The same Merkle-chained, cryptographically secured workflow handles any process that needs provenance and trust.</p>
+  <div class="cases">
+    <div class="case">
+      <h3>Content Authenticity</h3>
+      <p>Camera enclave signs raw photos. Every edit tracked. Deepfakes exposed by missing chain.</p>
+    </div>
+    <div class="case">
+      <h3>Manufacturing</h3>
+      <p>Design → print → inspect → ship. QR on the package proves the full supply chain.</p>
+    </div>
+    <div class="case">
+      <h3>Pharma / FDA</h3>
+      <p>Batch records as alloy contracts. Every step attested by facility hardware.</p>
+    </div>
+    <div class="case">
+      <h3>Creative IP</h3>
+      <p>Record → mix → master → publish. Copyright disputes resolved by the chain.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Packages</h2>
+  <p>One spec, three languages. Rust is the source of truth.</p>
+  <div class="models">
+    <div class="model-card">
+      <div class="model-name">Rust</div>
+      <div class="model-meta">cargo add forge-alloy</div>
+      <div class="model-stats"><span class="stat">Source of truth · ts-rs ready</span></div>
+    </div>
+    <div class="model-card">
+      <div class="model-name">Python</div>
+      <div class="model-meta">pip install forge-alloy</div>
+      <div class="model-stats"><span class="stat">Pydantic models · sentinel-ai</span></div>
+    </div>
+    <div class="model-card">
+      <div class="model-name">TypeScript</div>
+      <div class="model-meta">npm install @continuum-ai/forge-alloy</div>
+      <div class="model-stats"><span class="stat">Types + validation · continuum</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <a href="https://github.com/CambrianTech/forge-alloy">ForgeAlloy</a> ·
+  <a href="https://github.com/CambrianTech/continuum">Continuum</a> ·
+  <a href="https://github.com/CambrianTech/sentinel-ai">Sentinel-AI</a> ·
+  <a href="https://huggingface.co/continuum-ai">HuggingFace</a>
+  <br><br>
+  Apache 2.0 · CambrianTech
+</div>
+
+</body>
+</html>
