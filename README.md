@@ -1,6 +1,6 @@
 # ForgeAlloy — Trustless AI Compute Contract
 
-Cryptographically verified model forging. Define, share, execute, and prove transformation pipelines across any hardware.
+End-to-end cryptographically secured workflow — chain of custody from creation through delivery, tracked in a blockchain, rewindable in time, corruption prevented by technology.
 
 A `.alloy.json` is a **Dockerfile for models** — the complete, typed specification for transforming a base model into a specialized one. It's both the recipe (before execution) and the report card (after execution), with cryptographic attestation so nobody can fake the results.
 
