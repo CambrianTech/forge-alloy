@@ -1,4 +1,4 @@
-# ForgeAlloy — Trustless AI Compute Contract
+# ForgeAlloy — Trustless Contract for AI and Beyond
 
 End-to-end cryptographically secured workflow — chain of custody from creation through delivery, tracked in a blockchain, rewindable in time, corruption prevented by technology.
 
