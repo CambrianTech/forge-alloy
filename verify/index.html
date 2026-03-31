@@ -262,7 +262,10 @@
 </div>
 
 <script>
-// No lookup table needed — QR codes encode the full alloy URL in the hash fragment.
+// Registry of alloy hashes for backwards-compatible QR codes (short hash → URL).
+// New QR codes encode the full URL. This handles legacy short-hash QR codes.
+// When the forge-alloy API exists, this moves to a hosted registry endpoint.
+const HASH_REGISTRY_URL = 'https://raw.githubusercontent.com/CambrianTech/forge-alloy/main/verify/registry.json';
 
 const ghBase = 'https://github.com/CambrianTech/';
 const hfBase = 'https://huggingface.co/';
@@ -394,13 +397,36 @@ async function verify() {
   statusEl.className = 'status loading';
   statusEl.innerHTML = '<div class="status-icon">&#x23F3;</div><div class="status-text">Verifying chain...</div>';
 
-  if (!input.startsWith('http')) {
+  let url = null;
+
+  if (input.startsWith('http')) {
+    // Full URL — fetch directly
+    url = input;
+  } else if (/^[0-9a-f]{8,64}$/.test(input)) {
+    // Short hash (legacy QR code) — look up in registry
+    try {
+      const regResp = await fetch(HASH_REGISTRY_URL);
+      if (regResp.ok) {
+        const registry = await regResp.json();
+        for (const entry of registry) {
+          if (entry.hash.startsWith(input) || input.startsWith(entry.hash)) {
+            url = entry.url;
+            break;
+          }
+        }
+      }
+    } catch {}
+    if (!url) {
+      statusEl.className = 'status failed';
+      statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Hash not in registry</div><div class="status-detail">Paste the full URL to the .alloy.json file, or drop it below.</div>';
+      return;
+    }
+  } else {
     statusEl.className = 'status failed';
-    statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Paste a full URL</div><div class="status-detail">Direct URL to an .alloy.json file, or drop the file below.</div>';
+    statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Paste a URL</div><div class="status-detail">Direct URL to an .alloy.json file, or drop the file below.</div>';
     return;
   }
 
-  let url = input;
   if (url.includes('/blob/')) url = url.replace('/blob/', '/resolve/');
 
   try {
