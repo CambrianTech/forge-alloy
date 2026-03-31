@@ -127,7 +127,8 @@
   </div>
 
   <div class="input-row">
-    <input type="text" id="alloyUrl" placeholder="HuggingFace alloy URL or hash from QR code">
+    <input type="text" id="alloyUrl" placeholder="HuggingFace alloy URL or hash from QR code"
+      onkeydown="if(event.key==='Enter')verify()">
     <button onclick="verify()">Verify</button>
   </div>
 
