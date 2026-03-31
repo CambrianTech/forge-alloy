@@ -1,6 +1,6 @@
-# ForgeAlloy
+# ForgeAlloy — Trustless AI Compute
 
-**Trustless AI Compute.** Define, share, execute, and cryptographically verify model transformation pipelines across any hardware.
+Cryptographically verified model forging. Define, share, execute, and prove transformation pipelines across any hardware.
 
 A `.alloy.json` is a **Dockerfile for models** — the complete, typed specification for transforming a base model into a specialized one. It's both the recipe (before execution) and the report card (after execution), with cryptographic attestation so nobody can fake the results.
 
