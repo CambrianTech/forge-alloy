@@ -354,12 +354,25 @@ async function showChain(text, expectedHash) {
       }
     }
 
-    // Hardware — link to GPU specs
+    // Hardware — link to NVIDIA product page or tech specs
     if (r.hardwareVerified?.length) {
       for (const hw of r.hardwareVerified) {
-        const gpuSearch = 'https://www.google.com/search?q=' + encodeURIComponent(hw.device + ' specs');
-        nodeRaw(chainEl, hw.verified ? 'verified' : 'info', 'Hardware',
-          '<a href="' + gpuSearch + '" target="_blank">' + hw.device + '</a> · ' + hw.format);
+        const device = hw.device || 'unknown';
+        // Link to NVIDIA product page for known GPUs
+        let hwUrl = null;
+        if (device.includes('5090')) hwUrl = 'https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5090/';
+        else if (device.includes('4090')) hwUrl = 'https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4090/';
+        else if (device.includes('3090')) hwUrl = 'https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3090-3090ti/';
+        else if (device.includes('A100')) hwUrl = 'https://www.nvidia.com/en-us/data-center/a100/';
+        else if (device.includes('H100')) hwUrl = 'https://www.nvidia.com/en-us/data-center/h100/';
+
+        const details = [hw.format];
+        if (hw.sizeGb) details.push(hw.sizeGb + 'GB');
+        if (hw.tokensPerSec) details.push(hw.tokensPerSec + ' tok/s');
+
+        nodeLink(chainEl, hw.verified ? 'verified' : 'info', 'Hardware',
+          device + ' · ' + details.join(' · '),
+          hwUrl, hwUrl ? 'NVIDIA product page' : null);
       }
     }
 
