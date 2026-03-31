@@ -282,6 +282,19 @@ The Merkle chain secures it. The attestation proves it. The QR makes it accessib
 - **Verifiable** — cryptographic attestation proves results are genuine
 - **Extensible** — open metric bags, arbitrary benchmarks, progressive trust tiers
 
+## This Repo IS the Trust Infrastructure
+
+This repository is Merkle-chained by git itself. Every commit hashes its parent. Every file has a SHA. The spec, the SDK, the verification page, and the examples all live here — secured by the same chain they describe.
+
+- **The spec** is a file in this repo → its hash is in the commit → the commit is in the chain
+- **The SDK** validates alloys using types defined here → the types are hashed → in the chain
+- **The verify page** runs on GitHub Pages from this repo → its source is hashed → in the chain
+- **The examples** are real alloys → their hashes are verifiable → in the chain
+
+The repo that defines the trust standard IS part of the trust chain. The certificate authority certifies itself — not circularly, but because git's Merkle tree is the root. Fork this repo and your fork has a different hash. The chain proves which is the original.
+
+`git log --format='%H %s'` is the audit trail. Every change to the spec, the SDK, the verification page — tracked, hashed, immutable in history.
+
 ## Delivery
 
 An executed alloy is self-contained and self-verifying. The signature survives any transport:
