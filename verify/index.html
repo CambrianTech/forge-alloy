@@ -696,7 +696,20 @@ async function showChain(text, expectedHash) {
 
       for (let idx = 0; idx < r.benchmarks.length; idx++) {
         const b = r.benchmarks[idx];
-        const score = b.metrics?.score || b.metrics?.accuracy || b.metrics?.passing || JSON.stringify(b.metrics);
+        const m = b.metrics || {};
+        let score = m.score || m.accuracy || m.passing || m.improvement || m.final;
+        if (score == null) {
+          // Pick first numeric value, or status string, or format as key:val pairs
+          const vals = Object.entries(m);
+          const numeric = vals.find(([,v]) => typeof v === 'number');
+          const status = vals.find(([k]) => k === 'status');
+          if (numeric) score = numeric[0] + ': ' + (typeof numeric[1] === 'number' ? numeric[1].toFixed(2) : numeric[1]);
+          else if (status) score = status[1];
+          else if (vals.length) score = vals.map(([k,v]) => k + ': ' + v).join(', ');
+          else score = '—';
+        } else if (typeof score === 'number') {
+          score = score % 1 === 0 ? score : score.toFixed(2);
+        }
         const link = benchLinks[b.name];
         const hashNote = b.resultHash
           ? '<span class="chain-goto" style="color:#00ffc8">result hash: ' + b.resultHash.slice(0, 16) + '...</span>'
