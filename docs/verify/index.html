@@ -130,8 +130,12 @@
 
     <div class="input-section">
       <div class="input-row">
-        <input type="text" id="alloyUrl" placeholder="https://huggingface.co/.../alloy.json or sha256:...">
+        <input type="text" id="alloyUrl" placeholder="Paste alloy URL or drag .alloy.json file here">
         <button onclick="verify()">Verify</button>
+      </div>
+      <div id="dropzone" style="margin-top:12px;padding:20px;border:2px dashed rgba(255,255,255,0.1);border-radius:8px;text-align:center;font-size:12px;color:#5a6070;cursor:pointer">
+        Drop .alloy.json file here — or click to browse
+        <input type="file" id="fileInput" accept=".json" style="display:none">
       </div>
     </div>
 
@@ -146,6 +150,32 @@
   </div>
 
 <script>
+// File drop/browse handling
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = '#00d4ff'; });
+dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = 'rgba(255,255,255,0.1)'; });
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.style.borderColor = 'rgba(255,255,255,0.1)';
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+fileInput.addEventListener('change', (e) => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    window._alloyContent = e.target.result;
+    document.getElementById('alloyUrl').value = file.name;
+    verifyContent(e.target.result, null);
+  };
+  reader.readAsText(file);
+}
+
 // Check URL hash on load (from QR code)
 window.addEventListener('load', () => {
   const hash = window.location.hash.slice(1);
@@ -154,6 +184,72 @@ window.addEventListener('load', () => {
     verify();
   }
 });
+
+async function verifyContent(text, expectedHash) {
+  const statusEl = document.getElementById('status');
+  const chainEl = document.getElementById('chain');
+
+  try {
+    const alloy = JSON.parse(text);
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const actualHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    let hashMatch = null;
+    if (expectedHash) {
+      hashMatch = actualHash.startsWith(expectedHash);
+    }
+
+    if (hashMatch === false) {
+      statusEl.className = 'status failed';
+      statusEl.innerHTML = '<div class="status-icon">❌</div><div class="status-text">HASH MISMATCH</div><div class="detail">Expected: ' + expectedHash + '... Got: ' + actualHash.slice(0, 16) + '...</div>';
+    } else {
+      statusEl.className = 'status verified';
+      statusEl.innerHTML = '<div class="status-icon">✅</div><div class="status-text">' + (hashMatch ? 'VERIFIED — hash matches' : 'LOADED — file verified locally') + '</div><div class="detail">sha256:' + actualHash.slice(0, 16) + '...</div>';
+    }
+
+    // Display chain (reuse existing display logic)
+    chainEl.style.display = 'flex';
+    chainEl.innerHTML = '';
+    const addRow = (key, value, cls = '') => {
+      chainEl.innerHTML += '<div class="chain-row"><span class="chain-key">' + key + '</span><span class="chain-value ' + cls + '">' + value + '</span></div>';
+    };
+
+    addRow('Name', alloy.name || 'unnamed');
+    addRow('Version', alloy.version || '?');
+    addRow('Source', alloy.source?.baseModel || 'unknown');
+    addRow('Architecture', alloy.source?.architecture || 'unknown');
+    addRow('Stages', (alloy.stages || []).map(s => s.type).join(' → '));
+    addRow('Cycles', alloy.cycles || 1);
+    if (alloy.target) addRow('Target Delta', Object.keys(alloy.target).join(', '), 'good');
+    if (alloy.results) {
+      const r = alloy.results;
+      if (r.baselinePerplexity) addRow('Baseline PPL', r.baselinePerplexity.toFixed(2));
+      if (r.finalPerplexity) addRow('Final PPL', r.finalPerplexity.toFixed(2), 'good');
+      if (r.improvementPct) addRow('Improvement', '+' + r.improvementPct.toFixed(1) + '%', 'good');
+    }
+    if (alloy.results?.integrity) {
+      const i = alloy.results.integrity;
+      addRow('Trust Level', i.trustLevel || 'unknown', 'trust');
+      if (i.code) addRow('Runner', i.code.runner + ' v' + i.code.version);
+      if (i.modelHash) addRow('Model Hash', i.modelHash.slice(0, 30) + '...');
+      addRow('Alloy Hash', 'sha256:' + actualHash.slice(0, 24) + '...');
+      if (i.attestedAt) addRow('Attested', i.attestedAt);
+    }
+    if (alloy.receipt) {
+      const rc = alloy.receipt;
+      if (rc.publications) {
+        rc.publications.forEach(p => addRow('Published', '<a href="' + p.url + '" target="_blank">' + p.target + '</a> — ' + p.publishedAt, 'good'));
+      }
+    }
+    addRow('Tags', (alloy.tags || []).join(', '));
+  } catch (err) {
+    statusEl.className = 'status failed';
+    statusEl.innerHTML = '<div class="status-icon">❌</div><div class="status-text">Parse error</div><div class="detail">' + err.message + '</div>';
+  }
+}
 
 async function verify() {
   const input = document.getElementById('alloyUrl').value.trim();
@@ -227,77 +323,18 @@ async function verify() {
       url = url.replace('/blob/', '/resolve/');
     }
 
-    // Fetch the alloy
-    const response = await fetch(url);
+    // Fetch the alloy — try direct, then CORS proxy
+    let response;
+    try {
+      response = await fetch(url);
+    } catch {
+      // CORS blocked — try proxy
+      response = await fetch('https://corsproxy.io/?' + encodeURIComponent(url));
+    }
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const text = await response.text();
-    const alloy = JSON.parse(text);
-
-    // Hash the content
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const actualHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-    // Verify hash if provided
-    let hashMatch = null;
-    if (expectedHash) {
-      hashMatch = actualHash.startsWith(expectedHash);
-    }
-
-    // Display result
-    if (hashMatch === false) {
-      statusEl.className = 'status failed';
-      statusEl.innerHTML = '<div class="status-icon">❌</div><div class="status-text">HASH MISMATCH — alloy may have been tampered with</div><div class="detail">Expected: ' + expectedHash + '... Got: ' + actualHash.slice(0, expectedHash.length) + '...</div>';
-    } else {
-      statusEl.className = 'status verified';
-      statusEl.innerHTML = '<div class="status-icon">✅</div><div class="status-text">' + (hashMatch ? 'VERIFIED — hash matches' : 'LOADED — no hash to verify against') + '</div><div class="detail">sha256:' + actualHash.slice(0, 16) + '...</div>';
-    }
-
-    // Display chain of custody
-    chainEl.style.display = 'flex';
-    chainEl.innerHTML = '';
-
-    const addRow = (key, value, cls = '') => {
-      chainEl.innerHTML += '<div class="chain-row"><span class="chain-key">' + key + '</span><span class="chain-value ' + cls + '">' + value + '</span></div>';
-    };
-
-    addRow('Name', alloy.name || 'unnamed');
-    addRow('Version', alloy.version || '?');
-    addRow('Source', alloy.source?.baseModel || 'unknown');
-    addRow('Architecture', alloy.source?.architecture || 'unknown');
-    addRow('Stages', (alloy.stages || []).map(s => s.type).join(' → '));
-    addRow('Cycles', alloy.cycles || 1);
-
-    if (alloy.target) {
-      addRow('Target Delta', Object.keys(alloy.target).join(', '), 'good');
-    }
-
-    if (alloy.results) {
-      const r = alloy.results;
-      if (r.baselinePerplexity) addRow('Baseline PPL', r.baselinePerplexity.toFixed(2));
-      if (r.finalPerplexity) addRow('Final PPL', r.finalPerplexity.toFixed(2), 'good');
-      if (r.improvementPct) addRow('Improvement', '+' + r.improvementPct.toFixed(1) + '%', 'good');
-      if (r.benchmarks) {
-        r.benchmarks.forEach(b => {
-          const score = b.metrics?.score || b.metrics?.accuracy || b.metrics?.passing || '?';
-          addRow('Benchmark: ' + b.name, score, 'good');
-        });
-      }
-    }
-
-    if (alloy.results?.integrity) {
-      const i = alloy.results.integrity;
-      addRow('Trust Level', i.trustLevel || 'unknown', 'trust');
-      if (i.code) addRow('Runner', i.code.runner + ' v' + i.code.version);
-      if (i.modelHash) addRow('Model Hash', i.modelHash.slice(0, 30) + '...');
-      addRow('Alloy Hash', 'sha256:' + actualHash.slice(0, 24) + '...');
-      if (i.attestedAt) addRow('Attested', i.attestedAt);
-    }
-
-    addRow('Tags', (alloy.tags || []).join(', '));
+    await verifyContent(text, expectedHash);
 
   } catch (err) {
     statusEl.className = 'status failed';
