@@ -210,6 +210,38 @@ The card is like a certificate printout — nice to look at, but the real proof 
 
 At enclave tier, the card is generated and hashed inside the TEE before upload. Maximum integrity.
 
+## Offline & Air-Gapped Verification
+
+The alloy is fully verifiable without any network connection. This is critical for regulated, secure, and dark-network environments.
+
+**What offline verification needs:**
+- The executed `.alloy.json` file
+- The signer's public key (pre-distributed or on the alloy itself)
+- A verifier binary (Rust, Python, or TypeScript — no runtime dependencies beyond crypto)
+
+**What offline verification proves:**
+- Model weights match the attested hash (SHA-256, full file)
+- Pipeline definition matches the attested hash
+- Benchmark datasets match the attested hashes (Merkle tree, RFC 6962)
+- Signature is valid (ES256 / EdDSA / ML-DSA — pure math, no API calls)
+- Code that produced the results matches the attested binary hash
+
+**No network required.** No registry lookup, no blockchain query, no timestamp authority. The alloy carries everything needed to verify itself. The public key can be pre-distributed via any secure channel — USB, QR code, certificate bundle, or baked into the verifier binary.
+
+**Use cases:**
+- **Healthcare / HIPAA**: Hospital network forges models on patient data that never leaves the building. Alloy proves the model was produced correctly. FDA audit = verify the alloy.
+- **Defense / SCIF**: Air-gapped classified networks. Model delivered on physical media. Alloy is the chain of custody.
+- **Financial / SOX**: Regulated model governance. Every model in production has a verifiable alloy proving its lineage.
+- **Dark grid**: Private mesh networks (Reticulum, Tor, local mesh). Nodes verify each other's work without touching the public internet.
+- **Edge / embedded**: IoT devices, robots, vehicles. The model on the device has an alloy. Field audit = verify locally.
+
+**Revocation caveat:** Offline verification can't check key revocation status. For environments that need revocation, either:
+1. Use short-lived keys and re-verify when keys expire
+2. Periodically sync a revocation list (CRL) via any transport (USB, one-way data diode)
+3. Accept the risk — if the key was valid at signing time and the signature verifies, the attestation was valid when created
+
+**The Merkle tree helps here:** Dataset hashing uses a Merkle tree (RFC 6962). Verifiers can check individual files against the root hash without re-downloading the entire dataset. Ship the Merkle proof alongside the alloy for partial verification of large datasets.
+
 ## Known Limitations (Not Solvable by Attestation)
 
 | Attack | Status | Notes |
