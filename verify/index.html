@@ -285,7 +285,7 @@ async function showChain(text, expectedHash) {
       statusEl.className = 'status verified';
       statusEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap">' +
         (qrDataUrl ? '<img src="' + qrDataUrl + '" width="80" height="80" style="border-radius:4px;background:white;padding:4px">' : '') +
-        '<div><div class="status-icon">✅</div><div class="status-text">' + (hashOk ? 'CHAIN VERIFIED' : 'CHAIN LOADED') + '</div><div class="status-detail">sha256:' + actualHash.slice(0, 24) + '…</div></div></div>';
+        '<div><div class="status-icon">✅</div><div class="status-text">' + (hashOk ? 'CHAIN OF CUSTODY (<a href="https://github.com/CambrianTech/forge-alloy/blob/main/docs/ATTESTATION.md#pipeline-lifecycle-forge--attest--verify--deliver--anchor" style="color:#00ffc8">MERKLE</a>) VERIFIED' : 'CHAIN LOADED') + '</div><div class="status-detail">sha256:' + actualHash.slice(0, 24) + '…</div></div></div>';
     }
 
     // Build visual chain
