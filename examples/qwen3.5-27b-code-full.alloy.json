@@ -1,0 +1,82 @@
+{
+  "name": "qwen3.5-27b-code-full",
+  "version": "1.0.0",
+  "description": "Full-pipeline code forge for Qwen3.5-27B. Entropy pruning, 3 cycles, GGUF device ladder, HumanEval + MMLU benchmarks, auto-publish.",
+  "author": "continuum-ai",
+  "tags": ["code", "qwen3.5", "27b", "full-pipeline", "forge-alloy"],
+  "license": "apache-2.0",
+
+  "source": {
+    "baseModel": "Qwen/Qwen3.5-27B",
+    "architecture": "qwen3_5"
+  },
+
+  "stages": [
+    {
+      "type": "prune",
+      "strategy": "entropy",
+      "level": 0.3,
+      "minHeadsPerLayer": 4,
+      "minKvHeadsPerLayer": 2,
+      "analysisSteps": 200
+    },
+    {
+      "type": "train",
+      "domain": "code",
+      "dataset": "m-a-p/CodeFeedback-Filtered-Instruction",
+      "steps": 1000,
+      "learningRate": "2e-4",
+      "batchSize": 2,
+      "gradientAccumulation": 4,
+      "scheduler": "cosine",
+      "warmupRatio": 0.03,
+      "precision": "bf16",
+      "sequenceLength": 2048,
+      "optimizations": ["flash_attention", "gradient_checkpointing"]
+    },
+    {
+      "type": "quant",
+      "format": "gguf",
+      "quantTypes": ["Q4_K_M", "Q8_0"],
+      "deviceTargets": ["macbookair", "macbookpro", "rtx3090", "rtx5090"]
+    },
+    {
+      "type": "eval",
+      "benchmarks": [
+        { "name": "humaneval", "submitToLeaderboard": true },
+        { "name": "mmlu", "subset": "mmlu-pro", "nShot": 5, "submitToLeaderboard": false },
+        { "name": "gsm8k", "nShot": 8, "submitToLeaderboard": false }
+      ],
+      "passingThreshold": 60,
+      "compareToBase": true
+    },
+    {
+      "type": "publish",
+      "org": "continuum-ai",
+      "repoNameTemplate": "{base}-{domain}-forged",
+      "includeAlloy": true,
+      "cardFromBenchmarks": true,
+      "tags": ["continuum", "forged", "experiential-plasticity", "forge-alloy"],
+      "private": false
+    }
+  ],
+
+  "cycles": 3,
+
+  "hardware": {
+    "minVramGb": 24,
+    "recommendedVramGb": 32,
+    "estimatedDurationMinutes": 180,
+    "supportsCPU": false,
+    "testedOn": ["RTX 5090"]
+  },
+
+  "outputs": {
+    "produces": [
+      { "type": "safetensors", "description": "Forged base weights" },
+      { "type": "gguf", "description": "Q4_K_M for MacBook, Q8_0 for desktop" },
+      { "type": "model-card", "description": "Auto-generated from benchmarks" },
+      { "type": "alloy", "description": "Executed alloy with results + attestation" }
+    ]
+  }
+}
