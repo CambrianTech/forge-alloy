@@ -352,6 +352,13 @@ pub struct IntegrityAttestation {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub anchor: Option<TrustAnchor>,
 
+    /// Third-party adapter attestations — independent certifications from approved adapters.
+    /// Each adapter (eval harness, safety auditor, hardware certifier, etc.) signs its own
+    /// result with its own key. The chain becomes a stack of independent proofs.
+    /// Like UL certification — each adapter is an independent certifier with its own passkey.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub certifications: Vec<AdapterAttestation>,
+
     /// ISO 8601 timestamp of attestation
     pub attested_at: String,
 }
@@ -402,6 +409,58 @@ pub enum AnchorType {
     Ipfs,
     /// Custom anchor (describe in location field)
     Custom,
+}
+
+/// Third-party adapter attestation — an independent certification for one chain element.
+/// Each approved adapter has its own keypair and signs its own results.
+/// Like UL certification: the adapter is an independent authority that tested one aspect
+/// of the model and vouches for it with its own passkey.
+///
+/// Examples:
+/// - HumanEval adapter: runs eval, signs scores with its key
+/// - UL safety adapter: runs safety audit, certifies compliance with its key
+/// - NVIDIA hardware adapter: runs perf test, signs results with GPU TEE key
+/// - HuggingFace adapter: verifies publication, signs receipt with HF key
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct AdapterAttestation {
+    /// Adapter identifier (e.g. "forge-alloy/humaneval", "ul/safety-audit", "nvidia/perf-cert")
+    pub adapter: String,
+
+    /// Adapter version (semver)
+    pub version: String,
+
+    /// What this adapter certifies (e.g. "benchmark:humaneval", "safety:toxicity", "hardware:inference")
+    pub domain: String,
+
+    /// The result or finding — adapter-specific, open-ended metrics
+    #[serde(default)]
+    pub result: HashMap<String, serde_json::Value>,
+
+    /// SHA-256 of the adapter binary or entry script (same pattern as CodeAttestation.binaryHash)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub adapter_hash: Option<String>,
+
+    /// Cryptographic signature from the adapter's own key — independent of the forge runner's signature.
+    /// Payload: JCS-canonical { adapter, version, domain, result, nonce, attestedAt }
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub signature: Option<AttestationSignature>,
+
+    /// Nonce provided by the API for this specific adapter run (prevents replay/cherry-picking)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub nonce: Option<String>,
+
+    /// Source repo for the adapter (GitHub URL — auditable)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_repo: Option<String>,
+
+    /// Git commit of the adapter at execution time
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub commit: Option<String>,
+
+    /// ISO 8601 timestamp of this certification
+    pub attested_at: String,
 }
 
 /// Attestation of the code that produced results.

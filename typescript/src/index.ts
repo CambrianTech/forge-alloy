@@ -90,6 +90,9 @@ export interface IntegrityAttestation {
   signature?: AttestationSignature;
   /** External trust anchor — immutable proof this attestation existed at a point in time */
   anchor?: TrustAnchor;
+  /** Third-party adapter attestations — independent certifications from approved adapters.
+   *  Like UL certification: each adapter is an independent certifier with its own passkey. */
+  certifications?: AdapterAttestation[];
   attestedAt: string;
 }
 
@@ -138,6 +141,33 @@ export interface AttestationSignature {
   credentialId?: string;
   certificateChain?: string[];
   keyRegistry?: string;
+}
+
+/**
+ * Third-party adapter attestation — independent certification for one chain element.
+ * Each approved adapter has its own keypair and signs its own results.
+ * Like UL certification: the adapter is an independent authority that tested
+ * one aspect of the model and vouches for it with its own passkey.
+ */
+export interface AdapterAttestation {
+  /** Adapter identifier (e.g. "forge-alloy/humaneval", "ul/safety-audit", "nvidia/perf-cert") */
+  adapter: string;
+  version: string;
+  /** What this adapter certifies (e.g. "benchmark:humaneval", "safety:toxicity", "hardware:inference") */
+  domain: string;
+  /** Adapter-specific results — open-ended metrics */
+  result: Record<string, unknown>;
+  /** SHA-256 of the adapter binary or entry script */
+  adapterHash?: string;
+  /** Cryptographic signature from the adapter's own key — independent of forge runner */
+  signature?: AttestationSignature;
+  /** Nonce provided by the API for this specific adapter run */
+  nonce?: string;
+  /** Source repo for the adapter (GitHub URL — auditable) */
+  sourceRepo?: string;
+  /** Git commit of the adapter at execution time */
+  commit?: string;
+  attestedAt: string;
 }
 
 // ── Stages ──────────────────────────────────────────────────────────────────

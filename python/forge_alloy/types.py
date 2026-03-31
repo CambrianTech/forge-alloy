@@ -104,6 +104,26 @@ class IntegrityAttestation(BaseModel):
     audience: Optional[str] = None
     signature: Optional[AttestationSignature] = None
     anchor: Optional["TrustAnchor"] = None
+    certifications: list["AdapterAttestation"] = Field(default_factory=list)
+    attested_at: str = Field(alias="attestedAt")
+
+    model_config = {"populate_by_name": True}
+
+
+class AdapterAttestation(BaseModel):
+    """Third-party adapter attestation — independent certification for one chain element.
+    Each approved adapter has its own keypair and signs its own results.
+    Like UL certification: the adapter is an independent authority that tested
+    one aspect of the model and vouches for it with its own passkey."""
+    adapter: str
+    version: str
+    domain: str
+    result: dict[str, Any] = Field(default_factory=dict)
+    adapter_hash: Optional[str] = Field(default=None, alias="adapterHash")
+    signature: Optional[AttestationSignature] = None
+    nonce: Optional[str] = None
+    source_repo: Optional[str] = Field(default=None, alias="sourceRepo")
+    commit: Optional[str] = None
     attested_at: str = Field(alias="attestedAt")
 
     model_config = {"populate_by_name": True}

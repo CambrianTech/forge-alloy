@@ -132,6 +132,33 @@
         "nonce": { "type": "string", "description": "Verifier-provided challenge for replay prevention (like WebAuthn challenge)" },
         "audience": { "type": "string", "description": "Audience binding — prevents cross-marketplace replay" },
         "signature": { "$ref": "#/$defs/AttestationSignature" },
+        "certifications": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AdapterAttestation" },
+          "description": "Third-party adapter attestations — independent certifications from approved adapters. Each adapter signs with its own key."
+        },
+        "attestedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "AdapterAttestation": {
+      "type": "object",
+      "required": ["adapter", "version", "domain", "attestedAt"],
+      "description": "Third-party adapter certification. Like UL: independent authority tests one aspect, signs with own key.",
+      "properties": {
+        "adapter": { "type": "string", "description": "Adapter identifier (e.g., forge-alloy/humaneval, ul/safety-audit, nvidia/perf-cert)" },
+        "version": { "type": "string", "description": "Adapter version (semver)" },
+        "domain": { "type": "string", "description": "What this adapter certifies (e.g., benchmark:humaneval, safety:toxicity, hardware:inference)" },
+        "result": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Adapter-specific results — open-ended metrics"
+        },
+        "adapterHash": { "type": "string", "description": "SHA-256 of adapter binary/script" },
+        "signature": { "$ref": "#/$defs/AttestationSignature" },
+        "nonce": { "type": "string", "description": "API-provided nonce for this adapter run" },
+        "sourceRepo": { "type": "string", "description": "GitHub URL — open source adapters get higher trust" },
+        "commit": { "type": "string", "description": "Git commit of adapter at execution time" },
         "attestedAt": { "type": "string", "format": "date-time" }
       }
     },

@@ -27,12 +27,48 @@
   }
   .header p { color: #8a92a5; font-size: 13px; margin-top: 6px; }
 
+  .layout {
+    display: flex;
+    gap: 24px;
+    max-width: 1100px;
+    width: 100%;
+    align-items: flex-start;
+  }
+  .layout .qr-col {
+    flex-shrink: 0;
+    width: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 30px;
+  }
+  .layout .qr-col img {
+    border-radius: 8px;
+    background: white;
+    padding: 8px;
+  }
+  .layout .qr-col .qr-label {
+    font-size: 10px;
+    color: #5a6070;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .layout .qr-col .qr-hash {
+    font-size: 9px;
+    font-family: monospace;
+    color: #8a92a5;
+    word-break: break-all;
+    text-align: center;
+  }
+  .layout .chain-col { flex: 1; min-width: 0; }
+
   .card {
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 10px;
     padding: 24px;
-    max-width: 680px;
     width: 100%;
   }
 
@@ -89,6 +125,7 @@
   .chain-dot.verified { border-color: #00ffc8; background: rgba(0,255,200,0.2); box-shadow: 0 0 6px rgba(0,255,200,0.3); }
   .chain-dot.trust { border-color: #ffaa00; background: rgba(255,170,0,0.2); }
   .chain-dot.info { border-color: #00d4ff; background: rgba(0,212,255,0.2); }
+  .chain-dot.warning { border-color: #ff6b35; background: rgba(255,107,53,0.2); }
   .chain-line { width: 2px; flex: 1; min-height: 8px; background: rgba(255,255,255,0.08); }
 
   .chain-content { flex: 1; min-width: 0; }
@@ -103,6 +140,64 @@
   .chain-value a { color: #00d4ff; }
   .chain-goto { font-size: 9px; color: #5a6070; margin-left: 8px; white-space: nowrap; }
 
+  /* Trust analysis — expandable per node */
+  .trust-toggle {
+    display: inline-block;
+    font-size: 9px;
+    color: #5a6070;
+    cursor: pointer;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 3px;
+    user-select: none;
+  }
+  .trust-toggle:hover { color: #8a92a5; border-color: rgba(255,255,255,0.15); }
+
+  .trust-analysis {
+    display: none;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .trust-analysis.open { display: block; }
+  .trust-analysis .proves { color: #00ffc8; }
+  .trust-analysis .warns { color: #ffaa00; }
+  .trust-analysis .gap { color: #ff6b35; }
+  .trust-analysis .closes { color: #8a92a5; font-style: italic; }
+  .trust-analysis .sdk-boost {
+    margin-top: 6px;
+    padding: 6px 8px;
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.12);
+    border-radius: 4px;
+    color: #00d4ff;
+    font-size: 10px;
+  }
+  .trust-analysis .sdk-boost strong { color: #00ffc8; }
+
+  /* Trust score badge */
+  .trust-badge {
+    display: inline-block;
+    font-size: 8px;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+  }
+  .trust-badge.high { background: rgba(0,255,200,0.15); color: #00ffc8; border: 1px solid rgba(0,255,200,0.3); }
+  .trust-badge.medium { background: rgba(255,170,0,0.15); color: #ffaa00; border: 1px solid rgba(255,170,0,0.3); }
+  .trust-badge.low { background: rgba(255,107,53,0.15); color: #ff6b35; border: 1px solid rgba(255,107,53,0.3); }
+  .trust-badge.none { background: rgba(255,68,68,0.1); color: #ff4444; border: 1px solid rgba(255,68,68,0.2); }
+  .trust-badge.api { background: rgba(0,212,255,0.15); color: #00d4ff; border: 1px solid rgba(0,212,255,0.3); }
+
   /* Publications */
   .pub-list { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
   .pub-item {
@@ -110,19 +205,59 @@
     border: 1px solid rgba(0,255,200,0.1); border-radius: 4px;
   }
 
-  .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #5a6070; }
+  .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #5a6070; max-width: 1100px; width: 100%; }
+
+  /* Summary card at bottom of chain */
+  .trust-summary {
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+  }
+  .trust-summary h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #8a92a5;
+    margin-bottom: 10px;
+  }
+  .trust-summary .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 11px;
+  }
+  .trust-summary .summary-bar {
+    height: 4px;
+    border-radius: 2px;
+    margin-top: 10px;
+    background: rgba(255,255,255,0.06);
+    overflow: hidden;
+  }
+  .trust-summary .summary-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  @media (max-width: 700px) {
+    .layout { flex-direction: column; }
+    .layout .qr-col { width: 100%; flex-direction: row; justify-content: center; position: static; flex-wrap: wrap; }
+  }
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>ForgeAlloy — Chain of Custody</h1>
-  <p>Cryptographic verification of the complete workflow</p>
+  <p>Cryptographic verification of the complete model forging pipeline</p>
 </div>
 
-<div class="card">
+<div class="card" style="max-width:1100px;">
   <div id="status" class="status idle">
-    <div class="status-icon">🔗</div>
+    <div class="status-icon">&#x1f517;</div>
     <div class="status-text">Verify a ForgeAlloy chain</div>
     <div class="status-detail">Paste URL, scan QR, or drop an .alloy.json file</div>
   </div>
@@ -138,7 +273,13 @@
     <input type="file" id="fileInput" accept=".json" style="display:none">
   </div>
 
-  <div id="chain" class="chain"></div>
+  <div id="chainLayout" class="layout" style="display:none">
+    <div id="qrCol" class="qr-col"></div>
+    <div class="chain-col">
+      <div id="chain" class="chain"></div>
+      <div id="trustSummary"></div>
+    </div>
+  </div>
 </div>
 
 <div class="footer">
@@ -155,6 +296,90 @@ const KNOWN_ALLOYS = [
   'https://huggingface.co/continuum-ai/qwen3.5-4b-code-forged/resolve/main/qwen3.5-4b-code-forged.alloy.json',
   'https://huggingface.co/continuum-ai/qwen3.5-27b-code-forged/resolve/main/qwen3.5-27b-code-forged.alloy.json',
 ];
+
+const ghBase = 'https://github.com/CambrianTech/';
+const hfBase = 'https://huggingface.co/';
+
+// Trust analysis definitions — what each chain element proves and doesn't
+const TRUST_DEFS = {
+  source: {
+    proves: ['Base model identity is recorded'],
+    doesNotProve: ['Base model weights were unmodified before forging'],
+    closedBy: 'SDK: hash base model at load time, compare to HuggingFace published hash',
+    sdkBoost: 'forge-alloy SDK hashes the base model on load and compares to the HuggingFace-published SHA. Tampered base models are caught before forging begins.',
+  },
+  pipeline: {
+    proves: ['Pipeline stages are declared in the alloy spec'],
+    doesNotProve: ['These exact stages actually executed', 'No additional undeclared stages ran'],
+    closedBy: 'SDK: stage executor emits signed checkpoint after each stage completes',
+    sdkBoost: 'forge-alloy SDK wraps each stage executor — emitting a signed hash after each stage completes. The alloy records a Merkle chain of stage checkpoints. Undeclared stages break the chain.',
+  },
+  code: {
+    proves: ['Source code is public and auditable at this commit', 'Binary hash locks the exact script that ran'],
+    doesNotProve: ['Code was not patched in memory at runtime', 'No uncommitted local modifications were present'],
+    closedBy: 'Enclave execution (TEE) guarantees code integrity — hardware prevents memory patching',
+    sdkBoost: 'forge-alloy SDK self-hashes at import time and records the hash before any user code runs. The API cross-checks this hash against the file at the declared GitHub commit.',
+  },
+  codeNoHash: {
+    proves: ['Runner identity is recorded'],
+    doesNotProve: ['Which exact code ran', 'Code was unmodified', 'Code is public'],
+    closedBy: 'SDK: capture binaryHash + commit automatically. GitHub URL makes code auditable.',
+    sdkBoost: 'forge-alloy SDK automatically captures its own binary hash, git commit, and source repo URL. Without the SDK, this metadata is often missing or fabricated.',
+  },
+  modelHash: {
+    proves: ['Hash locks specific model weights — any byte change breaks the hash'],
+    doesNotProve: ['These weights were produced by this pipeline', 'Weights were not swapped after forging'],
+    closedBy: 'Signed attestation (Phase 2) binds hash to signer identity. Enclave (Phase 4) proves input-to-output binding.',
+    sdkBoost: 'forge-alloy SDK hashes the model immediately after the final training step, inside the same process. The hash is captured before the weights touch disk — no window for substitution.',
+  },
+  benchmarks: {
+    proves: ['Benchmark results were recorded at execution time'],
+    doesNotProve: ['Runner did not cherry-pick best of N runs', 'Eval harness was not modified to inflate scores', 'Model was not trained on the test set'],
+    closedBy: 'Nonce challenge from API prevents cherry-picking. Eval harness hash prevents modification. Training data attestation addresses test set contamination.',
+    sdkBoost: 'forge-alloy API issues a one-time nonce before eval begins. The SDK runs the eval harness, hashes the harness binary, and signs the results with the nonce. Only one attempt per challenge — cherry-picking is impossible. The API can independently re-run evals to spot-check.',
+  },
+  benchmarkNoWitness: {
+    proves: ['Someone claims these scores'],
+    doesNotProve: ['Eval actually ran', 'Scores are real', 'Best-of-N was not used', 'Eval harness was standard'],
+    closedBy: 'SDK-witnessed evaluation with nonce challenge',
+    sdkBoost: 'Without forge-alloy SDK, benchmark scores are just numbers in a JSON file. Anyone can type them. The SDK witnesses the evaluation end-to-end: harness hash, nonce, timing, and result signing.',
+  },
+  hardware: {
+    proves: ['Hardware profile is recorded in results'],
+    doesNotProve: ['Model was actually tested on this hardware', 'Performance numbers are real'],
+    closedBy: 'SDK: run inference benchmark on declared hardware, sign results with device attestation',
+    sdkBoost: 'forge-alloy SDK runs a standardized inference benchmark on declared hardware and captures device attestation (GPU serial, driver version, VRAM). Numbers are measured, not claimed.',
+  },
+  trustLevel: {
+    'self-attested': {
+      proves: ['Signer vouches for itself', 'Prevents accidental corruption'],
+      doesNotProve: ['Signer is honest', 'Data was not fabricated', 'A compromised runner did not forge the attestation'],
+      closedBy: 'Verified tier (audited runner) or Enclave tier (hardware proof)',
+    },
+    'verified': {
+      proves: ['Third-party audited the runner', 'Certificate chain is valid'],
+      doesNotProve: ['Runner was not compromised after audit', 'Auditor is trustworthy'],
+      closedBy: 'Enclave tier — hardware guarantees replace auditor trust',
+    },
+    'enclave': {
+      proves: ['Hardware TEE executed the code', 'Code integrity is hardware-enforced', 'Input-to-output binding is proven'],
+      doesNotProve: ['Training data quality', 'Model is not trained on eval set'],
+      closedBy: 'These are ML research problems, not cryptographic ones',
+    },
+  },
+  receipt: {
+    proves: ['Model was published to declared location at declared time'],
+    doesNotProve: ['Published model matches forged model (model card could be edited on HuggingFace)'],
+    closedBy: 'cardHash detects post-publish edits. Download the alloy and re-verify.',
+    sdkBoost: 'forge-alloy SDK publishes via API, which independently downloads and re-hashes the published model. Publication receipt is countersigned by the API — proving the published weights match the forged weights.',
+  },
+  alloyHash: {
+    proves: ['The alloy file itself has not been modified since this hash was computed'],
+    doesNotProve: ['The alloy contents are truthful'],
+    closedBy: 'Each element inside the alloy has its own trust analysis — alloy hash just prevents tampering of the container',
+    sdkBoost: 'forge-alloy API stores alloy hashes in a public append-only log. Anyone can verify an alloy against the log to confirm it was not modified after registration.',
+  },
+};
 
 // File handling
 const dropzone = document.getElementById('dropzone');
@@ -173,7 +398,7 @@ function handleFile(file) {
   reader.readAsText(file);
 }
 
-// Show this verifier's own commit hash — the verifier is part of the chain
+// Show this verifier's own commit hash
 fetch('https://api.github.com/repos/CambrianTech/forge-alloy/commits/main', {headers: {'Accept': 'application/vnd.github.v3+json'}})
   .then(r => r.json())
   .then(data => {
@@ -196,12 +421,11 @@ async function verify() {
   if (!input) return;
 
   statusEl.className = 'status loading';
-  statusEl.innerHTML = '<div class="status-icon">⏳</div><div class="status-text">Verifying chain...</div>';
+  statusEl.innerHTML = '<div class="status-icon">&#x23F3;</div><div class="status-text">Verifying chain...</div>';
 
   let url = null;
   let expectedHash = null;
 
-  // Parse input
   if (input.startsWith('http')) {
     if (input.includes('#')) {
       url = input.split('#')[0];
@@ -211,7 +435,6 @@ async function verify() {
     expectedHash = input;
   }
 
-  // Search known alloys if we only have a hash
   if (!url && expectedHash) {
     for (const known of KNOWN_ALLOYS) {
       try {
@@ -223,7 +446,7 @@ async function verify() {
     }
     if (!url) {
       statusEl.className = 'status failed';
-      statusEl.innerHTML = '<div class="status-icon">❌</div><div class="status-text">Alloy not found</div><div class="status-detail">Hash ' + expectedHash + ' not in known models. Paste the full URL.</div>';
+      statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Alloy not found</div><div class="status-detail">Hash ' + expectedHash + ' not in known models. Paste the full URL.</div>';
       return;
     }
   }
@@ -237,7 +460,7 @@ async function verify() {
     }
   } catch (err) {
     statusEl.className = 'status failed';
-    statusEl.innerHTML = '<div class="status-icon">❌</div><div class="status-text">Failed</div><div class="status-detail">' + err.message + '</div>';
+    statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Failed</div><div class="status-detail">' + err.message + '</div>';
   }
 }
 
@@ -247,7 +470,6 @@ async function fetchWithProxy(url) {
 }
 
 async function generateQRDataUrl(text) {
-  // Minimal QR using a free API — replace with client-side lib later
   try {
     const url = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(text);
     const resp = await fetch(url);
@@ -263,35 +485,135 @@ async function sha256hex(text) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+let trustTally = { high: 0, medium: 0, low: 0, none: 0 };
+
+function resetTrustTally() {
+  trustTally = { high: 0, medium: 0, low: 0, none: 0 };
+}
+
+function tallyTrust(level) {
+  if (trustTally[level] !== undefined) trustTally[level]++;
+}
+
+// Determine trust level for a chain element based on what data is present
+function assessNodeTrust(element, alloy) {
+  const r = alloy.results || {};
+  const i = r.integrity || {};
+  const code = i.code || {};
+  const hasSig = !!i.signature;
+  const isEnclave = i.trustLevel === 'enclave';
+  const isVerified = i.trustLevel === 'verified';
+  const hasApiWitness = !!i.apiWitness; // future: API countersignature
+
+  switch (element) {
+    case 'source':
+      return i.modelHash ? 'medium' : 'low';
+    case 'pipeline':
+      return hasApiWitness ? 'high' : 'medium';
+    case 'code':
+      if (isEnclave) return 'high';
+      if (code.binaryHash && code.commit && code.sourceRepo) return 'medium';
+      if (code.binaryHash) return 'low';
+      return 'none';
+    case 'modelHash':
+      if (isEnclave) return 'high';
+      if (hasSig) return 'medium';
+      return i.modelHash ? 'low' : 'none';
+    case 'benchmarks':
+      if (hasApiWitness) return 'high';
+      if (r.benchmarks?.length && r.benchmarks.some(b => b.resultHash)) return 'medium';
+      if (r.benchmarks?.length) return 'low';
+      return 'none';
+    case 'hardware':
+      if (r.hardwareVerified?.some(h => h.verified)) return 'medium';
+      return 'low';
+    case 'receipt':
+      const receipt = alloy.receipt || {};
+      if (receipt.cardHash && receipt.alloyHash) return 'medium';
+      if (receipt.publications?.length) return 'low';
+      return 'none';
+    default:
+      return 'medium';
+  }
+}
+
+function trustBadgeHtml(level) {
+  const labels = { high: 'proven', medium: 'attested', low: 'self-reported', none: 'unverified', api: 'api-witnessed' };
+  return '<span class="trust-badge ' + level + '">' + (labels[level] || level) + '</span>';
+}
+
+function toggleAnalysis(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
+let analysisCounter = 0;
+
+function trustAnalysisHtml(def) {
+  if (!def) return '';
+  const id = 'analysis-' + (++analysisCounter);
+  let html = '<span class="trust-toggle" onclick="toggleAnalysis(\'' + id + '\')">trust analysis</span>';
+  html += '<div id="' + id + '" class="trust-analysis">';
+  if (def.proves) {
+    for (const p of def.proves) html += '<div class="proves">&#x2713; Proves: ' + p + '</div>';
+  }
+  if (def.doesNotProve) {
+    for (const w of def.doesNotProve) html += '<div class="warns">&#x26A0; Does not prove: ' + w + '</div>';
+  }
+  if (def.closedBy) {
+    html += '<div class="closes">&#x2192; ' + def.closedBy + '</div>';
+  }
+  if (def.sdkBoost) {
+    html += '<div class="sdk-boost"><strong>With forge-alloy SDK:</strong> ' + def.sdkBoost + '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
 async function showChain(text, expectedHash) {
   const statusEl = document.getElementById('status');
   const chainEl = document.getElementById('chain');
+  const qrCol = document.getElementById('qrCol');
+  const chainLayout = document.getElementById('chainLayout');
+  const summaryEl = document.getElementById('trustSummary');
+
+  resetTrustTally();
+  analysisCounter = 0;
 
   try {
     const alloy = JSON.parse(text);
     const actualHash = await sha256hex(text);
 
-    // Verify hash
     let hashOk = null;
     if (expectedHash) hashOk = actualHash.startsWith(expectedHash);
 
-    // Generate QR code client-side for the verified box
+    // QR code
     const thisUrl = window.location.origin + window.location.pathname + '#' + actualHash.slice(0, 16);
     const qrDataUrl = await generateQRDataUrl(thisUrl);
 
+    // Status
     if (hashOk === false) {
       statusEl.className = 'status failed';
-      statusEl.innerHTML = '<div class="status-icon">❌</div><div class="status-text">HASH MISMATCH — chain may be compromised</div><div class="status-detail">Expected ' + expectedHash + '… got ' + actualHash.slice(0, expectedHash.length) + '…</div>';
+      statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">HASH MISMATCH — chain may be compromised</div><div class="status-detail">Expected ' + expectedHash + '... got ' + actualHash.slice(0, expectedHash.length) + '...</div>';
     } else {
       statusEl.className = 'status verified';
       statusEl.innerHTML =
-        '<div class="status-icon">✅</div>' +
-        '<div class="status-text">' + (hashOk ? 'CHAIN OF CUSTODY (<a href="https://github.com/CambrianTech/forge-alloy/blob/main/docs/ATTESTATION.md#pipeline-lifecycle-forge--attest--verify--deliver--anchor" style="color:#00ffc8">MERKLE</a>) VERIFIED' : 'CHAIN LOADED') + '</div>' +
-        '<div class="status-detail">sha256:' + actualHash.slice(0, 24) + '…</div>' +
-        (qrDataUrl ? '<img src="' + qrDataUrl + '" width="120" height="120" style="margin-top:12px;border-radius:6px;background:white;padding:6px">' : '');
+        '<div class="status-icon">&#x2705;</div>' +
+        '<div class="status-text">' + (hashOk ? 'CHAIN OF CUSTODY VERIFIED' : 'CHAIN LOADED') + '</div>' +
+        '<div class="status-detail">sha256:' + actualHash.slice(0, 24) + '...</div>';
     }
 
-    // Build visual chain
+    // QR column (left side)
+    qrCol.innerHTML = '';
+    if (qrDataUrl) {
+      qrCol.innerHTML =
+        '<img src="' + qrDataUrl + '" width="140" height="140" alt="Verification QR">' +
+        '<div class="qr-label">Scan to verify this chain independently</div>' +
+        '<div class="qr-hash">sha256:' + actualHash.slice(0, 16) + '...</div>';
+    }
+
+    // Show layout
+    chainLayout.style.display = 'flex';
     chainEl.className = 'chain visible';
     chainEl.innerHTML = '';
 
@@ -300,42 +622,50 @@ async function showChain(text, expectedHash) {
     const code = i.code || {};
     const receipt = alloy.receipt || {};
 
-    const hfBase = 'https://huggingface.co/';
-    const ghBase = 'https://github.com/CambrianTech/';
-
-    // Source — link to HF model page
+    // --- Source Model ---
     const baseModel = alloy.source?.baseModel || '?';
-    nodeLink(chainEl, 'info', 'Source Model', baseModel, hfBase + baseModel, 'HuggingFace model page');
+    const srcTrust = assessNodeTrust('source', alloy);
+    tallyTrust(srcTrust);
+    nodeRaw(chainEl, 'info', 'Source Model',
+      '<a href="' + hfBase + baseModel + '" target="_blank">' + baseModel + '</a>' +
+      trustBadgeHtml(srcTrust) +
+      trustAnalysisHtml(TRUST_DEFS.source));
 
-    // Architecture — link to HF docs for the arch
+    // --- Architecture ---
     const arch = alloy.source?.architecture || '?';
-    nodeLink(chainEl, 'info', 'Architecture', arch, hfBase + 'docs/transformers/model_doc/' + arch.replace('_', ''), 'transformers docs');
+    nodeLink(chainEl, 'info', 'Architecture', arch,
+      hfBase + 'docs/transformers/model_doc/' + arch.replace('_', ''), 'transformers docs');
 
-    // Target (if present)
+    // --- Target ---
     if (alloy.target) {
       const deltas = Object.entries(alloy.target).filter(([k,v]) => v != null);
-      const deltaHtml = deltas.map(([k,v]) => '<span style="color:#00ffc8">' + k + '</span>').join(', ');
+      const deltaHtml = deltas.map(([k]) => '<span style="color:#00ffc8">' + k + '</span>').join(', ');
       nodeRaw(chainEl, 'info', 'Target Delta', deltaHtml);
     }
 
-    // Stages — each links to forge-alloy spec
+    // --- Pipeline ---
     if (alloy.stages?.length) {
+      const pipeTrust = assessNodeTrust('pipeline', alloy);
+      tallyTrust(pipeTrust);
       const stageHtml = alloy.stages.map(s =>
         '<a href="' + ghBase + 'forge-alloy#stage-types" target="_blank" style="color:#e0e6ed">' + s.type + '</a>'
-      ).join(' → ');
-      nodeRaw(chainEl, 'info', 'Pipeline', stageHtml + ' (' + alloy.cycles + ' cycles)');
+      ).join(' &#x2192; ');
+      nodeRaw(chainEl, 'info', 'Pipeline',
+        stageHtml + ' (' + alloy.cycles + ' cycle' + (alloy.cycles > 1 ? 's' : '') + ')' +
+        trustBadgeHtml(pipeTrust) +
+        trustAnalysisHtml(TRUST_DEFS.pipeline));
     }
 
-    // Results — with context about what the numbers mean
+    // --- Forge Results ---
     if (r.baselinePerplexity) {
       const imp = r.improvementPct || 0;
       const quality = imp > 20 ? 'exceptional' : imp > 10 ? 'strong' : imp > 5 ? 'moderate' : imp > 0 ? 'marginal' : 'no improvement';
       nodeRaw(chainEl, 'verified', 'Forge Result',
-        '<span class="chain-value good">' + r.baselinePerplexity.toFixed(2) + ' → ' + r.finalPerplexity.toFixed(2) + ' (+' + imp.toFixed(1) + '%)</span>' +
-        '<span class="chain-goto">' + quality + ' improvement · lower = better</span>');
+        '<span class="chain-value good">' + r.baselinePerplexity.toFixed(2) + ' &#x2192; ' + r.finalPerplexity.toFixed(2) + ' (+' + imp.toFixed(1) + '%)</span>' +
+        '<span class="chain-goto">' + quality + ' improvement &middot; lower = better</span>');
     }
 
-    // Benchmarks — link to benchmark source
+    // --- Benchmarks (THE PROOF) ---
     const benchLinks = {
       'perplexity': null,
       'humaneval': 'https://github.com/openai/human-eval',
@@ -345,23 +675,40 @@ async function showChain(text, expectedHash) {
       'hellaswag': 'https://huggingface.co/datasets/Rowan/hellaswag',
     };
     if (r.benchmarks?.length) {
-      for (const b of r.benchmarks) {
+      const benchTrust = assessNodeTrust('benchmarks', alloy);
+      tallyTrust(benchTrust);
+      const hasWitness = r.benchmarks.some(b => b.resultHash);
+      const benchDef = hasWitness ? TRUST_DEFS.benchmarks : TRUST_DEFS.benchmarkNoWitness;
+
+      for (let idx = 0; idx < r.benchmarks.length; idx++) {
+        const b = r.benchmarks[idx];
         const score = b.metrics?.score || b.metrics?.accuracy || b.metrics?.passing || JSON.stringify(b.metrics);
         const link = benchLinks[b.name];
+        const hashNote = b.resultHash
+          ? '<span class="chain-goto" style="color:#00ffc8">result hash: ' + b.resultHash.slice(0, 16) + '...</span>'
+          : '<span class="chain-goto" style="color:#ff6b35">no result hash — self-reported</span>';
+        const isFirst = idx === 0;
+        const analysisHtml = isFirst ? trustBadgeHtml(benchTrust) + trustAnalysisHtml(benchDef) : trustBadgeHtml(benchTrust);
+
         if (link) {
-          nodeRaw(chainEl, 'verified', 'Benchmark: ' + b.name,
-            '<a href="' + link + '" target="_blank" style="color:#00ffc8">' + score + '</a>');
+          nodeRaw(chainEl, benchTrust === 'low' ? 'warning' : 'verified', 'Benchmark: ' + b.name,
+            '<a href="' + link + '" target="_blank" style="color:#00ffc8">' + score + '</a>' +
+            hashNote + analysisHtml);
         } else {
-          node(chainEl, 'verified', 'Benchmark: ' + b.name, String(score), 'good');
+          nodeRaw(chainEl, benchTrust === 'low' ? 'warning' : 'verified', 'Benchmark: ' + b.name,
+            '<span class="chain-value good">' + score + '</span>' +
+            hashNote + analysisHtml);
         }
       }
     }
 
-    // Hardware — link to NVIDIA product page or tech specs
+    // --- Hardware ---
     if (r.hardwareVerified?.length) {
-      for (const hw of r.hardwareVerified) {
+      const hwTrust = assessNodeTrust('hardware', alloy);
+      tallyTrust(hwTrust);
+      for (let idx = 0; idx < r.hardwareVerified.length; idx++) {
+        const hw = r.hardwareVerified[idx];
         const device = hw.device || 'unknown';
-        // Link to NVIDIA product page for known GPUs
         let hwUrl = null;
         if (device.includes('5090')) hwUrl = 'https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5090/';
         else if (device.includes('4090')) hwUrl = 'https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4090/';
@@ -373,73 +720,93 @@ async function showChain(text, expectedHash) {
         if (hw.sizeGb) details.push(hw.sizeGb + 'GB');
         if (hw.tokensPerSec) details.push(hw.tokensPerSec + ' tok/s');
 
-        nodeLink(chainEl, hw.verified ? 'verified' : 'info', 'Hardware',
-          device + ' · ' + details.join(' · '),
-          hwUrl, hwUrl ? 'NVIDIA product page' : null);
+        const isFirst = idx === 0;
+        const analysisHtml = isFirst ? trustBadgeHtml(hwTrust) + trustAnalysisHtml(TRUST_DEFS.hardware) : trustBadgeHtml(hwTrust);
+
+        nodeRaw(chainEl, hw.verified ? 'verified' : 'info', 'Hardware',
+          (hwUrl ? '<a href="' + hwUrl + '" target="_blank">' + device + '</a>' : device) +
+          ' &middot; ' + details.join(' &middot; ') +
+          analysisHtml);
       }
     }
 
-    // Trust level — with explanation of what the level means
+    // --- Trust Level ---
     if (i.trustLevel) {
-      const trustExplain = {
-        'self-attested': 'signer vouches for itself · prevents accidental corruption',
-        'verified': 'third-party audited the runner · certificate chain verified',
-        'enclave': 'hardware TEE execution · tamper-proof · highest trust',
-      };
-      const explain = trustExplain[i.trustLevel] || '';
+      const tlDef = TRUST_DEFS.trustLevel[i.trustLevel];
+      const tlBadge = i.trustLevel === 'enclave' ? 'high' : i.trustLevel === 'verified' ? 'medium' : 'low';
       nodeRaw(chainEl, 'trust', 'Trust Level',
         '<a href="' + ghBase + 'forge-alloy/blob/main/docs/ATTESTATION.md" target="_blank" style="color:#ffaa00">' + i.trustLevel + '</a>' +
-        '<span class="chain-goto">→ attestation spec · ' + explain + '</span>');
+        trustBadgeHtml(tlBadge) +
+        trustAnalysisHtml(tlDef));
     }
 
-    // Runner — link to repo
+    // --- Runner + Code ---
     if (code.runner) {
+      const codeTrust = assessNodeTrust('code', alloy);
+      tallyTrust(codeTrust);
       const runnerRepo = code.runner.includes('sentinel') ? 'sentinel-ai' : code.runner.includes('continuum') ? 'continuum' : 'forge-alloy';
-      nodeLink(chainEl, 'info', 'Runner', code.runner + ' v' + code.version,
-        ghBase + runnerRepo, runnerRepo + ' repo');
+      const codeDef = code.binaryHash ? TRUST_DEFS.code : TRUST_DEFS.codeNoHash;
+
+      nodeRaw(chainEl, codeTrust === 'none' ? 'warning' : 'info', 'Runner',
+        '<a href="' + ghBase + runnerRepo + '" target="_blank">' + code.runner + ' v' + code.version + '</a>' +
+        trustBadgeHtml(codeTrust) +
+        trustAnalysisHtml(codeDef));
     }
 
-    // Code hash — link to exact commit if available, otherwise latest
+    // --- Code Hash → GitHub link ---
     if (code.binaryHash) {
       const runnerRepo = code.runner?.includes('sentinel') ? 'sentinel-ai' : code.runner?.includes('continuum') ? 'continuum' : 'forge-alloy';
       const scriptFile = code.runner?.includes('alloy_executor') ? 'scripts/alloy_executor.py' : 'scripts/forge_model.py';
       const commitRef = code.commit || 'main';
       const codeUrl = ghBase + runnerRepo + '/blob/' + commitRef + '/' + scriptFile;
       nodeRaw(chainEl, 'info', 'Code Hash',
-        '<a href="' + codeUrl + '" target="_blank" class="chain-value hash">' + code.binaryHash.slice(0, 40) + '…</a>');
+        '<a href="' + codeUrl + '" target="_blank" class="chain-value hash">' + code.binaryHash.slice(0, 40) + '...</a>' +
+        '<span class="chain-goto">&#x2192; verify: hash this file at that commit</span>');
     }
 
-    // Git commit — link directly to the commit
+    // --- Git Commit → repo state ---
     if (code.commit) {
       const runnerRepo = code.runner?.includes('sentinel') ? 'sentinel-ai' : 'forge-alloy';
       nodeRaw(chainEl, 'verified', 'Git Commit',
         '<a href="' + ghBase + runnerRepo + '/commit/' + code.commit + '" target="_blank">' + code.commit.slice(0, 12) + '</a>' +
-        (code.sourceRepo ? ' · <a href="' + code.sourceRepo + '" target="_blank">repo</a>' : ''));
+        (code.sourceRepo ? ' &middot; <a href="' + code.sourceRepo + '" target="_blank">repo</a>' : '') +
+        '<span class="chain-goto">&#x2192; GitHub is the authority for this state</span>');
     }
 
-    // Model hash — link to model files on HF
+    // --- Model Hash ---
     if (i.modelHash) {
+      const mhTrust = assessNodeTrust('modelHash', alloy);
+      tallyTrust(mhTrust);
       const modelRepo = alloy.receipt?.publications?.[0]?.url || (hfBase + 'continuum-ai/' + alloy.name);
-      nodeRaw(chainEl, 'verified', 'Model Hash',
-        '<a href="' + modelRepo + '/tree/main" target="_blank" class="chain-value hash">' + i.modelHash + '</a>');
+      nodeRaw(chainEl, mhTrust === 'low' ? 'warning' : 'verified', 'Model Hash',
+        '<a href="' + modelRepo + '/tree/main" target="_blank" class="chain-value hash">' + i.modelHash + '</a>' +
+        trustBadgeHtml(mhTrust) +
+        trustAnalysisHtml(TRUST_DEFS.modelHash));
     }
 
-    // Alloy hash — link to spec
+    // --- Alloy Hash ---
+    const ahTrust = 'medium';
+    tallyTrust(ahTrust);
     nodeRaw(chainEl, 'verified', 'Alloy Hash',
-      '<span class="chain-value hash">sha256:' + actualHash.slice(0, 32) + '…</span> · <a href="' + ghBase + 'forge-alloy" target="_blank">spec</a>');
+      '<span class="chain-value hash">sha256:' + actualHash.slice(0, 32) + '...</span> &middot; <a href="' + ghBase + 'forge-alloy" target="_blank">spec</a>' +
+      trustBadgeHtml(ahTrust) +
+      trustAnalysisHtml(TRUST_DEFS.alloyHash));
 
-    // Attested timestamp
+    // --- Attested timestamp ---
     if (i.attestedAt) {
       node(chainEl, 'info', 'Attested', i.attestedAt, '');
     }
 
-    // Publications — each links to where it was published
+    // --- Publications ---
     if (receipt.publications?.length) {
+      const rcptTrust = assessNodeTrust('receipt', alloy);
+      tallyTrust(rcptTrust);
       let pubHtml = '<div class="pub-list">';
       for (const p of receipt.publications) {
         pubHtml += '<div class="pub-item"><a href="' + p.url + '" target="_blank">' + p.target + '</a> — ' + (p.publishedAt || '') + '</div>';
       }
       pubHtml += '</div>';
+      pubHtml += trustBadgeHtml(rcptTrust) + trustAnalysisHtml(TRUST_DEFS.receipt);
       nodeRaw(chainEl, 'verified', 'Published', pubHtml);
     }
 
@@ -447,7 +814,7 @@ async function showChain(text, expectedHash) {
       node(chainEl, 'verified', 'Receipt Issued', receipt.issuedAt, '');
     }
 
-    // Tags — link to HF tag filter
+    // --- Tags ---
     if (alloy.tags?.length) {
       const tagHtml = alloy.tags.map(t =>
         '<a href="' + hfBase + 'models?other=' + t + '" target="_blank">' + t + '</a>'
@@ -455,10 +822,133 @@ async function showChain(text, expectedHash) {
       nodeRaw(chainEl, 'info', 'Tags', tagHtml);
     }
 
+    // --- Adapter Certifications (THE INDEPENDENT PROOFS) ---
+    const certs = i.certifications || [];
+    if (certs.length) {
+      for (const cert of certs) {
+        const hasSig = !!cert.signature;
+        const hasNonce = !!cert.nonce;
+        const isOpenSource = !!cert.sourceRepo;
+        const certLevel = hasSig && hasNonce ? 'high' : hasSig ? 'medium' : 'low';
+        tallyTrust(certLevel);
+
+        let certHtml = '<strong>' + cert.adapter + '</strong> v' + cert.version;
+        certHtml += '<span class="chain-goto">' + cert.domain + '</span>';
+        certHtml += trustBadgeHtml(hasSig && hasNonce ? 'api' : certLevel);
+
+        // Show key results
+        if (cert.result && Object.keys(cert.result).length) {
+          const metrics = Object.entries(cert.result).slice(0, 5)
+            .map(([k,v]) => '<span style="color:#00ffc8">' + k + '</span>: ' + v).join(', ');
+          certHtml += '<div style="font-size:10px;margin-top:4px;color:#8a92a5">' + metrics + '</div>';
+        }
+
+        // Source link
+        if (isOpenSource && cert.commit) {
+          certHtml += '<div style="font-size:10px;margin-top:2px">' +
+            '<a href="' + cert.sourceRepo + '/tree/' + cert.commit + '" target="_blank">source @ ' + cert.commit.slice(0,8) + '</a>' +
+            ' <span style="color:#00ffc8">(open source — auditable)</span></div>';
+        } else if (isOpenSource) {
+          certHtml += '<div style="font-size:10px;margin-top:2px"><a href="' + cert.sourceRepo + '" target="_blank">source</a></div>';
+        } else {
+          certHtml += '<div style="font-size:10px;margin-top:2px;color:#ff6b35">closed source — trust the certifier</div>';
+        }
+
+        // Nonce presence
+        if (hasNonce) {
+          certHtml += '<div style="font-size:9px;margin-top:2px;color:#00d4ff">nonce-challenged — cherry-picking prevented</div>';
+        }
+
+        // Trust analysis for certifications
+        const certAnalysis = {
+          proves: [
+            'Independent adapter ran its own tests',
+            hasSig ? 'Results signed with adapter\'s own key' : null,
+            hasNonce ? 'Nonce challenge prevents cherry-picking' : null,
+            isOpenSource ? 'Adapter code is public and auditable' : null,
+          ].filter(Boolean),
+          doesNotProve: [
+            !hasSig ? 'Results are unsigned — could be fabricated' : null,
+            !hasNonce ? 'No nonce — best-of-N cherry-picking possible' : null,
+            !isOpenSource ? 'Closed source — adapter logic is not auditable' : null,
+          ].filter(Boolean),
+          closedBy: !hasSig ? 'Register adapter key and sign results' :
+                    !hasNonce ? 'Use forge-alloy API for nonce-challenged runs' :
+                    !isOpenSource ? 'Open-source the adapter for full auditability' :
+                    'This certification is at maximum local trust. Enclave execution would add hardware proof.',
+          sdkBoost: 'forge-alloy SDK invokes adapters with API-issued nonces and countersigns the results. Two independent witnesses instead of one.',
+        };
+
+        certHtml += trustAnalysisHtml(certAnalysis);
+        nodeRaw(chainEl, certLevel === 'high' ? 'verified' : certLevel === 'medium' ? 'trust' : 'warning',
+          'Certification', certHtml);
+      }
+    }
+
+    // --- Trust Summary ---
+    renderTrustSummary(summaryEl, alloy);
+
   } catch (err) {
     statusEl.className = 'status failed';
-    statusEl.innerHTML = '<div class="status-icon">❌</div><div class="status-text">Parse error</div><div class="status-detail">' + err.message + '</div>';
+    statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Parse error</div><div class="status-detail">' + err.message + '</div>';
   }
+}
+
+function renderTrustSummary(container, alloy) {
+  const total = trustTally.high + trustTally.medium + trustTally.low + trustTally.none;
+  if (total === 0) { container.innerHTML = ''; return; }
+
+  const pctHigh = Math.round((trustTally.high / total) * 100);
+  const pctMed = Math.round((trustTally.medium / total) * 100);
+  const pctLow = Math.round((trustTally.low / total) * 100);
+  const pctNone = Math.round((trustTally.none / total) * 100);
+
+  const i = (alloy.results?.integrity) || {};
+  const hasApiWitness = !!i.apiWitness;
+  const hasSig = !!i.signature;
+  const isEnclave = i.trustLevel === 'enclave';
+
+  // Overall assessment
+  let overallColor, overallLabel, overallAdvice;
+  if (isEnclave) {
+    overallColor = '#00ffc8'; overallLabel = 'ENCLAVE-PROVEN';
+    overallAdvice = 'Hardware TEE guarantees code integrity and input-output binding.';
+  } else if (hasApiWitness) {
+    overallColor = '#00d4ff'; overallLabel = 'API-WITNESSED';
+    overallAdvice = 'forge-alloy API verified key elements. Cherry-picking prevented by nonce challenge.';
+  } else if (hasSig) {
+    overallColor = '#ffaa00'; overallLabel = 'SIGNED';
+    overallAdvice = 'Attestation is signed but not independently witnessed. Use forge-alloy SDK for higher trust.';
+  } else {
+    overallColor = '#ff6b35'; overallLabel = 'SELF-ATTESTED';
+    overallAdvice = 'All claims are self-reported. Integrate forge-alloy SDK to increase trust at every node.';
+  }
+
+  container.innerHTML = `
+    <div class="trust-summary">
+      <h3>Trust Summary</h3>
+      <div class="summary-row">
+        <span style="color:${overallColor};font-weight:700">${overallLabel}</span>
+        <span style="color:#8a92a5">${total} elements analyzed</span>
+      </div>
+      <div class="summary-bar">
+        <div style="display:flex;height:100%;width:100%">
+          <div class="summary-bar-fill" style="width:${pctHigh}%;background:#00ffc8"></div>
+          <div class="summary-bar-fill" style="width:${pctMed}%;background:#ffaa00"></div>
+          <div class="summary-bar-fill" style="width:${pctLow}%;background:#ff6b35"></div>
+          <div class="summary-bar-fill" style="width:${pctNone}%;background:#ff4444"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:8px;font-size:9px;color:#8a92a5;flex-wrap:wrap">
+        ${trustTally.high ? '<span><span style="color:#00ffc8">&#x25CF;</span> Proven: ' + trustTally.high + '</span>' : ''}
+        ${trustTally.medium ? '<span><span style="color:#ffaa00">&#x25CF;</span> Attested: ' + trustTally.medium + '</span>' : ''}
+        ${trustTally.low ? '<span><span style="color:#ff6b35">&#x25CF;</span> Self-reported: ' + trustTally.low + '</span>' : ''}
+        ${trustTally.none ? '<span><span style="color:#ff4444">&#x25CF;</span> Unverified: ' + trustTally.none + '</span>' : ''}
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:#8a92a5;line-height:1.5">
+        ${overallAdvice}
+      </div>
+    </div>`;
 }
 
 function node(container, dotClass, label, value, valueClass) {
@@ -478,7 +968,7 @@ function node(container, dotClass, label, value, valueClass) {
 
 function nodeLink(container, dotClass, label, text, href, goto) {
   const linkHtml = href ? '<a href="' + href + '" target="_blank">' + text + '</a>' : text;
-  const gotoHtml = goto ? '<span class="chain-goto">→ ' + goto + '</span>' : '';
+  const gotoHtml = goto ? '<span class="chain-goto">&#x2192; ' + goto + '</span>' : '';
   const html = `
     <div class="chain-node">
       <div class="chain-dot-col">

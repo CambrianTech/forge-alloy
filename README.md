@@ -272,6 +272,144 @@ Source → Delta → Stages → Attest → Deliver → Verify (QR)
 
 The Merkle chain secures it. The attestation proves it. The QR makes it accessible. The blockchain anchors it in time. [Full applications doc →](docs/APPLICATIONS.md)
 
+## Hardware Trust Integration
+
+Every device that touches the chain can prove its involvement. The trust ladder goes from "take my word for it" to "silicon proves it":
+
+### The Trust Ladder
+
+| Level | Authority | How It Proves | Example |
+|-------|-----------|--------------|---------|
+| **Repository** | GitHub | Commit hash = Merkle root of repo state. GitHub vouches for content at that hash. | `sourceRepo` + `commit` in `CodeAttestation` |
+| **Passkey** | Device Secure Enclave | ES256 keypair bound to hardware. Non-exportable. Proves *this device* signed. | macOS `SecKeyCreateSignature`, Android StrongBox, Windows TPM |
+| **GPU TEE** | NVIDIA silicon | Blackwell/Hopper TEE-I/O. Hardware attestation report from SEC2 security component. NRAS remote attestation. | `certificateChain` carries NVIDIA attestation cert |
+| **Cloud Enclave** | AWS Nitro / Azure SGX | Isolated execution environment. Hypervisor cannot read enclave memory. | Nitro attestation document in `anchor` |
+| **Mobile Enclave** | Apple / Android | Secure Enclave (iPhone/Mac) or StrongBox (Android). Biometric-gated signing. | Touch ID / Face ID protects forge signing key |
+| **Sensor** | Camera / microphone / IoT | Hardware-signed capture at the source. Proves content was captured, not generated. | Camera enclave signs raw image → root of trust for content authenticity |
+
+### Repository Binding (Phase 1 — Now)
+
+GitHub is the certificate authority. No additional crypto needed.
+
+```json
+{
+  "code": {
+    "runner": "sentinel-ai/alloy_executor",
+    "commit": "abc123def",
+    "sourceRepo": "https://github.com/CambrianTech/sentinel-ai",
+    "binaryHash": "sha256:..."
+  }
+}
+```
+
+Verification: hash the file at `sourceRepo/blob/commit/script.py`, compare to `binaryHash`. If they match, the code that ran is the code on GitHub. If not, something was modified.
+
+### Passkey Signing (Phase 2)
+
+The forge runner's device signs the attestation with a hardware-bound key:
+
+- **macOS/iOS**: Apple Secure Enclave via `SecKeyCreateSignature` — Touch ID protected, non-exportable
+- **Android**: KeyStore with `setIsStrongBoxBacked(true)` — hardware-bound ES256
+- **Windows**: TPM 2.0 via `NCryptSignHash` — platform-bound signing
+
+The key never leaves the device. The signature proves *this specific machine* forged *this specific model*. Same primitive as FIDO2 passkeys — different ceremony, same hardware.
+
+### GPU TEE (Phase 4 — Required for Marketplace)
+
+NVIDIA Blackwell architecture has TEE silicon. The GPU itself attests what code ran:
+
+```
+Forge runner loads into GPU TEE
+  → GPU firmware hash recorded (environmentHash)
+  → NVIDIA Attestation Service (NRAS) issues remote attestation
+  → SEC2 security component generates hardware report
+  → certificateChain carries NVIDIA's attestation certificate
+  → Model weights hashed inside TEE before leaving enclave
+```
+
+This is the only tier where **every claim is hardware-proven**. The GPU can't lie about what code ran. The model hash is captured inside the enclave before the weights touch untrusted memory. Input-to-output binding is cryptographically guaranteed.
+
+**Supported hardware:**
+- NVIDIA B200 / GB200 (datacenter) — TEE-I/O today
+- NVIDIA RTX PRO 6000 Server — TEE via R580 TRD1
+- NVIDIA RTX 5090 (consumer) — TEE mode pending driver unlock
+- AWS Nitro Enclaves — available now for cloud forging
+- Intel SGX / TDX — CPU-side TEE
+
+### Mobile Enclave (Inference Verification)
+
+iPhone and MacBook have Secure Enclaves that can sign inference results:
+
+```
+Model runs on iPhone → inference result signed by Secure Enclave
+  → signature proves: this device, this model, this output
+  → hardware profile (tokens/sec, memory) is measured, not claimed
+```
+
+This enables verified inference benchmarks on consumer devices — the device proves it actually ran the model at the claimed speed.
+
+### Sensor Attestation (Content Authenticity)
+
+Cameras and microphones with hardware enclaves sign captures at the source. The sensor is the root of trust — every transformation after capture is a tracked stage.
+
+**Photography:**
+```
+Canon R5 (enclave) captures image → signs raw bytes → sha256:abc (root of trust)
+  → Photoshop edit (tracked delta: crop, levels) → sha256:def
+  → publish → sha256:def matches, chain intact
+```
+
+**Video production — full Merkle chain from lens to screen:**
+```
+Sony sensor (enclave-signed raw frames)          → sha256:abc  ← hardware root of trust
+  ↓
+ProRes encode (attested by encoder adapter)      → sha256:def  ← stage: transcode
+  ↓
+DaVinci Resolve edit (each cut is a delta)       → sha256:ghi  ← stage: edit
+  ↓
+Color grade (LUT application)                    → sha256:jkl  ← stage: color
+  ↓
+VFX composite (real vs generated — declared)     → sha256:mno  ← stage: vfx (declares what's synthetic)
+  ↓
+Master (final encode)                            → sha256:pqr  ← stage: master
+  ↓
+Distribute (Netflix, theaters, YouTube)          → sha256:pqr  ← receipt: delivery matches master
+```
+
+Every frame's provenance traces back to the sensor that captured it. Sony signs at capture with their enclave. Each tool in the chain (Resolve, After Effects, Nuke) is an adapter that attests its transformation. The Merkle chain proves:
+
+- **This was captured** — sensor enclave signature, not AI generated
+- **These edits were made** — every cut, grade, and composite is a declared stage
+- **What's synthetic is declared** — VFX stage explicitly marks generated content
+- **Nothing else changed** — hash of each stage input matches previous stage output
+- **The final master is authentic** — alloy hash = what was delivered
+
+**Deepfake detection becomes trivial:** if the chain starts with a generation model instead of a camera enclave, that's visible. No sensor attestation at the root = no proof of capture. The absence of hardware proof IS the tell.
+
+The forge-alloy pattern doesn't care if it's a GPU forging a model or a CMOS sensor capturing photons. Same chain, same math, same verification page.
+
+### Adapter Certifications (Independent Witnesses)
+
+Third-party adapters sign their own findings with their own keys. Each adapter is an independent certifier — like UL for products:
+
+```json
+{
+  "certifications": [
+    {
+      "adapter": "forge-alloy/humaneval",
+      "domain": "benchmark:humaneval",
+      "result": { "passing": 63, "total": 85, "score": 74.1 },
+      "signature": { "algorithm": "ES256", "publicKey": "...", "value": "..." },
+      "nonce": "api-provided-challenge",
+      "sourceRepo": "https://github.com/CambrianTech/forge-alloy",
+      "attestedAt": "2026-03-31T12:00:00Z"
+    }
+  ]
+}
+```
+
+Open-source adapters get higher trust — anyone can audit the code. The forge-alloy API issues nonces and countersigns results, adding a second independent witness. See [docs/SDK-ARCHITECTURE.md](docs/SDK-ARCHITECTURE.md).
+
 ## Design Principles
 
 - **JSON always** — no YAML, no TOML
@@ -309,7 +447,10 @@ No central authority required. The verifier checks the alloy's hashes and signat
 
 ## Documentation
 
-- [docs/ATTESTATION.md](docs/ATTESTATION.md) — Full attestation architecture and design
+- [docs/ATTESTATION.md](docs/ATTESTATION.md) — Full attestation architecture (FIDO2 model, trust tiers, signing, replay prevention)
+- [docs/SDK-ARCHITECTURE.md](docs/SDK-ARCHITECTURE.md) — SDK adapter framework (independent certifications, API witnessing, becoming a certifier)
+- [docs/APPLICATIONS.md](docs/APPLICATIONS.md) — Use cases beyond model forging
+- [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) — Compensation and contribution model
 
 ## License
 

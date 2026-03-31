@@ -219,6 +219,38 @@
           "hash": "sha256:789abc012def345789abc012def345789abc012def345789abc012def345789a"
         }
       ],
+      "certifications": [
+        {
+          "adapter": "forge-alloy/humaneval",
+          "version": "1.0.0",
+          "domain": "benchmark:humaneval",
+          "result": {
+            "passing": 63,
+            "total": 85,
+            "score": 74.1,
+            "harnessHash": "sha256:eval789abc012def345789abc012def345789abc012def345789abc012def345"
+          },
+          "adapterHash": "sha256:adapter123def456789abc012def345789abc012def345789abc012def345789",
+          "sourceRepo": "https://github.com/CambrianTech/forge-alloy",
+          "commit": "abc123def456789",
+          "attestedAt": "2026-03-28T14:30:00Z"
+        },
+        {
+          "adapter": "forge-alloy/inference-perf",
+          "version": "1.0.0",
+          "domain": "hardware:inference",
+          "result": {
+            "device": "RTX 5090 32GB",
+            "tokensPerSec": 174,
+            "memoryUsageGb": 9.2,
+            "format": "fp16"
+          },
+          "adapterHash": "sha256:perf456def789abc012def345789abc012def345789abc012def345789abc01",
+          "sourceRepo": "https://github.com/CambrianTech/forge-alloy",
+          "commit": "abc123def456789",
+          "attestedAt": "2026-03-28T14:31:00Z"
+        }
+      ],
       "attestedAt": "2026-03-28T14:32:00Z"
     }
   },
