@@ -246,9 +246,9 @@
     <input type="file" id="fileInput" accept=".json" style="display:none">
   </div>
 
+  <div id="trustSummary" style="display:none"></div>
   <div id="chainWrapper" class="chain-wrapper" style="display:none">
     <div id="chain" class="chain"></div>
-    <div id="trustSummary"></div>
   </div>
 </div>
 
@@ -430,8 +430,19 @@ async function verify() {
   if (url.includes('/blob/')) url = url.replace('/blob/', '/resolve/');
 
   try {
-    const resp = await fetchWithProxy(url);
-    const text = await resp.text();
+    // Try cache first (survives rate-limited reloads)
+    const cacheKey = 'forge-alloy:' + url;
+    let text = null;
+    try { text = sessionStorage.getItem(cacheKey); } catch {}
+
+    if (!text) {
+      const resp = await fetchWithProxy(url);
+      text = await resp.text();
+      // Verify it's valid JSON before caching
+      JSON.parse(text);
+      try { sessionStorage.setItem(cacheKey, text); } catch {}
+    }
+
     await showChain(text, null);
   } catch (err) {
     statusEl.className = 'status failed';
@@ -907,7 +918,8 @@ async function showChain(text, expectedHash) {
 
 function renderTrustSummary(container, alloy) {
   const total = trustTally.high + trustTally.medium + trustTally.low + trustTally.none;
-  if (total === 0) { container.innerHTML = ''; return; }
+  if (total === 0) { container.innerHTML = ''; container.style.display = 'none'; return; }
+  container.style.display = 'block';
 
   const pctHigh = Math.round((trustTally.high / total) * 100);
   const pctMed = Math.round((trustTally.medium / total) * 100);
