@@ -553,6 +553,11 @@ async function showChain(text, expectedHash) {
     const alloy = JSON.parse(text);
     const actualHash = await sha256hex(text);
 
+    const r = alloy.results || {};
+    const i = r.integrity || {};
+    const code = i.code || {};
+    const receipt = alloy.receipt || {};
+
     let hashOk = null;
     if (expectedHash) hashOk = actualHash.startsWith(expectedHash);
 
@@ -571,8 +576,9 @@ async function showChain(text, expectedHash) {
       statusEl.className = 'status failed';
       statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">HASH MISMATCH — chain may be compromised</div><div class="status-detail">Expected ' + expectedHash + '... got ' + actualHash.slice(0, expectedHash.length) + '...</div>';
     } else {
-      statusEl.className = 'status verified has-qr';
-      const qrHtml = qrDataUrl
+      const hasQr = !!qrDataUrl;
+      statusEl.className = 'status verified' + (hasQr ? ' has-qr' : '');
+      const qrHtml = hasQr
         ? '<div class="status-qr"><img src="' + qrDataUrl + '" width="140" height="140" alt="Verification QR"><div class="qr-caption">Scan to verify</div></div>'
         : '';
       const statusTitle = hashOk ? 'CHAIN OF CUSTODY VERIFIED' : 'CHAIN LOADED';
@@ -598,11 +604,6 @@ async function showChain(text, expectedHash) {
     chainWrapper.style.display = 'block';
     chainEl.className = 'chain visible';
     chainEl.innerHTML = '';
-
-    const r = alloy.results || {};
-    const i = r.integrity || {};
-    const code = i.code || {};
-    const receipt = alloy.receipt || {};
 
     // --- Source Model ---
     const baseModel = alloy.source?.baseModel || '?';
