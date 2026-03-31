@@ -277,9 +277,9 @@ class ModalityStage(BaseModel):
 
 # Discriminated union for stages
 AlloyStage = (
-    PruneStage | TrainStage | LoRAStage | CompactStage |
-    QuantStage | EvalStage | PublishStage | ExpertPruneStage |
-    ContextExtendStage | ModalityStage
+    SourceConfigStage | PruneStage | TrainStage | LoRAStage | CompactStage |
+    QuantStage | PackageStage | EvalStage | PublishStage | DeployStage |
+    ExpertPruneStage | ContextExtendStage | ModalityStage
 )
 
 
@@ -291,6 +291,92 @@ class AlloyHardware(BaseModel):
     tested_on: list[str] = Field(default_factory=list, alias="testedOn")
 
     model_config = {"populate_by_name": True}
+
+
+# ── New stage types (bookends) ───────────────────────────────────────────────
+
+
+class SourceConfigStage(BaseModel):
+    """Front bookend: declare target capabilities."""
+    type: Literal["source-config"] = "source-config"
+    context_length: Optional[int] = Field(default=None, alias="contextLength")
+    input_modalities: list[str] = Field(default_factory=list, alias="inputModalities")
+    tokenizer: Optional[str] = None
+    target_batch_size: Optional[int] = Field(default=None, alias="targetBatchSize")
+    target_devices: list[str] = Field(default_factory=list, alias="targetDevices")
+
+    model_config = {"populate_by_name": True}
+
+
+class PackageStage(BaseModel):
+    """End bookend: device-specific packaging."""
+    type: Literal["package"] = "package"
+    format: str
+    runtime: Optional[str] = None
+    optimization: str = "balanced"
+    validate_on: list[str] = Field(default_factory=list, alias="validateOn")
+    include_tokenizer: bool = Field(default=True, alias="includeTokenizer")
+
+    model_config = {"populate_by_name": True}
+
+
+class DeployStage(BaseModel):
+    """End bookend: deploy to grid node."""
+    type: Literal["deploy"] = "deploy"
+    target: str
+    health_check: bool = Field(default=True, alias="healthCheck")
+    warmup: bool = Field(default=True)
+    max_concurrency: Optional[int] = Field(default=None, alias="maxConcurrency")
+    auto_scale: Optional[bool] = Field(default=None, alias="autoScale")
+
+    model_config = {"populate_by_name": True}
+
+
+# ── Target (delta from source) ──────────────────────────────────────────────
+
+
+class AlloyTarget(BaseModel):
+    """What the model should BECOME. Only set fields you want to CHANGE."""
+    context_length: Optional[int] = Field(default=None, alias="contextLength")
+    modalities: Optional[list[str]] = None
+    domain: Optional[str] = None
+    prune_ratio: Optional[float] = Field(default=None, alias="pruneRatio")
+    experts: Optional[int] = None
+    output_formats: Optional[list[str]] = Field(default=None, alias="outputFormats")
+    quant_types: Optional[list[str]] = Field(default=None, alias="quantTypes")
+    target_devices: Optional[list[str]] = Field(default=None, alias="targetDevices")
+    deploy_to: Optional[str] = Field(default=None, alias="deployTo")
+    benchmarks: Optional[list[str]] = None
+    publish: Optional[bool] = None
+
+    model_config = {"populate_by_name": True}
+
+
+# ── Receipt (proof of delivery) ─────────────────────────────────────────────
+
+
+class Publication(BaseModel):
+    """A single publication record."""
+    target: str
+    url: str
+    published_at: str = Field(alias="publishedAt")
+    downloads: Optional[int] = None
+
+    model_config = {"populate_by_name": True}
+
+
+class AlloyReceipt(BaseModel):
+    """Proof of delivery — where it was published, verification URLs, QR."""
+    publications: list[Publication] = Field(default_factory=list)
+    verify_url: Optional[str] = Field(default=None, alias="verifyUrl")
+    alloy_hash: Optional[str] = Field(default=None, alias="alloyHash")
+    card_hash: Optional[str] = Field(default=None, alias="cardHash")
+    issued_at: str = Field(alias="issuedAt")
+
+    model_config = {"populate_by_name": True}
+
+
+# ── Hardware & Outputs ──────────────────────────────────────────────────────
 
 
 class OutputArtifact(BaseModel):
@@ -311,14 +397,15 @@ class ForgeAlloy(BaseModel):
     license: str = "apache-2.0"
 
     source: AlloySource
+    target: Optional[AlloyTarget] = None
     stages: list[AlloyStage] = Field(discriminator="type")
     cycles: int = Field(default=1, ge=1)
 
     hardware: Optional[AlloyHardware] = None
     outputs: Optional[AlloyOutputs] = None
 
-    # Populated after execution — benchmark scores, hardware verification, samples
     results: Optional[AlloyResults] = None
+    receipt: Optional[AlloyReceipt] = None
 
     source_alloy_id: Optional[str] = Field(default=None, alias="sourceAlloyId")
     forged_model_ids: Optional[list[str]] = Field(default=None, alias="forgedModelIds")
