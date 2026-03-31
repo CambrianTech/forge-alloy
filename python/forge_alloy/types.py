@@ -3,7 +3,7 @@
 from __future__ import annotations
 import json
 from pathlib import Path
-from typing import Any, Literal, Optional, Union
+from typing import Annotated, Any, Literal, Optional, Union
 from pydantic import BaseModel, Field
 
 
@@ -325,11 +325,14 @@ class DeployStage(BaseModel):
 
 
 # Discriminated union for stages — must be after ALL stage class definitions
-AlloyStage = (
-    SourceConfigStage | PruneStage | TrainStage | LoRAStage | CompactStage |
-    QuantStage | PackageStage | EvalStage | PublishStage | DeployStage |
-    ExpertPruneStage | ContextExtendStage | ModalityStage
-)
+AlloyStage = Annotated[
+    Union[
+        SourceConfigStage, PruneStage, TrainStage, LoRAStage, CompactStage,
+        QuantStage, PackageStage, EvalStage, PublishStage, DeployStage,
+        ExpertPruneStage, ContextExtendStage, ModalityStage,
+    ],
+    Field(discriminator="type"),
+]
 
 
 # ── Target (delta from source) ──────────────────────────────────────────────
@@ -398,7 +401,7 @@ class ForgeAlloy(BaseModel):
 
     source: AlloySource
     target: Optional[AlloyTarget] = None
-    stages: list[AlloyStage] = Field(discriminator="type")
+    stages: list[AlloyStage] = Field(default_factory=list)
     cycles: int = Field(default=1, ge=1)
 
     hardware: Optional[AlloyHardware] = None
