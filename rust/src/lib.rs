@@ -269,8 +269,8 @@ pub struct IntegrityAttestation {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub nonce: Option<String>,
 
-    /// Audience binding — who this attestation is intended for (marketplace URL, requester ID).
-    /// Prevents cross-marketplace replay.
+    /// Audience binding — canonical origin URI of the intended verifier (e.g. "https://marketplace.forge-alloy.dev").
+    /// Verifiers compare against their own origin — exact string match. Prevents cross-marketplace replay.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub audience: Option<String>,
 

@@ -101,16 +101,18 @@ The signed payload contains:
 
 The algorithm enum is extensible. When quantum-safe standards mature, add new variants without breaking existing attestations.
 
-## Passkey Signing (Phase 2 — Gap Identified)
+## Hardware Key Signing (Phase 2)
 
-WebAuthn credentials sign `clientDataJSON` (which includes a relying party challenge), **NOT** arbitrary payloads. Standard passkeys bind the key to the RP ID.
+WebAuthn credentials sign `clientDataJSON` (which includes a relying party challenge), NOT arbitrary payloads. Standard passkeys bind the key to the RP ID. But the underlying hardware keys are directly accessible:
 
-To use passkeys for forge attestation:
-1. **Hacky but works**: Embed attestation hash in the WebAuthn challenge field
-2. **Proper but complex**: Use a signing service that holds the Secure Enclave key and signs on behalf of the credential
-3. **Alternative**: Use the platform's raw key access (Apple CryptoKit on macOS/iOS gives direct Secure Enclave access outside WebAuthn)
+**The real path — raw Secure Enclave / StrongBox access:**
+- **macOS/iOS**: Apple's `SecKeyCreateSignature` with a Secure Enclave key gives ES256 signing of arbitrary data, no WebAuthn ceremony needed. The key is hardware-bound, non-exportable, Touch ID protected. This is the intended use of the hardware.
+- **Android**: `KeyStore` with `setIsStrongBoxBacked(true)` — same properties, same direct signing of arbitrary data.
+- **Windows**: TPM 2.0 via `NCryptSignHash` — hardware-bound ES256.
 
-The `credentialId` field links to a WebAuthn credential. The signing mechanism bridges the gap.
+This isn't a workaround — it's the primary use case for hardware security modules. WebAuthn is one protocol that uses these keys; forge attestation is another. Same hardware, different ceremony.
+
+The `credentialId` field can optionally link to a WebAuthn credential for cross-referencing, but the signing happens via the platform's native crypto API, not the WebAuthn ceremony.
 
 ## Key Registry
 
@@ -132,12 +134,14 @@ The `credentialId` field links to a WebAuthn credential. The signing mechanism b
 
 **Revocation propagation:** Short-lived keys (90-day expiry) + registry polling. Verifiers cache keys with max-age matching the key's remaining validity. On revocation, verifiers see `revokedAt` on next cache refresh. For marketplace payments: hold funds for a grace period (24-48h) before release, allowing revocation to propagate.
 
+**Superseded vs revoked:** Supersession is operational (key rotation), not a security event. A superseded key was valid when it signed — attestations signed before `supersededBy` was set MUST still verify. A revoked key was compromised — attestations signed by a revoked key SHOULD be treated as suspect regardless of when they were signed. Verifiers: check `revokedAt` first (reject if set), then check `supersededBy` (accept if attestation timestamp < supersession timestamp).
+
 **Registration authority:** Initially the forge-alloy repo maintainers (anyone with write access). Phase 3 introduces certificate-based registration where an auditor must sign the key before it's accepted.
 
 ## Replay Prevention
 
-- **nonce**: Verifier-provided random bytes (like WebAuthn challenge). Required for marketplace. The marketplace issues a nonce before forge begins — the nonce is included in the signed payload.
-- **audience**: Binds the attestation to a specific verifier. An attestation for marketplace A is invalid on marketplace B.
+- **nonce**: Verifier-provided random bytes (base64url, minimum 16 bytes). Required for marketplace. The marketplace issues a nonce before forge begins — the nonce is included in the signed payload.
+- **audience**: A URI identifying who this attestation is for. MUST be the marketplace's canonical origin (e.g., `https://marketplace.forge-alloy.dev`). An attestation signed for marketplace A with `audience: "https://a.example.com"` MUST be rejected by marketplace B. Verifiers compare audience against their own origin — exact string match, no normalization.
 - **timestamp**: `attestedAt` provides ordering but NOT freshness. A replayed attestation from a year ago is still valid without nonce/audience checks.
 
 ## Dataset Hashing Specification
@@ -146,9 +150,12 @@ Dataset hash must be deterministic and cover exactly the subset used:
 
 1. List all files in the dataset directory
 2. Sort filenames lexicographically
-3. For each file: SHA-256(contents)
-4. Combine via Merkle tree (sorted leaves)
-5. Record the root hash, plus the number of items evaluated
+3. For each file: `leaf = SHA-256(0x00 || file_contents)` (leaf domain prefix)
+4. Combine via Merkle tree: `node = SHA-256(0x01 || left || right)` (internal node domain prefix)
+5. If odd number of leaves, promote the last leaf unpaired
+6. Record the root hash, plus the number of items evaluated
+
+**Domain separation (RFC 6962 pattern):** Without the `0x00`/`0x01` prefixes, a two-file dataset could produce the same root as a single file whose contents happen to be the concatenation of two leaf hashes. Prepending `0x00` for leaves and `0x01` for internal nodes makes this impossible.
 
 If a subset was used (e.g., MMLU-Pro subset of MMLU), the hash covers ONLY the subset files, not the full dataset. The `name` field reflects the subset.
 
@@ -163,23 +170,29 @@ If a subset was used (e.g., MMLU-Pro subset of MMLU), the hash covers ONLY the s
 
 ## Implementation Phases
 
-### Phase 1: Self-Attested (Now)
+### Phase 1: Unsigned Attestation (Now)
 - Runner hashes itself, model, datasets
-- Records hashes in attestation (no signature yet)
-- Honest: prevents accidental corruption only
+- Records hashes in attestation — **no signature**
+- **Zero integrity guarantee** — anyone can modify the hashes after the fact
+- Value: audit trail, accidental corruption detection, format validation
 - Public key infrastructure not required
 
-### Phase 2: Signed Self-Attestation
-- ES256 signing with self-generated keys
+### Phase 2: Hardware-Key Signed Attestation
+- ES256 signing via platform Secure Enclave / StrongBox / TPM
+  - macOS: `SecKeyCreateSignature` (Touch ID protected, non-exportable)
+  - Android: `KeyStore.setIsStrongBoxBacked(true)`
+  - Windows: TPM 2.0 via `NCryptSignHash`
 - Key registry (JSON in repo, then hosted)
-- RFC 8785 canonical payload
+- RFC 8785 JCS canonical payload
 - Verifier implementation in all three languages
+- Trust level: still `self-attested` — hardware key proves identity but not code integrity
 
 ### Phase 3: Verified Runners
 - CI/CD builds runner from audited source
 - Auditor issues certificate for binary hash
 - Certificate chain in signature
 - Registration authority for key approval
+- Trust level: `verified`
 
 ### Phase 4: Enclave Execution (Required for Marketplace)
 - TEE: AWS Nitro Enclaves, Intel SGX, ARM TrustZone
@@ -187,6 +200,7 @@ If a subset was used (e.g., MMLU-Pro subset of MMLU), the hash covers ONLY the s
 - Nonce from marketplace for freshness
 - The ONLY tier that prevents all identified attacks
 - Required before real money flows through the system
+- Trust level: `enclave`
 
 ### Phase 5: Post-Quantum Migration
 - Monitor NIST PQC standard maturity (ML-DSA, SLH-DSA)
