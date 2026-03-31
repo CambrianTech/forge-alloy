@@ -355,12 +355,22 @@ async function showChain(text, expectedHash) {
         '<a href="' + ghBase + runnerRepo + '" target="_blank">' + code.runner + ' v' + code.version + '</a>');
     }
 
-    // Code hash — link to the script in the repo
+    // Code hash — link to exact commit if available, otherwise latest
     if (code.binaryHash) {
-      const scriptPath = code.runner?.includes('alloy_executor') ? 'blob/main/scripts/alloy_executor.py' : 'blob/main/scripts/forge_model.py';
-      const runnerRepo = code.runner?.includes('sentinel') ? 'sentinel-ai' : 'forge-alloy';
+      const runnerRepo = code.runner?.includes('sentinel') ? 'sentinel-ai' : code.runner?.includes('continuum') ? 'continuum' : 'forge-alloy';
+      const scriptFile = code.runner?.includes('alloy_executor') ? 'scripts/alloy_executor.py' : 'scripts/forge_model.py';
+      const commitRef = code.commit || 'main';
+      const codeUrl = ghBase + runnerRepo + '/blob/' + commitRef + '/' + scriptFile;
       nodeRaw(chainEl, 'info', 'Code Hash',
-        '<a href="' + ghBase + runnerRepo + '/' + scriptPath + '" target="_blank" class="chain-value hash">' + code.binaryHash + '</a>');
+        '<a href="' + codeUrl + '" target="_blank" class="chain-value hash">' + code.binaryHash.slice(0, 40) + '…</a>');
+    }
+
+    // Git commit — link directly to the commit
+    if (code.commit) {
+      const runnerRepo = code.runner?.includes('sentinel') ? 'sentinel-ai' : 'forge-alloy';
+      nodeRaw(chainEl, 'verified', 'Git Commit',
+        '<a href="' + ghBase + runnerRepo + '/commit/' + code.commit + '" target="_blank">' + code.commit.slice(0, 12) + '</a>' +
+        (code.sourceRepo ? ' · <a href="' + code.sourceRepo + '" target="_blank">repo</a>' : ''));
     }
 
     // Model hash — link to model files on HF
