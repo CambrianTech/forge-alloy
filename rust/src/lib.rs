@@ -461,16 +461,37 @@ pub struct AttestationSignature {
 #[cfg_attr(feature = "typescript", derive(TS), ts(export))]
 #[serde(tag = "type", rename_all = "kebab-case")]
 pub enum AlloyStage {
-    Prune(PruneStage),
-    Train(TrainStage),
-    Lora(LoRAStage),
-    Compact(CompactStage),
-    Quant(QuantStage),
-    Eval(EvalStage),
-    Publish(PublishStage),
-    ExpertPrune(ExpertPruneStage),
-    ContextExtend(ContextExtendStage),
+    // ── Input stages (front of pipeline) ─────────────────
+    /// Declare source model capabilities and configuration
+    SourceConfig(SourceConfigStage),
+    /// Add vision/audio/video encoder to the model
     Modality(ModalityStage),
+    /// Extend context window via RoPE rescaling
+    ContextExtend(ContextExtendStage),
+
+    // ── Transform stages (middle of pipeline) ────────────
+    /// Head pruning by entropy, magnitude, gradient
+    Prune(PruneStage),
+    /// Recovery/fine-tuning with full training config
+    Train(TrainStage),
+    /// LoRA adapter training
+    Lora(LoRAStage),
+    /// Plasticity-based mixed-precision compaction
+    Compact(CompactStage),
+    /// MoE expert pruning by activation profile
+    ExpertPrune(ExpertPruneStage),
+
+    // ── Output stages (end of pipeline) ──────────────────
+    /// Quantize to GGUF, MLX, ONNX, safetensors
+    Quant(QuantStage),
+    /// Package for specific device targets (CoreML, TensorRT, etc.)
+    Package(PackageStage),
+    /// Run benchmarks (HumanEval, MMLU, custom)
+    Eval(EvalStage),
+    /// Push to HuggingFace or other registry
+    Publish(PublishStage),
+    /// Deploy to grid node for serving
+    Deploy(DeployStage),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -700,6 +721,91 @@ pub struct ModalityStage {
 }
 
 fn default_projection() -> String { "mlp".to_string() }
+
+// ── Front Bookend: Source Configuration ─────────────────────────────────────
+
+/// Declares the starting model's capabilities and target configuration.
+/// This is the "what are we working with" stage — sits at the front of every pipeline.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct SourceConfigStage {
+    /// Target context window length (tokens). May trigger context-extend stage.
+    #[serde(default)]
+    pub context_length: Option<u32>,
+
+    /// Input modalities the final model should support
+    #[serde(default)]
+    pub input_modalities: Vec<String>,
+
+    /// Target vocabulary/tokenizer (if different from base model)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tokenizer: Option<String>,
+
+    /// Maximum batch size the model should support at inference
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_batch_size: Option<u32>,
+
+    /// Target devices this model should run on (drives quant/package decisions)
+    #[serde(default)]
+    pub target_devices: Vec<String>,
+}
+
+// ── End Bookend: Package & Deploy ───────────────────────────────────────────
+
+/// Package the model for specific device targets and runtimes.
+/// Converts model weights into device-optimized formats beyond basic quantization.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct PackageStage {
+    /// Target format for packaging
+    pub format: String,
+
+    /// Target runtime/platform
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub runtime: Option<String>,
+
+    /// Optimization level (speed vs accuracy tradeoff)
+    #[serde(default = "default_optimization")]
+    pub optimization: String,
+
+    /// Target devices to validate against
+    #[serde(default)]
+    pub validate_on: Vec<String>,
+
+    /// Whether to include tokenizer in the package
+    #[serde(default = "default_true")]
+    pub include_tokenizer: bool,
+}
+
+fn default_optimization() -> String { "balanced".to_string() }
+
+/// Deploy the model to a grid node or serving endpoint.
+/// The final stage — puts the model into production.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct DeployStage {
+    /// Target node or endpoint (grid node ID, URL, "local")
+    pub target: String,
+
+    /// Whether to run a health check after deployment
+    #[serde(default = "default_true")]
+    pub health_check: bool,
+
+    /// Whether to warm up the model (run a test inference)
+    #[serde(default = "default_true")]
+    pub warmup: bool,
+
+    /// Maximum serving concurrency
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_concurrency: Option<u32>,
+
+    /// Auto-scale configuration (grid-specific)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub auto_scale: Option<bool>,
+}
 
 // ── Hardware & Outputs ──────────────────────────────────────────────────────
 
