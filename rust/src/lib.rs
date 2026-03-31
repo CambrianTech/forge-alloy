@@ -278,8 +278,62 @@ pub struct IntegrityAttestation {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub signature: Option<AttestationSignature>,
 
+    /// External trust anchor — optional immutable record of this attestation.
+    /// Blockchain tx, Merkle root, RFC 3161 timestamp, or any external proof
+    /// that this attestation existed at a specific time and hasn't been backdated.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub anchor: Option<TrustAnchor>,
+
     /// ISO 8601 timestamp of attestation
     pub attested_at: String,
+}
+
+/// External trust anchor — immutable proof that an attestation existed at a point in time.
+/// The signature proves integrity. The anchor proves existence. Together they prevent
+/// both tampering AND backdating.
+///
+/// Use cases:
+/// - Blockchain: publish attestation hash to an immutable ledger
+/// - Merkle tree: batch attestations into a root published periodically
+/// - RFC 3161: traditional timestamping authority
+/// - IPFS: content-addressed storage (hash = address)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct TrustAnchor {
+    /// Anchor type
+    pub anchor_type: AnchorType,
+
+    /// The hash or ID that was anchored (typically SHA-256 of the full attestation)
+    pub anchored_hash: String,
+
+    /// Where the anchor lives (tx hash, IPFS CID, TSA URL, Merkle root location)
+    pub location: String,
+
+    /// When the anchor was created
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub anchored_at: Option<String>,
+
+    /// Chain/network identifier (e.g. "ethereum:mainnet", "solana:mainnet")
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub network: Option<String>,
+}
+
+/// Type of external trust anchor
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "typescript", derive(TS), ts(export))]
+#[serde(rename_all = "kebab-case")]
+pub enum AnchorType {
+    /// Blockchain transaction containing the attestation hash
+    Blockchain,
+    /// Merkle root published to a known location (batched attestations)
+    MerkleRoot,
+    /// RFC 3161 Timestamp Authority response
+    Rfc3161,
+    /// IPFS content-addressed storage
+    Ipfs,
+    /// Custom anchor (describe in location field)
+    Custom,
 }
 
 /// Attestation of the code that produced results.
@@ -588,6 +642,11 @@ pub struct PublishStage {
     pub tags: Vec<String>,
     #[serde(default)]
     pub private: bool,
+    /// SHA-256 of the generated model card (README.md). If the card is edited
+    /// after publish, this hash won't match — verification tools flag the discrepancy.
+    /// The alloy is the source of truth, the card is a render.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub card_hash: Option<String>,
 }
 
 fn default_repo_template() -> String { "{base}-{domain}-forged".to_string() }

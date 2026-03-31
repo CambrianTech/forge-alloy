@@ -88,7 +88,20 @@ export interface IntegrityAttestation {
   /** Audience binding — who this attestation is for (prevents cross-marketplace replay) */
   audience?: string;
   signature?: AttestationSignature;
+  /** External trust anchor — immutable proof this attestation existed at a point in time */
+  anchor?: TrustAnchor;
   attestedAt: string;
+}
+
+/** External trust anchor — blockchain, Merkle root, RFC 3161, IPFS */
+export type AnchorType = 'blockchain' | 'merkle-root' | 'rfc3161' | 'ipfs' | 'custom';
+
+export interface TrustAnchor {
+  anchorType: AnchorType;
+  anchoredHash: string;
+  location: string;
+  anchoredAt?: string;
+  network?: string;
 }
 
 /** Attestation of the code that produced results */
@@ -222,6 +235,8 @@ export interface PublishStage {
   cardFromBenchmarks?: boolean;
   tags?: string[];
   private?: boolean;
+  /** SHA-256 of generated model card — verification tools flag edits */
+  cardHash?: string;
 }
 
 export interface ExpertPruneStage {

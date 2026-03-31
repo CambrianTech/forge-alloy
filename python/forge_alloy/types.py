@@ -103,7 +103,19 @@ class IntegrityAttestation(BaseModel):
     nonce: Optional[str] = None
     audience: Optional[str] = None
     signature: Optional[AttestationSignature] = None
+    anchor: Optional["TrustAnchor"] = None
     attested_at: str = Field(alias="attestedAt")
+
+    model_config = {"populate_by_name": True}
+
+
+class TrustAnchor(BaseModel):
+    """External trust anchor — immutable proof attestation existed at a point in time."""
+    anchor_type: Literal["blockchain", "merkle-root", "rfc3161", "ipfs", "custom"] = Field(alias="anchorType")
+    anchored_hash: str = Field(alias="anchoredHash")
+    location: str
+    anchored_at: Optional[str] = Field(default=None, alias="anchoredAt")
+    network: Optional[str] = None
 
     model_config = {"populate_by_name": True}
 
@@ -224,6 +236,7 @@ class PublishStage(BaseModel):
     card_from_benchmarks: bool = Field(default=True, alias="cardFromBenchmarks")
     tags: list[str] = Field(default_factory=list)
     private: bool = False
+    card_hash: Optional[str] = Field(default=None, alias="cardHash")
 
     model_config = {"populate_by_name": True}
 
