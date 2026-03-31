@@ -275,14 +275,6 @@ class ModalityStage(BaseModel):
     model_config = {"populate_by_name": True}
 
 
-# Discriminated union for stages
-AlloyStage = (
-    SourceConfigStage | PruneStage | TrainStage | LoRAStage | CompactStage |
-    QuantStage | PackageStage | EvalStage | PublishStage | DeployStage |
-    ExpertPruneStage | ContextExtendStage | ModalityStage
-)
-
-
 class AlloyHardware(BaseModel):
     min_vram_gb: Optional[float] = Field(default=None, alias="minVramGb")
     recommended_vram_gb: Optional[float] = Field(default=None, alias="recommendedVramGb")
@@ -293,7 +285,7 @@ class AlloyHardware(BaseModel):
     model_config = {"populate_by_name": True}
 
 
-# ── New stage types (bookends) ───────────────────────────────────────────────
+# ── Bookend stage types ───────────────────────────────────────────────────── ───────────────────────────────────────────────
 
 
 class SourceConfigStage(BaseModel):
@@ -330,6 +322,14 @@ class DeployStage(BaseModel):
     auto_scale: Optional[bool] = Field(default=None, alias="autoScale")
 
     model_config = {"populate_by_name": True}
+
+
+# Discriminated union for stages — must be after ALL stage class definitions
+AlloyStage = (
+    SourceConfigStage | PruneStage | TrainStage | LoRAStage | CompactStage |
+    QuantStage | PackageStage | EvalStage | PublishStage | DeployStage |
+    ExpertPruneStage | ContextExtendStage | ModalityStage
+)
 
 
 # ── Target (delta from source) ──────────────────────────────────────────────
