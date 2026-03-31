@@ -176,6 +176,101 @@ The complete JSON Schema is at [`schema/forge-alloy.schema.json`](schema/forge-a
 
 - [`qwen3.5-4b-code-balanced.alloy.json`](examples/qwen3.5-4b-code-balanced.alloy.json) — Recipe (before execution)
 - [`qwen3.5-4b-code-balanced-executed.alloy.json`](examples/qwen3.5-4b-code-balanced-executed.alloy.json) — Executed (with results, benchmarks, hardware profiles, attestation)
+- [`qwen3.5-4b-multimodal-code.alloy.json`](examples/qwen3.5-4b-multimodal-code.alloy.json) — Full pipeline: source-config → vision → context → prune → train → quant → eval → publish → deploy
+
+## Case Studies — The Alloy Pattern Applied
+
+The same Merkle-chained, cryptographically secured workflow handles any process that needs provenance and trust. We're using it NOW between [continuum](https://github.com/CambrianTech/continuum) and [sentinel-ai](https://github.com/CambrianTech/sentinel-ai) for model forging. The pattern is universal.
+
+### AI Model Forging (In Production)
+
+We forge models on consumer GPUs and publish to HuggingFace with full chain of custody. Every claim on the model card is backed by the alloy.
+
+```
+Introspect Qwen3.5-4B → delta: add code domain + GGUF quant
+  → forge (3 cycles on RTX 5090) → attest (code hash + model hash)
+  → eval (HumanEval 74.1%) → publish (HF + alloy file + QR)
+```
+
+**Result**: 15,000+ downloads across 13 published models. Every model carries its alloy. Anyone can verify the forge, reproduce the pipeline, or re-forge with modifications.
+
+### Content Authenticity (Deepfake Prevention)
+
+Camera with hardware enclave signs the raw image at capture. Every edit is a tracked delta. The Merkle chain proves what's real and what's modified.
+
+```
+Capture (Canon R5, enclave-signed)          → sha256:abc  ← root of trust
+  ↓
+Crop + levels (Photoshop CC via API)        → sha256:def  ← delta: crop(10,20,800,600)
+  ↓
+Publish to Twitter                          → sha256:def  ← unmodified since edit
+```
+
+**Scan QR → full edit history.** AI generated? Chain starts with a generation model, not a camera enclave. Altered? Every edit listed with exact parameters and tool. Unaltered? Camera hash matches published hash. No chain = no trust.
+
+Steganographic embedding puts the alloy hash invisibly in the image itself. Even if the QR is cropped, the proof survives.
+
+### Physical Manufacturing (Etsy, Supply Chain)
+
+A producer's workflow from design through delivery, verified end to end:
+
+```
+Design (ring-v3.stl, silver)                → sha256:abc
+  ↓
+3D Print (Formlabs, 80% infill)             → sha256:def  ← attested by printer
+  ↓
+Quality check (weight: 12.3g, 4 photos)     → sha256:ghi
+  ↓
+Publish (Etsy + Shopify)                    → sha256:jkl
+  ↓
+Ship (USPS 9400..., GPS cold chain)         → sha256:mno
+```
+
+**QR on the package.** Buyer scans → sees full provenance. Photos match product. Manufacturing specs recorded. Returns traceable. Trust without trusting the seller.
+
+### Pharmaceutical / Regulated Manufacturing
+
+FDA-grade batch records as alloy contracts:
+
+```
+Compound (lot numbers, raw materials)       → sha256:abc  ← facility-attested
+  ↓
+Synthesize (reactor: 180°C, 4hr, yield 94%) → sha256:def
+  ↓
+Quality test (purity 99.7%)                 → sha256:ghi  ← enclave-attested lab
+  ↓
+Package (lot XY-2026-0331, exp 2028-03)     → sha256:jkl
+  ↓
+Distribute (cold chain verified)            → sha256:mno
+```
+
+**FDA audit = verify the chain.** Every step attested. Every parameter recorded. The alloy IS the batch record.
+
+### Creative IP (Music, Film, Software)
+
+Prove who created what, when, with what tools:
+
+```
+Record (studio, 24-bit/96kHz, 3 musicians)  → sha256:abc  ← hardware-attested interface
+  ↓
+Mix (Pro Tools, 47 tracks)                  → sha256:def
+  ↓
+Master (LUFS -14, true peak -1dB)           → sha256:ghi
+  ↓
+Publish (Spotify + Apple + Bandcamp)        → sha256:jkl
+```
+
+**Copyright dispute?** The chain resolves it. Who recorded what, when, mixed by whom, mastered to what spec. Timestamped and signed.
+
+### The Common Pattern
+
+Every case follows the same structure. Different stage types, same infrastructure:
+
+```
+Source → Delta → Stages → Attest → Deliver → Verify (QR)
+```
+
+The Merkle chain secures it. The attestation proves it. The QR makes it accessible. The blockchain anchors it in time. [Full applications doc →](docs/APPLICATIONS.md)
 
 ## Design Principles
 
