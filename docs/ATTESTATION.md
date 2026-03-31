@@ -195,12 +195,23 @@ If a subset was used (e.g., MMLU-Pro subset of MMLU), the hash covers ONLY the s
 - Trust level: `verified`
 
 ### Phase 4: Enclave Execution (Required for Marketplace)
-- TEE: AWS Nitro Enclaves, Intel SGX, ARM TrustZone
-- Hardware attestation proves code integrity
-- Nonce from marketplace for freshness
+- Trust level: `enclave`
 - The ONLY tier that prevents all identified attacks
 - Required before real money flows through the system
-- Trust level: `enclave`
+
+**NVIDIA GPU TEE (primary target):**
+- Blackwell architecture has TEE silicon — datacenter SKUs (B200, GB200) have full TEE-I/O today
+- Consumer Blackwell (RTX 5090): TEE mode pending driver unlock (RTX PRO 6000 Server has it via R580 TRD1)
+- NVIDIA Attestation Service (NRAS) provides remote attestation + Reference Integrity Manifests (RIM)
+- SEC2 security component generates hardware attestation reports
+- Integration: `certificateChain` carries NVIDIA's attestation certificate, `environmentHash` is the GPU firmware hash
+- Ref: [NVIDIA Secure AI with Blackwell and Hopper](https://docs.nvidia.com/nvidia-secure-ai-with-blackwell-and-hopper-gpus-whitepaper.pdf)
+
+**Other TEE options:**
+- AWS Nitro Enclaves (cloud, available now)
+- Intel SGX / TDX (broad CPU-side support)
+- ARM TrustZone (mobile/embedded — phone-based attestation)
+- Apple Secure Enclave (macOS/iOS — already used in Phase 2 for key signing)
 
 ### Phase 5: Post-Quantum Migration
 - Monitor NIST PQC standard maturity (ML-DSA, SLH-DSA)
