@@ -435,8 +435,17 @@ async function verify() {
 }
 
 async function fetchWithProxy(url) {
+  // Try direct first (works if CORS allows it)
   try { const r = await fetch(url); if (r.ok) return r; } catch {}
-  return fetch('https://corsproxy.io/?' + encodeURIComponent(url));
+  // Fallback proxies — corsproxy.io started requiring paid plans
+  const proxies = [
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+    'https://corsproxy.io/?' + encodeURIComponent(url),
+  ];
+  for (const proxy of proxies) {
+    try { const r = await fetch(proxy); if (r.ok) return r; } catch {}
+  }
+  throw new Error('Could not fetch alloy — CORS blocked and proxies unavailable. Try dropping the file instead.');
 }
 
 async function generateQRDataUrl(text) {
