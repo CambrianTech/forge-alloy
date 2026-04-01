@@ -1,8 +1,19 @@
-# ForgeAlloy — Trustless Contract for AI and Beyond
+# ForgeAlloy — Trustless Contract for AI Model Transformation
 
-End-to-end cryptographically secured workflow — chain of custody from creation through delivery, tracked in a blockchain, rewindable in time, corruption prevented by technology.
+A **domain-agnostic pipeline contract** with cryptographic chain of custody. An alloy defines WHAT to do (the recipe), records WHAT happened (the results), and PROVES it was done honestly (the attestation). Works for LLMs, vision, audio, diffusion, robotics — any domain that transforms models.
 
-A `.alloy.json` is a **Dockerfile for models** — the complete, typed specification for transforming a base model into a specialized one. It's both the recipe (before execution) and the report card (after execution), with cryptographic attestation so nobody can fake the results.
+A `.alloy.json` is a **Dockerfile for models**. It's both the recipe (before execution) and the report card (after execution). The last stage is always **delivery** — the model reaches its destination only after every prior stage is verified.
+
+### Core Concepts
+
+| Concept | What It Is |
+|---------|-----------|
+| **Alloy** | A complete pipeline spec: source model → stages → delivery |
+| **Stage** | One step in the pipeline (transform, evaluate, package) |
+| **Domain** | A family of stage types (LLM, vision, audio, diffusion) |
+| **Results** | Benchmarks, samples, hardware profiles — attached after execution |
+| **Attestation** | Cryptographic proof: who ran what, on which hardware, with which code |
+| **Delivery** | Final stage — publish, deploy, or hand off. Never automatic without review. |
 
 ## Quick Example
 
@@ -34,7 +45,23 @@ After execution, the same file gains a `results` section with benchmark scores, 
 
 ## Stage Types
 
-Stages are the building blocks of every alloy pipeline. They're organized into three phases — **input** (configure), **transform** (modify the model), **output** (produce deliverables) — and are **domain-extensible**. The stages below are the LLM domain. Other domains (vision, audio, diffusion, robotics) register their own stage types with the same schema pattern.
+Every alloy pipeline is a sequence of **stages** organized into three phases:
+
+```
+INPUT (configure) → TRANSFORM (modify the model) → DELIVERY (verify + ship)
+```
+
+Stages are **domain-extensible**. The core contract defines the phase structure. Each domain (LLM, vision, audio, diffusion) registers its own stage types. The executor, attestation, and pipeline runner are domain-agnostic.
+
+### Generic Pipeline Structure
+
+| Phase | Purpose | Examples (any domain) |
+|-------|---------|----------------------|
+| **Input** | Configure source model, capabilities, targets | source-config, context-extend, modality |
+| **Transform** | Modify model weights, architecture, behavior | prune, train, lora, compact, adapt |
+| **Delivery** | Verify quality, package, ship to destination | eval, quant, package, deliver |
+
+**Delivery is never automatic.** The alloy defines what CAN be delivered and where. Actual delivery requires explicit approval — the forge produces artifacts and evidence, a human (or authorized agent) reviews and approves.
 
 ### LLM Domain (built-in)
 
@@ -48,23 +75,23 @@ Stages are the building blocks of every alloy pipeline. They're organized into t
 | `lora` | transform | LoRA adapter training (QLoRA, rank, alpha, dropout) |
 | `compact` | transform | Plasticity-based mixed-precision compaction |
 | `expert-prune` | transform | MoE expert pruning by activation profile |
-| `quant` | output | Output quantization (GGUF, MLX, ONNX, safetensors) |
-| `eval` | output | Benchmarking (HumanEval, MMLU, GSM8K, custom) |
-| `publish` | output | Push to HuggingFace with generated model card |
-| `deploy` | output | Deploy to grid node for serving |
+| `quant` | delivery | Output quantization (GGUF, MLX, ONNX, safetensors) |
+| `eval` | delivery | Benchmarking (HumanEval, MMLU, GSM8K, custom) |
+| `publish` | delivery | Push to HuggingFace with generated model card |
+| `deploy` | delivery | Deploy to grid node for serving |
 
-### Domain Extension
+### Other Domains
 
-Forge-alloy is not LLM-specific. The stage system is generic — any domain can register stages that follow the same input/transform/output pattern:
+The same pipeline structure applies to any model domain:
 
-| Domain | Example Stages |
-|--------|---------------|
-| **Vision** | `augment`, `backbone-swap`, `detection-head`, `calibrate` |
-| **Diffusion** | `unet-prune`, `scheduler-swap`, `vae-tune` |
-| **Audio** | `codec-swap`, `speaker-adapt`, `denoise` |
-| **Robotics** | `sim-to-real`, `policy-distill`, `safety-bound` |
+| Domain | Input | Transform | Delivery |
+|--------|-------|-----------|----------|
+| **Vision** | source-config, calibrate | augment, backbone-swap, detection-head | eval (mAP, IoU), package (CoreML, TensorRT) |
+| **Diffusion** | source-config | unet-prune, scheduler-swap, vae-tune | eval (FID, CLIP), package |
+| **Audio** | source-config | codec-swap, speaker-adapt, denoise | eval (WER, MOS), package |
+| **Robotics** | source-config, sim-config | sim-to-real, policy-distill, safety-bound | eval (success rate), deploy |
 
-Each domain defines its own stage configs, executors, and eval benchmarks. The alloy contract, attestation, and pipeline execution are domain-agnostic — the same executor runs any domain's stages. See [#7](https://github.com/CambrianTech/forge-alloy/issues/7) for the domain extension roadmap.
+Each domain defines its own stage configs, executors, and benchmarks. The alloy contract and attestation are universal. See [#7](https://github.com/CambrianTech/forge-alloy/issues/7) for the domain extension roadmap.
 
 ## Results & Benchmarks
 
