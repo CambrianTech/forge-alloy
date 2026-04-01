@@ -34,18 +34,37 @@ After execution, the same file gains a `results` section with benchmark scores, 
 
 ## Stage Types
 
-| Stage | What It Does |
-|-------|-------------|
-| `prune` | Head pruning (entropy, magnitude, gradient) |
-| `train` | Recovery/fine-tuning with full training config |
-| `lora` | LoRA adapter training (QLoRA, rank, alpha, dropout) |
-| `compact` | Plasticity-based mixed-precision compaction |
-| `quant` | Output quantization (GGUF, MLX, ONNX) |
-| `eval` | Benchmarking (HumanEval, MMLU, GSM8K, IMO-ProofBench, custom) |
-| `publish` | Push to HuggingFace with generated model card |
-| `expert-prune` | MoE expert pruning by activation profile |
-| `context-extend` | RoPE rescaling (YaRN, NTK) for longer context |
-| `modality` | Add vision/audio encoder (LLaVA-style, Whisper-style) |
+Stages are the building blocks of every alloy pipeline. They're organized into three phases — **input** (configure), **transform** (modify the model), **output** (produce deliverables) — and are **domain-extensible**. The stages below are the LLM domain. Other domains (vision, audio, diffusion, robotics) register their own stage types with the same schema pattern.
+
+### LLM Domain (built-in)
+
+| Stage | Phase | What It Does |
+|-------|-------|-------------|
+| `source-config` | input | Context window, modalities, target devices |
+| `context-extend` | input | RoPE rescaling (YaRN, NTK) for longer context |
+| `modality` | input | Add vision/audio encoder (LLaVA-style, Whisper-style) |
+| `prune` | transform | Head pruning (entropy, magnitude, gradient) |
+| `train` | transform | Recovery/fine-tuning with full training config |
+| `lora` | transform | LoRA adapter training (QLoRA, rank, alpha, dropout) |
+| `compact` | transform | Plasticity-based mixed-precision compaction |
+| `expert-prune` | transform | MoE expert pruning by activation profile |
+| `quant` | output | Output quantization (GGUF, MLX, ONNX, safetensors) |
+| `eval` | output | Benchmarking (HumanEval, MMLU, GSM8K, custom) |
+| `publish` | output | Push to HuggingFace with generated model card |
+| `deploy` | output | Deploy to grid node for serving |
+
+### Domain Extension
+
+Forge-alloy is not LLM-specific. The stage system is generic — any domain can register stages that follow the same input/transform/output pattern:
+
+| Domain | Example Stages |
+|--------|---------------|
+| **Vision** | `augment`, `backbone-swap`, `detection-head`, `calibrate` |
+| **Diffusion** | `unet-prune`, `scheduler-swap`, `vae-tune` |
+| **Audio** | `codec-swap`, `speaker-adapt`, `denoise` |
+| **Robotics** | `sim-to-real`, `policy-distill`, `safety-bound` |
+
+Each domain defines its own stage configs, executors, and eval benchmarks. The alloy contract, attestation, and pipeline execution are domain-agnostic — the same executor runs any domain's stages. See [#7](https://github.com/CambrianTech/forge-alloy/issues/7) for the domain extension roadmap.
 
 ## Results & Benchmarks
 
