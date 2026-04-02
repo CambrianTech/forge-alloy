@@ -1,0 +1,45 @@
+{
+  "name": "qwen3-vl-4b-code-ui-forged",
+  "version": "1.0.0",
+  "description": "Vision model that reads code screenshots and UI. EXPERIMENTAL.",
+  "author": "continuum-ai",
+  "tags": ["vision", "code", "multimodal", "forge-alloy"],
+  "license": "apache-2.0",
+  "source": {
+    "baseModel": "Qwen/Qwen3-VL-4B-Instruct",
+    "architecture": "qwen3_vl",
+    "isMoE": false
+  },
+  "stages": [
+    {
+      "type": "train",
+      "domain": "code",
+      "dataset": "m-a-p/CodeFeedback-Filtered-Instruction",
+      "steps": 1000,
+      "learningRate": "1e-4",
+      "batchSize": 1,
+      "gradientAccumulation": 8,
+      "scheduler": "cosine",
+      "warmupRatio": 0.05,
+      "precision": "bf16",
+      "sequenceLength": 2048,
+      "optimizations": ["gradient_checkpointing"],
+      "_note": "EXPERIMENTAL: LoRA on LLM portion only. Vision encoder frozen."
+    },
+    {
+      "type": "eval",
+      "benchmarks": [
+        {"name": "humaneval"}
+      ],
+      "compareToBase": true
+    },
+    {
+      "type": "deliver"
+    }
+  ],
+  "cycles": 1,
+  "hardware": {
+    "minVramGb": 16,
+    "recommendedVramGb": 24
+  }
+}

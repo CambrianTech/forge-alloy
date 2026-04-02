@@ -1,0 +1,52 @@
+{
+  "name": "qwen3.5-9b-code-128k-forged",
+  "version": "1.0.0",
+  "description": "9B coding model with 128K context. The viral target.",
+  "author": "continuum-ai",
+  "tags": ["code", "128k-context", "yarn", "forge-alloy"],
+  "license": "apache-2.0",
+  "source": {
+    "baseModel": "Qwen/Qwen3.5-9B",
+    "architecture": "qwen3_5",
+    "isMoE": false
+  },
+  "stages": [
+    {
+      "type": "context-extend",
+      "targetLength": 131072,
+      "method": "yarn"
+    },
+    {
+      "type": "train",
+      "domain": "code",
+      "dataset": "m-a-p/CodeFeedback-Filtered-Instruction",
+      "steps": 2000,
+      "learningRate": "1e-4",
+      "batchSize": 1,
+      "gradientAccumulation": 8,
+      "scheduler": "cosine",
+      "warmupRatio": 0.03,
+      "weightDecay": 0.01,
+      "maxGradientNorm": 1.0,
+      "precision": "bf16",
+      "sequenceLength": 4096,
+      "optimizations": ["flash_attention", "gradient_checkpointing"]
+    },
+    {
+      "type": "eval",
+      "benchmarks": [
+        {"name": "humaneval"},
+        {"name": "humaneval+"}
+      ],
+      "compareToBase": true
+    },
+    {
+      "type": "deliver"
+    }
+  ],
+  "cycles": 3,
+  "hardware": {
+    "minVramGb": 24,
+    "recommendedVramGb": 32
+  }
+}

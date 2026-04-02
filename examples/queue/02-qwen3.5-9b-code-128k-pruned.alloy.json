@@ -1,0 +1,51 @@
+{
+  "name": "qwen3.5-9b-code-128k-pruned-forged",
+  "version": "1.0.0",
+  "description": "9B pruned to ~7B with 128K context. MacBook Air target.",
+  "author": "continuum-ai",
+  "tags": ["code", "128k-context", "pruned", "yarn", "forge-alloy"],
+  "license": "apache-2.0",
+  "source": {
+    "baseModel": "continuum-ai/qwen3.5-9b-code-128k-forged",
+    "architecture": "qwen3_5",
+    "isMoE": false
+  },
+  "stages": [
+    {
+      "type": "prune",
+      "strategy": "entropy",
+      "level": 0.25,
+      "minHeadsPerLayer": 4
+    },
+    {
+      "type": "train",
+      "domain": "code",
+      "dataset": "m-a-p/CodeFeedback-Filtered-Instruction",
+      "steps": 2000,
+      "learningRate": "2e-4",
+      "batchSize": 1,
+      "gradientAccumulation": 8,
+      "scheduler": "cosine",
+      "warmupRatio": 0.05,
+      "precision": "bf16",
+      "sequenceLength": 4096,
+      "optimizations": ["flash_attention", "gradient_checkpointing"]
+    },
+    {
+      "type": "eval",
+      "benchmarks": [
+        {"name": "humaneval"},
+        {"name": "humaneval+"}
+      ],
+      "compareToBase": true
+    },
+    {
+      "type": "deliver"
+    }
+  ],
+  "cycles": 3,
+  "hardware": {
+    "minVramGb": 24,
+    "recommendedVramGb": 32
+  }
+}
