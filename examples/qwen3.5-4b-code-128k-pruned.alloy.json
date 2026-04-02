@@ -1,0 +1,53 @@
+{
+  "name": "qwen3.5-4b-code-128k-pruned-forged",
+  "version": "1.0.0",
+  "description": "128K context + 25% head pruning. Extended, trained, pruned, retrained.",
+  "author": "continuum-ai",
+  "tags": ["code", "128k-context", "pruned", "yarn", "forge-alloy"],
+  "license": "apache-2.0",
+  "source": {
+    "baseModel": "continuum-ai/qwen3.5-4b-code-128k-forged",
+    "architecture": "qwen3_5",
+    "isMoE": false
+  },
+  "stages": [
+    {
+      "type": "prune",
+      "strategy": "entropy",
+      "level": 0.25,
+      "minHeadsPerLayer": 4
+    },
+    {
+      "type": "train",
+      "domain": "code",
+      "dataset": "m-a-p/CodeFeedback-Filtered-Instruction",
+      "steps": 2000,
+      "learningRate": "2e-4",
+      "batchSize": 2,
+      "gradientAccumulation": 4,
+      "scheduler": "cosine",
+      "warmupRatio": 0.05,
+      "weightDecay": 0.01,
+      "maxGradientNorm": 1.0,
+      "precision": "bf16",
+      "sequenceLength": 4096,
+      "optimizations": ["flash_attention", "gradient_checkpointing"]
+    },
+    {
+      "type": "eval",
+      "benchmarks": [
+        {"name": "humaneval"},
+        {"name": "humaneval+"}
+      ],
+      "compareToBase": true
+    },
+    {
+      "type": "deliver"
+    }
+  ],
+  "cycles": 3,
+  "hardware": {
+    "minVramGb": 10,
+    "recommendedVramGb": 24
+  }
+}
