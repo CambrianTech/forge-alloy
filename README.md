@@ -1,19 +1,56 @@
-# ForgeAlloy — Trustless Contract for AI Model Transformation
+# ForgeAlloy — Universal Attestation Chain
 
-A **domain-agnostic pipeline contract** with cryptographic chain of custody. An alloy defines WHAT to do (the recipe), records WHAT happened (the results), and PROVES it was done honestly (the attestation). Works for LLMs, vision, audio, diffusion, robotics — any domain that transforms models.
+A **domain-agnostic chain of custody** for any data transformation. Each link in the chain is signed, hashed, and verifiable by anyone — no trusted server, no central authority. The math is the authority.
 
-A `.alloy.json` is a **Dockerfile for models**. It's both the recipe (before execution) and the report card (after execution). The last stage is always **delivery** — the model reaches its destination only after every prior stage is verified.
+Built for AI model forging. Extends to any domain: datasets, adapters, compute receipts, grid transactions, package delivery, document signing — anything where you need to prove who did what to which data.
+
+A `.alloy.json` is a **Dockerfile for models** AND a **shipping manifest** AND a **signed receipt**. It's the recipe (before), the report card (after), and the cryptographic proof (always). Verify it client-side, offline, with no network. Scan a QR code and see the entire chain.
 
 ### Core Concepts
 
 | Concept | What It Is |
 |---------|-----------|
-| **Alloy** | A complete pipeline spec: source model → stages → delivery |
-| **Stage** | One step in the pipeline (transform, evaluate, package) |
-| **Domain** | A family of stage types (LLM, vision, audio, diffusion) |
-| **Results** | Benchmarks, samples, hardware profiles — attached after execution |
+| **Alloy** | A chain of signed transformations on hashed data |
+| **Stage** | One link in the chain: input hash → transformation → output hash → signature |
+| **Domain** | A family of stage types (LLM, vision, audio, compute, delivery — extensible) |
+| **Chain** | Each stage's output hash = next stage's input hash. Walk backwards to verify. |
 | **Attestation** | Cryptographic proof: who ran what, on which hardware, with which code |
-| **Delivery** | Final stage — publish, deploy, or hand off. Never automatic without review. |
+| **Verification** | Client-side. Recompute hashes, verify signatures. No trusted server. |
+| **QR Code** | Self-contained proof — scan to verify the entire chain offline |
+| **Delivery** | Final stage — hand off to recipient. Never automatic without review. |
+
+### The Chain
+
+```
+[Source] ──hash──► [Stage 1] ──hash──► [Stage 2] ──hash──► [Delivery]
+   │                  │                    │                    │
+ signed             signed               signed              signed
+```
+
+Each link: `prev_hash` + `input_hash` + `stage_config` + `output_hash` + `signature`. Break any link → chain invalid. Verify any link → follow `prev` to origin.
+
+### Type Byte (domain classification)
+
+```
+0x01  Model forge       Prune, train, quant — AI model transformation
+0x02  Adapter training   LoRA, skill acquisition
+0x03  Dataset            Provenance of training data
+0x04  Compute receipt    Grid transaction, GPU-hours
+0x05  Delivery           Model published/deployed
+0x06  Evaluation         Benchmark scores, quality gates
+0x07  Vision encoder     Modality addition (CLIP, SigLIP)
+0x08  Audio encoder      Modality addition (Whisper)
+0xFF  Custom domain      Schema in payload
+```
+
+### Verification (no trusted server)
+
+```bash
+forge-alloy verify model.alloy.json --model-dir ./weights/
+# Recomputes hashes, verifies signatures, walks chain — all local, no network
+```
+
+In browser: client-side JS does the same. The verification page is a convenience — the math runs locally.
 
 ## Quick Example
 
