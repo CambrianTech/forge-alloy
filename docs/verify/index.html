@@ -151,10 +151,7 @@
 </div>
 
 <script>
-const KNOWN_ALLOYS = [
-  'https://huggingface.co/continuum-ai/qwen3.5-4b-code-forged/resolve/main/qwen3.5-4b-code-forged.alloy.json',
-  'https://huggingface.co/continuum-ai/qwen3.5-27b-code-forged/resolve/main/qwen3.5-27b-code-forged.alloy.json',
-];
+// No hardcoded alloy list — we search HuggingFace dynamically
 
 // File handling
 const dropzone = document.getElementById('dropzone');
@@ -211,19 +208,38 @@ async function verify() {
     expectedHash = input;
   }
 
-  // Search known alloys if we only have a hash
+  // Search for alloy by hash — scan all continuum-ai models on HF
+  // No hardcoded list. HuggingFace IS the external source of truth.
+  // Hash verification happens client-side via crypto.subtle — zero trust in us.
   if (!url && expectedHash) {
-    for (const known of KNOWN_ALLOYS) {
-      try {
-        const resp = await fetchWithProxy(known);
-        const txt = await resp.text();
-        const h = await sha256hex(txt);
-        if (h.startsWith(expectedHash)) { url = known; break; }
-      } catch { continue; }
+    statusEl.innerHTML = '<div class="status-icon">⏳</div><div class="status-text">Searching HuggingFace...</div><div class="status-detail">Scanning continuum-ai models for hash ' + expectedHash + '…</div>';
+    try {
+      // &full=true returns siblings (file listing) in one request — no N+1
+      const modelsResp = await fetchWithProxy('https://huggingface.co/api/models?author=continuum-ai&limit=100&full=true');
+      const models = await modelsResp.json();
+      let searched = 0;
+      for (const m of models) {
+        // Find .alloy.json in file list (no extra API call needed)
+        const alloyFile = (m.siblings || []).find(f => f.rfilename?.endsWith('.alloy.json'));
+        if (!alloyFile) continue;
+        searched++;
+        statusEl.querySelector('.status-detail').textContent =
+          'Checking ' + m.modelId + '… (' + searched + '/' + models.length + ')';
+        try {
+          const alloyUrl = 'https://huggingface.co/' + m.modelId + '/resolve/main/' + alloyFile.rfilename;
+          const resp = await fetchWithProxy(alloyUrl);
+          if (!resp.ok) continue;
+          const txt = await resp.text();
+          const h = await sha256hex(txt);
+          if (h.startsWith(expectedHash)) { url = alloyUrl; break; }
+        } catch { continue; }
+      }
+    } catch (e) {
+      console.error('HF search failed:', e);
     }
     if (!url) {
       statusEl.className = 'status failed';
-      statusEl.innerHTML = '<div class="status-icon">❌</div><div class="status-text">Alloy not found</div><div class="status-detail">Hash ' + expectedHash + ' not in known models. Paste the full URL.</div>';
+      statusEl.innerHTML = '<div class="status-icon">❌</div><div class="status-text">Alloy not found</div><div class="status-detail">Hash ' + expectedHash + ' not found in continuum-ai models.<br>Paste the full alloy URL or drop the .alloy.json file.</div>';
       return;
     }
   }

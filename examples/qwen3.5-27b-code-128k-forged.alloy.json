@@ -1,0 +1,110 @@
+{
+  "name": "qwen3.5-27b-code-128k-forged",
+  "version": "1.0.0",
+  "description": "The model nobody has published: Qwen3.5-27B aggressively pruned for code, context extended to 128K via YaRN, LoRA-recovered, multi-format quantized. 27B-class coding with 128K context on a MacBook Pro.",
+  "author": "continuum-ai",
+  "tags": ["code", "qwen3.5", "27b", "128k-context", "long-context", "experiential-plasticity", "forge-alloy", "yarn"],
+  "license": "apache-2.0",
+
+  "source": {
+    "baseModel": "Qwen/Qwen3.5-27B",
+    "architecture": "qwen3_5"
+  },
+
+  "stages": [
+    {
+      "type": "source-config",
+      "contextLength": 131072,
+      "inputModalities": ["text"],
+      "targetDevices": ["MacBook Pro 32GB", "MacBook Pro 16GB", "RTX 5090", "RTX 4090"]
+    },
+    {
+      "type": "context-extend",
+      "targetLength": 131072,
+      "method": "yarn",
+      "trainingSteps": 500
+    },
+    {
+      "type": "prune",
+      "strategy": "entropy",
+      "level": 0.4,
+      "minHeadsPerLayer": 4,
+      "minKvHeadsPerLayer": 2,
+      "analysisSteps": 300
+    },
+    {
+      "type": "lora",
+      "rank": 64,
+      "alpha": 128,
+      "dropout": 0.05,
+      "targetModules": ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+      "quantize": true,
+      "quantizeBits": 4,
+      "dataset": "m-a-p/CodeFeedback-Filtered-Instruction",
+      "epochs": 2,
+      "learningRate": "1e-4",
+      "batchSize": 1,
+      "mergeAfter": true
+    },
+    {
+      "type": "train",
+      "domain": "code",
+      "dataset": "m-a-p/CodeFeedback-Filtered-Instruction",
+      "steps": 2000,
+      "learningRate": "5e-5",
+      "batchSize": 1,
+      "gradientAccumulation": 8,
+      "scheduler": "cosine",
+      "warmupRatio": 0.05,
+      "precision": "bf16",
+      "sequenceLength": 8192,
+      "optimizations": ["flash_attention", "gradient_checkpointing", "optimizer_8bit", "sequence_packing"]
+    },
+    {
+      "type": "quant",
+      "format": "gguf",
+      "quantTypes": ["Q4_K_M", "Q5_K_M", "Q6_K", "Q8_0"],
+      "deviceTargets": ["MacBook Air 16GB", "MacBook Pro 16GB", "MacBook Pro 32GB", "RTX 4090", "RTX 5090"]
+    },
+    {
+      "type": "eval",
+      "benchmarks": [
+        { "name": "humaneval", "submitToLeaderboard": true },
+        { "name": "humaneval+", "submitToLeaderboard": true },
+        { "name": "mmlu", "subset": "mmlu-pro", "nShot": 5, "submitToLeaderboard": false },
+        { "name": "gsm8k", "nShot": 8, "submitToLeaderboard": false },
+        { "name": "arc_challenge", "nShot": 25, "submitToLeaderboard": false }
+      ],
+      "passingThreshold": 55,
+      "compareToBase": true
+    },
+    {
+      "type": "publish",
+      "org": "continuum-ai",
+      "repoNameTemplate": "qwen3.5-27b-code-128k-forged",
+      "includeAlloy": true,
+      "cardFromBenchmarks": true,
+      "tags": ["continuum", "forged", "experiential-plasticity", "forge-alloy", "128k-context", "yarn", "long-context", "code"],
+      "private": false
+    }
+  ],
+
+  "cycles": 3,
+
+  "hardware": {
+    "minVramGb": 24,
+    "recommendedVramGb": 32,
+    "estimatedDurationMinutes": 360,
+    "supportsCPU": false,
+    "testedOn": ["RTX 5090"]
+  },
+
+  "outputs": {
+    "produces": [
+      { "type": "safetensors", "description": "Pruned + LoRA-merged + context-extended base weights" },
+      { "type": "gguf", "description": "Q4_K_M (MacBook Air), Q5/Q6 (MacBook Pro), Q8 (desktop)" },
+      { "type": "model-card", "description": "Auto-generated with benchmark comparisons vs base 27B" },
+      { "type": "alloy", "description": "Full executed alloy with attestation chain" }
+    ]
+  }
+}
