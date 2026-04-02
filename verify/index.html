@@ -262,10 +262,8 @@
 </div>
 
 <script>
-// Registry of alloy hashes for backwards-compatible QR codes (short hash → URL).
-// New QR codes encode the full URL. This handles legacy short-hash QR codes.
-// When the forge-alloy API exists, this moves to a hosted registry endpoint.
-const HASH_REGISTRY_URL = 'https://raw.githubusercontent.com/CambrianTech/forge-alloy/main/verify/registry.json';
+// No hardcoded registry. Search HuggingFace dynamically.
+// The alloy file on HF is the source of truth. Hash verification is client-side.
 
 const ghBase = 'https://github.com/CambrianTech/';
 const hfBase = 'https://huggingface.co/';
@@ -398,27 +396,43 @@ async function verify() {
   statusEl.innerHTML = '<div class="status-icon">&#x23F3;</div><div class="status-text">Verifying chain...</div>';
 
   let url = null;
+  let expectedHash = null;
 
   if (input.startsWith('http')) {
-    // Full URL — fetch directly
-    url = input;
+    // Full URL — fetch directly (may include hash fragment)
+    if (input.includes('#')) {
+      url = input.split('#')[0];
+      expectedHash = input.split('#').pop();
+    } else {
+      url = input;
+    }
   } else if (/^[0-9a-f]{8,64}$/.test(input)) {
-    // Short hash (legacy QR code) — look up in registry
+    // Hash from QR code — search HuggingFace dynamically
+    expectedHash = input;
+    statusEl.innerHTML = '<div class="status-icon">&#x23F3;</div><div class="status-text">Searching HuggingFace...</div><div class="status-detail">Scanning continuum-ai models for hash ' + input + '&hellip;</div>';
     try {
-      const regResp = await fetch(HASH_REGISTRY_URL);
-      if (regResp.ok) {
-        const registry = await regResp.json();
-        for (const entry of registry) {
-          if (entry.hash.startsWith(input) || input.startsWith(entry.hash)) {
-            url = entry.url;
-            break;
-          }
-        }
+      const modelsResp = await fetchWithProxy('https://huggingface.co/api/models?author=continuum-ai&limit=100&full=true');
+      const models = await modelsResp.json();
+      let searched = 0;
+      for (const m of models) {
+        const alloyFile = (m.siblings || []).find(f => f.rfilename?.endsWith('.alloy.json'));
+        if (!alloyFile) continue;
+        searched++;
+        const detail = statusEl.querySelector('.status-detail');
+        if (detail) detail.textContent = 'Checking ' + m.modelId + '... (' + searched + ')';
+        try {
+          const alloyUrl = 'https://huggingface.co/' + m.modelId + '/resolve/main/' + alloyFile.rfilename;
+          const resp = await fetchWithProxy(alloyUrl);
+          if (!resp.ok) continue;
+          const txt = await resp.text();
+          const h = await sha256hex(txt);
+          if (h.startsWith(input)) { url = alloyUrl; break; }
+        } catch { continue; }
       }
-    } catch {}
+    } catch (e) { console.error('HF search failed:', e); }
     if (!url) {
       statusEl.className = 'status failed';
-      statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Hash not in registry</div><div class="status-detail">Paste the full URL to the .alloy.json file, or drop it below.</div>';
+      statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Alloy not found</div><div class="status-detail">Hash ' + input + ' not found in continuum-ai models.<br>Paste the full alloy URL or drop the .alloy.json file.</div>';
       return;
     }
   } else {
@@ -443,7 +457,7 @@ async function verify() {
       try { sessionStorage.setItem(cacheKey, text); } catch {}
     }
 
-    await showChain(text, null);
+    await showChain(text, expectedHash);
   } catch (err) {
     statusEl.className = 'status failed';
     statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Failed to fetch</div><div class="status-detail">' + err.message + '</div>';
