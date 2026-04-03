@@ -528,6 +528,35 @@ Third-party adapters sign their own findings with their own keys. Each adapter i
 
 Open-source adapters get higher trust — anyone can audit the code. The forge-alloy API issues nonces and countersigns results, adding a second independent witness. See [docs/SDK-ARCHITECTURE.md](docs/SDK-ARCHITECTURE.md).
 
+## Zero Overhead — You're Already Doing This
+
+Attestation isn't a burden. It's recognition that what you already do IS the proof.
+
+| What You Already Do | What the Alloy Adds |
+|---------------------|---------------------|
+| Code lives in git | Hash the commit — done |
+| Weights live on HuggingFace | Hash the files — done |
+| Eval scripts are in the repo | Hash at that commit — done |
+| Builds are reproducible from commits | That's the replay — done |
+| Input data has a URL/path | Hash it — done |
+
+The alloy doesn't create new storage. It doesn't create new process. It creates **a chain of hashes over things that already exist.** The JSON is kilobytes. The hashes are 64 characters each. The signature is one API call.
+
+**What it costs:**
+- Code retention: zero (git keeps history forever)
+- Weight retention: zero (already on HuggingFace/S3/your disk)
+- Eval data retention: zero (public benchmarks don't disappear)
+- Alloy file: ~2KB JSON
+- Signing: one `SecKeyCreateSignature` call (~1ms)
+
+**What it proves:**
+- Every claim on your model card is reproducible
+- Every benchmark score is replayable
+- Every transformation is traceable to source
+- Deepfakes and fabricated results are mathematically impossible
+
+Full strict mode. No grace periods. No recovery windows. No burden — because there's nothing extra to store. The data already lives somewhere. The alloy just holds the hashes.
+
 ## Design Principles
 
 - **JSON always** — no YAML, no TOML
