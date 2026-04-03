@@ -31,6 +31,28 @@ The attestation IS the invoice. The contract defines the work. The executed cont
 
 No intermediary decides the price. The contract is public. The attestation is verifiable. Supply and demand set the rate. The grid is the marketplace.
 
+## Reputation IS Verification Rate
+
+No voting. No reviews. No stars. Your reputation is derived from one thing: **can your attestation chains be replayed right now?**
+
+```
+Node A: 99.8% chains verifiable, 500 completed forges  →  premium rate
+Node B: 94.0% chains verifiable, 50 completed forges   →  market rate
+Node C: 80.0% chains verifiable, 10 completed forges   →  discount or no work
+```
+
+The verification endpoint IS the rating system. One mechanism, not two. The grid checks your chains, computes your percentage, routes work accordingly. Reliable nodes get more work, earn more, get even more work. Unreliable nodes fade unless they fix their storage.
+
+**New nodes** start with no history — they take lower-paying jobs to build reputation, just like a new eBay seller. Transaction count + verification rate = trust score. Buyers filter: "only nodes >99% verification, >100 completed forges."
+
+**Pricing follows trust.** A 5090 with 80% reliability is worth less than a 4090 with 99.9%. Hardware specs set the ceiling. Reputation sets the actual rate. The market decides — no authority sets prices.
+
+**The incentive is self-enforcing:**
+- Lose data → chain breaks → visible to everyone immediately
+- Not "we might get audited someday" — your models show UNVERIFIABLE right now
+- Nobody needs to be told to back up their data — the consequence of losing it is instant and public
+- HuggingFace, node operators, grid participants all have their own incentive to maintain their piece of the chain
+
 ## Humans Thrive
 
 The ecosystem is designed so humans and AI both contribute value and both get compensated:
