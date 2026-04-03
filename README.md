@@ -1,5 +1,7 @@
 # ForgeAlloy — Universal Attestation Chain
 
+> *"Zero-trust is the only path to absolute trust, proven by mathematics alone. A Merkle chain for any series of transactions — each stage cryptographically and deterministically secured — allows even AI to be part of that chain. Deepfakes and misinformation become impossible."*
+
 A **domain-agnostic chain of custody** for any data transformation. Each link in the chain is signed, hashed, and verifiable by anyone — no trusted server, no central authority. The math is the authority.
 
 Built for AI model forging. Extends to any domain: datasets, adapters, compute receipts, grid transactions, package delivery, document signing — anything where you need to prove who did what to which data.
