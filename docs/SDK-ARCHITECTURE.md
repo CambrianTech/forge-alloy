@@ -128,12 +128,45 @@ No trust. No review board. No human judgment. The replay IS the verification.
 
 ### Longevity Guarantee
 
-Each stage's data must remain available for the NEXT stage to verify against. This is the contract:
+Each stage's data must remain available for the NEXT stage to verify against. The contract defines the retention duration — like the IRS requiring 7 years of tax records. This isn't policy — it's a hash that either resolves or doesn't.
 
 - You claim `output_hash: sha256:abc` for your prune stage
 - The train stage's `input_hash` must be `sha256:abc`
 - If you can't produce the data that hashes to `sha256:abc` for replay, your attestation is void
 - The chain demands the data. Delete your inputs after claiming an output = broken chain = rejected
+- Day 1 or year 6 — the verification is identical: produce the data, hash it, does it match?
+
+```json
+{
+  "stage": "prune",
+  "output_hash": "sha256:abc...",
+  "retention": {
+    "duration": "7y",
+    "storage": "content-addressed",
+    "expires": "2033-04-03T00:00:00Z"
+  }
+}
+```
+
+### Amendments (Honest Gaps)
+
+If data becomes unavailable (storage failure, policy change, legal order), the chain doesn't silently break. An **amendment** is filed — a new attested stage declaring the gap:
+
+```json
+{
+  "type": "amendment",
+  "stage_ref": "sha256:abc...",
+  "reason": "Storage node decommissioned",
+  "data_available": false,
+  "amended_at": "2029-06-15T00:00:00Z",
+  "signed_by": "passkey:..."
+}
+```
+
+The amendment is itself hashed and chained. The audit trail is honest about its own gaps. No silent failures. No "we lost the records." Either:
+- **Data present** → hash matches → verified
+- **Amendment filed** → gap declared, signed, dated → accountable
+- **Neither** → chain broken → breach
 
 This is how the API **forces adherence**. If your source code complies with the alloy spec, compliance is mathematically proven through replay. Not audited. Not reviewed. Proven.
 
