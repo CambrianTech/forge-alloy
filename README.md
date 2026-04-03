@@ -111,6 +111,7 @@ Stages are **domain-extensible**. The core contract defines the phase structure.
 | `train` | transform | Recovery/fine-tuning with full training config |
 | `lora` | transform | LoRA adapter training (QLoRA, rank, alpha, dropout) |
 | `compact` | transform | Plasticity-based mixed-precision compaction |
+| `recover` | transform | Post-surgery weight recovery (analytical, RANSAC, ML meta-learner) |
 | `expert-prune` | transform | MoE expert pruning by activation profile |
 | `quant` | delivery | Output quantization (GGUF, MLX, ONNX, safetensors) |
 | `eval` | delivery | Benchmarking (HumanEval, MMLU, GSM8K, custom) |
@@ -470,6 +471,38 @@ Every frame's provenance traces back to the sensor that captured it. Sony signs 
 **Deepfake detection becomes trivial:** if the chain starts with a generation model instead of a camera enclave, that's visible. No sensor attestation at the root = no proof of capture. The absence of hardware proof IS the tell.
 
 The forge-alloy pattern doesn't care if it's a GPU forging a model or a CMOS sensor capturing photons. Same chain, same math, same verification page.
+
+### Deterministic Inference (The "Nondeterministic AI" Myth)
+
+"Nondeterministic" AI is only nondeterministic because nobody pins the RNG seed. Pin the seed + model weights + input + runtime binary → **exact same output every time**. That's reproducible. That's mathematically attestable.
+
+```json
+{
+  "inference_attestation": {
+    "model_hash": "sha256:7f8a9b...",
+    "input_hash": "sha256:abc123...",
+    "rng_seed": 48291,
+    "runtime_hash": "sha256:def456...",
+    "output_hash": "sha256:ghi789...",
+    "device_key": "passkey:...",
+    "timestamp": "2026-04-03T17:30:00Z"
+  }
+}
+```
+
+Anyone with the same `(model, input, seed, runtime)` **MUST** produce the same output. If they don't, something was tampered with. That's not a promise — that's math.
+
+**Every layer is a known state:**
+- Silicon: ECC corrects bit flips (known, detectable)
+- Hardware: Secure enclave attests execution (known)
+- Runtime: Pinned binary hash (known)
+- Model: Content-addressed weights (known)
+- Inference: Pinned RNG seed (known)
+- Output: Deterministic from inputs (known)
+
+Short of a cosmic ray (which ECC detects and corrects), every state transition is accounted for. The word "nondeterministic" in AI is a confession of laziness, not a property of the system.
+
+**Recovery attestation** ties into the forge pipeline: after structural surgery (pruning, context extension), the RANSAC-style recovery (#149) tries candidate weight adjustments. Each candidate's `(adjustment, eval_score)` is attested. The winning recovery is part of the chain — not just "we pruned and retrained" but "we pruned, tried 50 recovery candidates, #37 scored best, here's the math."
 
 ### Adapter Certifications (Independent Witnesses)
 
