@@ -242,6 +242,68 @@ The alloy is fully verifiable without any network connection. This is critical f
 
 **The Merkle tree helps here:** Dataset hashing uses a Merkle tree (RFC 6962). Verifiers can check individual files against the root hash without re-downloading the entire dataset. Ship the Merkle proof alongside the alloy for partial verification of large datasets.
 
+## Deterministic Inference Attestation
+
+"Nondeterministic" AI is a myth born from unpinned RNG seeds. Pin the seed and every layer becomes a known state transition:
+
+| Layer | State | How |
+|-------|-------|-----|
+| Silicon | Known | ECC detects/corrects bit flips |
+| Hardware | Known | Secure enclave attests execution |
+| Runtime | Known | Binary hash verified |
+| Model | Known | Content-addressed weights (SHA-256) |
+| RNG | Known | Seed pinned, deterministic |
+| Input | Known | Prompt/context hashed |
+| Output | Known | Deterministic from all above |
+
+Given identical `(model_hash, input_hash, rng_seed, runtime_hash)`, the output is identical. Always. If it's not, something was tampered with. That's not a promise — that's math.
+
+Short of a cosmic ray (which ECC detects and corrects — a known, accountable event), every state transition is mathematically determined. The word "nondeterministic" applied to AI inference is a confession that the system wasn't built to be accountable, not a fundamental property.
+
+### Inference Attestation Record
+
+```json
+{
+  "inference_attestation": {
+    "model_hash": "sha256:7f8a9b...",
+    "input_hash": "sha256:abc123...",
+    "rng_seed": 48291,
+    "runtime_hash": "sha256:def456...",
+    "output_hash": "sha256:ghi789...",
+    "device_key": "passkey:...",
+    "timestamp": "2026-04-03T17:30:00Z",
+    "parent_chain": ["sha256:..."]
+  }
+}
+```
+
+This enables replayable inference: anyone with the attestation can reproduce the exact output. The inference IS the proof. The contract IS the computation.
+
+## Git as Trust Infrastructure
+
+The entire attestation problem is solved by git's data structure. Git IS a Merkle chain:
+
+- Every commit: `hash(parent + tree + author + timestamp)`
+- Every tree: `hash(blobs)`
+- Hashes all the way down
+- Change history → invalidate every subsequent hash
+
+Forge-alloy is git's Merkle structure applied to transformations instead of files. The alloy lives IN git. Model weights are content-addressed blobs. Verification is `git log` + hash comparison.
+
+No blockchain required. No custom infrastructure. Three existing technologies:
+
+1. **Git** — Merkle-chained history, immutable, auditable
+2. **Content-addressed storage** — artifacts referenced by hash (Git LFS, IPFS, HF)
+3. **Hardware signing** — secure enclave signs commits (GPG/SSH signing, passkeys)
+
+The contract requirement is simply: **maintain history per the spec, with binary artifacts hashed at each step.** Git does this natively. The only additions are hardware attestation (enclave signs the commit) and the contract schema (alloy spec defines required stages).
+
+### Zero Trust IS Trust
+
+"Zero trust" is an oxymoron that accidentally describes the correct architecture. You don't trust any participant — you trust the math. The Merkle chain doesn't care who you are. It cares whether `hash(your_claimed_input)` matches `hash(actual_input)`. Identity is a key. Verification is a hash. Trust is a mathematical proof, not a social relationship.
+
+The verification engine is open source. The data can be private. Defense, healthcare, finance — the domain doesn't matter. The verifier sees hashes, not content. The proof is public. The data stays in the enclave. Trustless verification through mathematics.
+
 ## Known Limitations (Not Solvable by Attestation)
 
 | Attack | Status | Notes |

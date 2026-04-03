@@ -536,7 +536,57 @@ Open-source adapters get higher trust — anyone can audit the code. The forge-a
 - **Verifiable** — cryptographic attestation proves results are genuine
 - **Extensible** — open metric bags, arbitrary benchmarks, progressive trust tiers
 
-## This Repo IS the Trust Infrastructure
+## Git IS the Solution
+
+The entire attestation problem is already solved by a technology every developer uses daily. **Git is a Merkle chain.** Every commit is `hash(parent + tree + author + timestamp)`. Every tree is `hash(blobs)`. Hashes all the way down. You can't change history without invalidating every subsequent hash.
+
+Forge-alloy is git's data structure applied to transformations instead of files. The alloy file lives IN git. The model weights are content-addressed blobs. Verification is `git log` + hash comparison.
+
+No blockchain needed. No custom infrastructure. Three things that exist today:
+
+1. **Git** — Merkle-chained history, immutable, auditable
+2. **Content-addressed storage** — weights/artifacts referenced by hash
+3. **Hardware signing** — secure enclave signs commits
+
+That's it. The contract says "maintain history per the spec, with these binary artifacts hashed at each step." Git does this natively.
+
+### Mathematical Proof of Contracts
+
+A contract is: "I will do X to Y and produce Z." Mathematical proof of contract is: "Here's the hash of X, the hash of the operation, the hash of Z, and the cryptographic signature proving this specific hardware executed it. Reproduce it yourself."
+
+Every alloy file is a mathematically proven contract. Not a legal document requiring interpretation — a computation requiring only verification. The judge is `sha256`, not a courtroom.
+
+```
+Contract: "Prune Qwen3.5-4B by 10%, recover weights, achieve >70% HumanEval"
+
+Proof:
+  input_hash:     sha256:abc...  (exact model weights before)
+  operation:      prune(0.10) → recover(ransac, candidate #37) → eval
+  output_hash:    sha256:def...  (exact model weights after)
+  eval_score:     74.1% HumanEval (attested by benchmark adapter)
+  hardware:       RTX 5090 (enclave-signed)
+  runtime:        sentinel-ai@commit:09bb60f (hash-verified)
+  
+Verification:    Run the same inputs → get the same outputs. Math checks out or it doesn't.
+```
+
+The verification engine is open source (Apache 2.0). The data it verifies can be private, classified, whatever. Defense contractor runs a classified model on classified data — the alloy records hashes, not content. The proof is public. The data stays private. Trustless verification.
+
+### Open Verifier, Private Data
+
+The separation is fundamental:
+
+| Component | Visibility | Why |
+|-----------|-----------|-----|
+| **Verification engine** | Open source, auditable | Nobody has to trust it — read the code |
+| **Contract schema** | Public (alloy spec) | Defines what stages are required |
+| **Hashes** | Public | Math, not data — reveals nothing about content |
+| **Content** | Private (optional) | Weights, images, formulas stay in the enclave |
+| **Hardware attestation** | Public signature | Proves execution without revealing content |
+
+This scales to any domain: model forging, defense, pharmaceuticals, content authenticity. Same verifier, same math. The domain changes, the proof doesn't.
+
+### This Repo IS the Trust Infrastructure
 
 This repository is Merkle-chained by git itself. Every commit hashes its parent. Every file has a SHA. The spec, the SDK, the verification page, and the examples all live here — secured by the same chain they describe.
 
