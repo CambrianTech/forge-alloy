@@ -106,9 +106,51 @@ A closed-source adapter can only say "trust us." An open-source adapter says "do
 | **Code audit** | source-review, dependency-scan | Code integrity and supply chain |
 | **Data provenance** | dataset-verify, license-check | Training data integrity and licensing |
 
-## The API Role
+## The API Role: Verification Gate, Not Service
 
-The forge-alloy API is the matchmaker:
+The forge-alloy API isn't a service — it's an **enforcement mechanism**. Its only job is to verify that claimed transformations are reproducible. You want to publish? Prove it. You want to deliver? Prove it. You want to claim a benchmark score? **The API replays it.**
+
+### The Replay Contract
+
+Every stage in the alloy carries its input hash (from the previous stage) and its output hash. The API's verification is simple:
+
+```
+For each stage:
+  1. Take the claimed input_hash
+  2. Re-execute the stage with the same parameters
+  3. Hash the output
+  4. Does output_hash match the claimed output_hash?
+     YES → stage verified, proceed
+     NO  → rejected, chain broken, attestation void
+```
+
+No trust. No review board. No human judgment. The replay IS the verification.
+
+### Longevity Guarantee
+
+Each stage's data must remain available for the NEXT stage to verify against. This is the contract:
+
+- You claim `output_hash: sha256:abc` for your prune stage
+- The train stage's `input_hash` must be `sha256:abc`
+- If you can't produce the data that hashes to `sha256:abc` for replay, your attestation is void
+- The chain demands the data. Delete your inputs after claiming an output = broken chain = rejected
+
+This is how the API **forces adherence**. If your source code complies with the alloy spec, compliance is mathematically proven through replay. Not audited. Not reviewed. Proven.
+
+### Compliant Source Code = Proven Source Code
+
+The alloy spec defines what stages are required and what each stage must produce. If your forge runner implements the spec:
+
+1. Each stage hashes its input before execution
+2. Each stage hashes its output after execution
+3. Each hash is recorded in the alloy
+4. The API can replay any stage and verify the hashes match
+
+A compliant runner CANNOT produce a fraudulent alloy — the math prevents it. The spec IS the enforcement. The API IS the judge. The replay IS the proof.
+
+### Matchmaking and Witnessing
+
+Beyond enforcement, the API coordinates the certification process:
 
 1. **Before forge**: API issues nonces for each adapter that will run
 2. **During forge**: SDK invokes adapters at the right pipeline points
