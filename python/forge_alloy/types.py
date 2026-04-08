@@ -35,7 +35,8 @@ class BenchmarkResult(BaseModel):
 class HardwareProfile(BaseModel):
     """Verified performance on a specific device — generates model card device grid."""
     device: str
-    format: str
+    format: Optional[str] = None
+    vram_gb: Optional[float] = Field(default=None, alias="vramGb")
     size_gb: Optional[float] = Field(default=None, alias="sizeGb")
     tokens_per_sec: Optional[float] = Field(default=None, alias="tokensPerSec")
     memory_usage_gb: Optional[float] = Field(default=None, alias="memoryUsageGb")
@@ -96,8 +97,8 @@ class IntegrityAttestation(BaseModel):
     Self-attested only prevents accidental corruption, NOT adversarial modification.
     Only enclave tier provides tamper-proof guarantees."""
     trust_level: Literal["self-attested", "verified", "enclave"] = Field(default="self-attested", alias="trustLevel")
-    code: CodeAttestation
-    model_hash: str = Field(alias="modelHash")
+    code: Optional[CodeAttestation] = None
+    model_hash: Optional[str] = Field(default=None, alias="modelHash")
     alloy_hash: Optional[str] = Field(default=None, alias="alloyHash")
     datasets: list[DatasetAttestation] = Field(default_factory=list)
     nonce: Optional[str] = None
@@ -105,9 +106,9 @@ class IntegrityAttestation(BaseModel):
     signature: Optional[AttestationSignature] = None
     anchor: Optional["TrustAnchor"] = None
     certifications: list["AdapterAttestation"] = Field(default_factory=list)
-    attested_at: str = Field(alias="attestedAt")
+    attested_at: Optional[str] = Field(default=None, alias="attestedAt")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class AdapterAttestation(BaseModel):
@@ -163,13 +164,28 @@ class AlloyResults(BaseModel):
 
 class PruneStage(BaseModel):
     type: Literal["prune"] = "prune"
-    strategy: Literal["entropy", "magnitude", "gradient", "random"]
+    # Strategy enum extended with activation-magnitude (the §4.1.3.1 fix metric
+    # used by the v2-7B forge published as continuum-ai/qwen2.5-coder-7b-compacted)
+    # and per-layer-normalized-* variants surfaced by the §4.1.3.4 work.
+    strategy: Literal[
+        "entropy",
+        "magnitude",
+        "gradient",
+        "random",
+        "activation-magnitude",
+        "calibration-aware-activation-count",
+        "per-layer-normalized-router-importance",
+    ]
     level: float = Field(ge=0.0, le=0.9)
     min_heads_per_layer: int = Field(default=4, alias="minHeadsPerLayer")
     min_kv_heads_per_layer: int = Field(default=2, alias="minKvHeadsPerLayer")
     analysis_steps: int = Field(default=200, alias="analysisSteps")
+    # Optional methodology metadata fields used by post-§4.1.3 forges
+    per_layer_normalized: Optional[bool] = Field(default=None, alias="perLayerNormalized")
+    defrag_mode: Optional[str] = Field(default=None, alias="defragMode")
+    notes: Optional[str] = None
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class TrainStage(BaseModel):
@@ -235,8 +251,12 @@ class BenchmarkDef(BaseModel):
     subset: Optional[str] = None
     n_shot: Optional[int] = Field(default=None, alias="nShot")
     submit_to_leaderboard: bool = Field(default=False, alias="submitToLeaderboard")
+    samples_path: Optional[str] = Field(default=None, alias="samplesPath")
+    base_samples_path: Optional[str] = Field(default=None, alias="baseSamplesPath")
+    calibration_anchor: Optional[dict[str, Any]] = Field(default=None, alias="calibrationAnchor")
+    notes: Optional[str] = None
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class EvalStage(BaseModel):
@@ -244,8 +264,10 @@ class EvalStage(BaseModel):
     benchmarks: list[BenchmarkDef]
     passing_threshold: Optional[float] = Field(default=None, alias="passingThreshold")
     compare_to_base: bool = Field(default=True, alias="compareToBase")
+    calibration_anchor: Optional[dict[str, Any]] = Field(default=None, alias="calibrationAnchor")
+    notes: Optional[str] = None
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class PublishStage(BaseModel):
@@ -261,14 +283,72 @@ class PublishStage(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class ExpertActivationProfileStage(BaseModel):
+    """§4.1.3.4 calibration-aware MoE expert importance profiling.
+    Produces an importance JSON consumed by a downstream expert-prune stage."""
+    type: Literal["expert-activation-profile"] = "expert-activation-profile"
+    calibration_corpus: str = Field(alias="calibrationCorpus")
+    metric: Literal["activation_count", "router_l2", "activation_magnitude"] = "activation_count"
+    max_length: int = Field(default=2048, ge=128, alias="maxLength")
+    device: Optional[str] = None
+    importance_output: Optional[str] = Field(default=None, alias="importanceOutput")
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+class CompensationLoRAStage(BaseModel):
+    """§4.1.3.3 KL-distillation-against-teacher compensation LoRA."""
+    type: Literal["compensation-lora"] = "compensation-lora"
+    teacher: str
+    calibration_corpus: str = Field(alias="calibrationCorpus")
+    loss_type: Literal["kl_logits", "mse_hidden", "both"] = Field(default="kl_logits", alias="lossType")
+    kd_temperature: float = Field(default=2.0, ge=0.0, alias="kdTemperature")
+    lora_rank: int = Field(default=16, ge=1, alias="loraRank")
+    lora_alpha: int = Field(default=32, ge=1, alias="loraAlpha")
+    target_modules: list[str] = Field(default_factory=list, alias="targetModules")
+    steps: int = Field(default=500, ge=1)
+    learning_rate: str = Field(default="1e-4", alias="learningRate")
+    teacher_quant: Optional[Literal["8bit", "4bit", "fp16"]] = Field(default=None, alias="teacherQuant")
+    student_quant: Optional[Literal["fp16", "4bit", "8bit"]] = Field(default=None, alias="studentQuant")
+    merged_at_save: bool = Field(default=True, alias="mergedAtSave")
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
 class ExpertPruneStage(BaseModel):
     type: Literal["expert-prune"] = "expert-prune"
-    keep_experts: int = Field(ge=1, alias="keepExperts")
-    selection_strategy: Literal["activation", "gradient", "random"] = Field(default="activation", alias="selectionStrategy")
+    # Either flat keep_experts (legacy) OR keep_experts_per_layer (post-§4.1.3.4)
+    keep_experts: Optional[int] = Field(default=None, ge=1, alias="keepExperts")
+    keep_experts_per_layer: Optional[int] = Field(default=None, ge=1, alias="keepExpertsPerLayer")
+    original_experts_per_layer: Optional[int] = Field(default=None, alias="originalExpertsPerLayer")
+    # Strategy/selection — both forms shipped on published alloys
+    strategy: Optional[str] = None
+    selection_strategy: Optional[str] = Field(default=None, alias="selectionStrategy")
+    metric: Optional[str] = None
+    metric_source: Optional[str] = Field(default=None, alias="metricSource")
     profile_dataset: Optional[str] = Field(default=None, alias="profileDataset")
     profile_steps: int = Field(default=100, ge=1, alias="profileSteps")
+    importance_json: Optional[str] = Field(default=None, alias="importanceJson")
+    expert_tensor_layout: Optional[Literal[
+        "auto",
+        "mlp-experts-unfused",
+        "block_sparse_moe-unfused",
+        "granite-moe-fused",
+        "deepseek-routed-shared",
+    ]] = Field(default="auto", alias="expertTensorLayout")
+    calibration_corpus: Optional[str] = Field(default=None, alias="calibrationCorpus")
+    per_layer_normalized: Optional[bool] = Field(default=None, alias="perLayerNormalized")
+    prune_pct: Optional[float] = Field(default=None, alias="prunePct")
+    experts_dropped: Optional[int] = Field(default=None, alias="expertsDropped")
+    experts_renamed: Optional[int] = Field(default=None, alias="expertsRenamed")
+    router_sliced_layers: Optional[int] = Field(default=None, alias="routerSlicedLayers")
+    implementation: Optional[str] = None
+    rationale: Optional[str] = None
+    notes: Optional[str] = None
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class ContextExtendStage(BaseModel):
@@ -349,7 +429,8 @@ AlloyStage = Annotated[
     Union[
         SourceConfigStage, PruneStage, TrainStage, LoRAStage, CompactStage,
         QuantStage, PackageStage, EvalStage, PublishStage, DeployStage,
-        ExpertPruneStage, ContextExtendStage, ModalityStage,
+        ExpertPruneStage, ExpertActivationProfileStage, CompensationLoRAStage,
+        ContextExtendStage, ModalityStage,
     ],
     Field(discriminator="type"),
 ]
@@ -411,10 +492,42 @@ class AlloyOutputs(BaseModel):
     produces: list[OutputArtifact] = Field(default_factory=list)
 
 
+class CalibrationCorpusRef(BaseModel):
+    """§4.1.3.4.1 calibration corpus discipline gate — declared at alloy root."""
+    id: str
+    name: Optional[str] = None
+    path: str
+    sha256: Optional[str] = None
+    examples: Optional[int] = None
+    tokens: Optional[int] = None
+    distribution_summary: Optional[str] = Field(default=None, alias="distributionSummary")
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+class PriorMetricBaseline(BaseModel):
+    """§4.1.3.4 negative-baseline empirical control. Preserves superseded
+    forge attempts as falsifiability anchors in the published artifact."""
+    id: Optional[str] = None
+    name: Optional[str] = None
+    metric: Optional[Union[str, dict[str, Any]]] = None
+    evaluation: Optional[dict[str, Any]] = None
+    prune: Optional[dict[str, Any]] = None
+    results: Optional[dict[str, Any]] = None
+    samples_path: Optional[str] = Field(default=None, alias="samplesPath")
+    outcome: Optional[Literal["shipped", "negative_baseline", "superseded"]] = None
+    superseded_by: Optional[str] = Field(default=None, alias="supersededBy")
+    methodology_anchor: Optional[str] = Field(default=None, alias="methodologyAnchor")
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
 class ForgeAlloy(BaseModel):
     name: str
     version: str
     description: str = ""
+    user_summary: Optional[str] = Field(default=None, alias="userSummary")
     author: str = ""
     tags: list[str] = Field(default_factory=list)
     license: str = "apache-2.0"
@@ -433,7 +546,13 @@ class ForgeAlloy(BaseModel):
     source_alloy_id: Optional[str] = Field(default=None, alias="sourceAlloyId")
     forged_model_ids: Optional[list[str]] = Field(default=None, alias="forgedModelIds")
 
-    model_config = {"populate_by_name": True}
+    # Methodology / prose fields shipped on continuum-ai/* artifacts
+    limitations: list[str] = Field(default_factory=list)
+    methodology_paper_url: Optional[str] = Field(default=None, alias="methodologyPaperUrl")
+    calibration_corpora: list[CalibrationCorpusRef] = Field(default_factory=list, alias="calibrationCorpora")
+    prior_metric_baselines: list[PriorMetricBaseline] = Field(default_factory=list, alias="priorMetricBaselines")
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
     @classmethod
     def from_file(cls, path: str | Path) -> "ForgeAlloy":
