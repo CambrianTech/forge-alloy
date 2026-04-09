@@ -231,10 +231,14 @@ class PruneStage(BaseModel):
 
 class TrainStage(BaseModel):
     type: Literal["train"] = "train"
-    domain: str
+    # domain / steps / learning_rate are OPTIONAL — when omitted, the
+    # family adapter's default_train_params() hook fills them in at
+    # execution time. Recipe authors only need to specify these when
+    # they want to override the family-default. Adapter-driven > seeder-hardcoded.
+    domain: Optional[str] = None
     dataset: Optional[str] = None
-    steps: int = Field(ge=1)
-    learning_rate: str = Field(alias="learningRate")
+    steps: Optional[int] = Field(default=None, ge=1)
+    learning_rate: Optional[str] = Field(default=None, alias="learningRate")
     batch_size: int = Field(default=4, ge=1, le=64, alias="batchSize")
     gradient_accumulation: int = Field(default=1, ge=1, le=16, alias="gradientAccumulation")
     scheduler: Literal["cosine", "linear", "constant", "constant_with_warmup", "polynomial"] = "cosine"
