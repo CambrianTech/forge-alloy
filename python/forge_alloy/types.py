@@ -416,6 +416,54 @@ class ModalityStage(BaseModel):
     model_config = {"populate_by_name": True, "extra": "allow"}
 
 
+class BenchmarkAcceptance(BaseModel):
+    """Acceptance criterion for one benchmark.
+
+    `min` is the absolute pass@1 floor (0..1) the forged model must clear.
+    `anchorDelta` is the §4.1.3.4 discipline gate: the forged score must
+    be within Δ of the base anchor measured in the SAME eval pipeline.
+    Negative means forged ≥ anchor + delta (i.e. anchorDelta=-3 means the
+    forged score is allowed to drop by at most 3 percentage points
+    relative to the unmodified base anchor).
+    """
+    min: float = Field(..., ge=0.0, le=1.0)
+    anchor_delta: Optional[float] = Field(default=None, alias="anchorDelta")
+    anchor_benchmark: Optional[str] = Field(default=None, alias="anchorBenchmark")
+    notes: Optional[str] = None
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+class AcceptanceHardware(BaseModel):
+    """Hardware acceptance criteria — must fit on the declared tier."""
+    max_vram_gb: Optional[float] = Field(default=None, alias="maxVramGb")
+    device_tier: Optional[str] = Field(default=None, alias="deviceTier")
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+class AcceptanceIntegrity(BaseModel):
+    """Integrity acceptance criteria — chain-of-custody requirements."""
+    model_hash_required: bool = Field(default=False, alias="modelHashRequired")
+    samples_path_required: bool = Field(default=False, alias="samplesPathRequired")
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+class AcceptanceCriteria(BaseModel):
+    """The part spec — gate the forged model must clear before shipping.
+
+    Lives on the alloy itself (the alloy IS the part spec). Sentinel-ai
+    forges and assays; it never reads acceptanceCriteria. Continuum (the
+    shipping department) reads BOTH the assayed scores written into the
+    finished/ manifest AND the alloy's acceptanceCriteria, and decides
+    ship vs rework. Same alloy → same gate verdict on any forge run by
+    anyone, anywhere — the spec is portable.
+    """
+    benchmarks: dict[str, BenchmarkAcceptance] = Field(default_factory=dict)
+    hardware: Optional[AcceptanceHardware] = None
+    integrity: Optional[AcceptanceIntegrity] = None
+    notes: Optional[str] = None
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
 class AlloyHardware(BaseModel):
     min_vram_gb: Optional[float] = Field(default=None, alias="minVramGb")
     recommended_vram_gb: Optional[float] = Field(default=None, alias="recommendedVramGb")
@@ -597,6 +645,11 @@ class ForgeAlloy(BaseModel):
     methodology_paper_url: Optional[str] = Field(default=None, alias="methodologyPaperUrl")
     calibration_corpora: list[CalibrationCorpusRef] = Field(default_factory=list, alias="calibrationCorpora")
     prior_metric_baselines: list[PriorMetricBaseline] = Field(default_factory=list, alias="priorMetricBaselines")
+
+    # The part spec — gate the forged model must clear before continuum
+    # ships it. Optional (backwards compat with every existing alloy).
+    # Sentinel never reads this; continuum's shipping flow does.
+    acceptance_criteria: Optional[AcceptanceCriteria] = Field(default=None, alias="acceptanceCriteria")
 
     model_config = {"populate_by_name": True, "extra": "allow"}
 
