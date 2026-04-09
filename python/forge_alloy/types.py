@@ -14,22 +14,54 @@ class AlloySource(BaseModel):
     is_moe: bool = Field(default=False, alias="isMoE")
     total_experts: Optional[int] = Field(default=None, alias="totalExperts")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 # ── Results (populated after execution) ────────────────────────────────────
 
 
 class BenchmarkResult(BaseModel):
-    """A single benchmark result. Metrics are open-ended — each benchmark
-    reports whatever it wants (passing, total, accuracy, score, etc.)"""
+    """A single benchmark result. Carries the canonical fields the publish
+    pipeline (alloy_to_card.py) and the Tier 4 reproducibility test both
+    consume:
+
+        score          The student's pass@1 / accuracy / etc.
+        baseScore      The unmodified base anchor's same metric, measured on
+                       the same hardware in the same eval pipeline (per the
+                       § 4.1.4.1 anchor-reproduction discipline gate).
+        delta          score - baseScore (preserved in the alloy so the
+                       published Δ doesn't drift if either side is rounded).
+        metric         The metric name (typically 'pass@1' for code benchmarks).
+        samplesPath    The per-problem JSONL the student score was computed
+                       from. Tier 3 hashes this against resultHash.
+        baseSamplesPath The base anchor's samples JSONL.
+        resultHash     sha256 of the student samples bytes (Merkle anchor).
+        baseResultHash sha256 of the base samples bytes.
+        calibrated     True if the score is the calibration-anchored value
+                       per § 4.1.4.1 discipline.
+
+    Plus the legacy `metrics` open-ended dict for benchmarks that report
+    multiple sub-scores (e.g. lm-eval-harness MMLU sub-tasks).
+    """
     name: str
     subset: Optional[str] = None
+    metric: Optional[str] = None
+    score: Optional[float] = None
+    base_score: Optional[float] = Field(default=None, alias="baseScore")
+    delta: Optional[float] = None
+    calibrated: Optional[bool] = None
+    samples_path: Optional[str] = Field(default=None, alias="samplesPath")
+    base_samples_path: Optional[str] = Field(default=None, alias="baseSamplesPath")
+    result_hash: Optional[str] = Field(default=None, alias="resultHash")
+    base_result_hash: Optional[str] = Field(default=None, alias="baseResultHash")
     metrics: dict[str, Union[int, float, str, bool]] = Field(default_factory=dict)
     submitted_to_leaderboard: bool = Field(default=False, alias="submittedToLeaderboard")
-    result_hash: Optional[str] = Field(default=None, alias="resultHash")
 
-    model_config = {"populate_by_name": True}
+    # extra="allow" so artifact-specific extras (per-benchmark notes,
+    # methodology anchor URLs, etc.) round-trip cleanly. The named fields
+    # above are the canonical surface that publish_model.py and
+    # alloy_to_card.py read.
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class HardwareProfile(BaseModel):
@@ -42,7 +74,7 @@ class HardwareProfile(BaseModel):
     memory_usage_gb: Optional[float] = Field(default=None, alias="memoryUsageGb")
     verified: bool = False
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class GenerationSample(BaseModel):
@@ -52,7 +84,7 @@ class GenerationSample(BaseModel):
     completion: str
     baseline_completion: Optional[str] = Field(default=None, alias="baselineCompletion")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class CodeAttestation(BaseModel):
@@ -65,7 +97,7 @@ class CodeAttestation(BaseModel):
     environment: Optional[str] = None
     environment_hash: Optional[str] = Field(default=None, alias="environmentHash")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class DatasetAttestation(BaseModel):
@@ -75,7 +107,7 @@ class DatasetAttestation(BaseModel):
     hash: str
     source: Optional[str] = None
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class AttestationSignature(BaseModel):
@@ -89,7 +121,7 @@ class AttestationSignature(BaseModel):
     certificate_chain: list[str] = Field(default_factory=list, alias="certificateChain")
     key_registry: Optional[str] = Field(default=None, alias="keyRegistry")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class IntegrityAttestation(BaseModel):
@@ -127,7 +159,7 @@ class AdapterAttestation(BaseModel):
     commit: Optional[str] = None
     attested_at: str = Field(alias="attestedAt")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class TrustAnchor(BaseModel):
@@ -138,7 +170,7 @@ class TrustAnchor(BaseModel):
     anchored_at: Optional[str] = Field(default=None, alias="anchoredAt")
     network: Optional[str] = None
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class AlloyResults(BaseModel):
@@ -151,12 +183,21 @@ class AlloyResults(BaseModel):
     improvement_pct: Optional[float] = Field(default=None, alias="improvementPct")
     final_size_gb: Optional[float] = Field(default=None, alias="finalSizeGb")
     final_params: Optional[str] = Field(default=None, alias="finalParams")
+    # MoE-specific param counts shipped on the morning's qwen3-coder-30b-a3b
+    # and OLMoE flagships (forgedParamsB after expert pruning, activeParamsB
+    # is unchanged because expert pruning doesn't change activation count).
+    forged_params_b: Optional[float] = Field(default=None, alias="forgedParamsB")
+    active_params_b: Optional[float] = Field(default=None, alias="activeParamsB")
     benchmarks: list[BenchmarkResult] = Field(default_factory=list)
     hardware_verified: list[HardwareProfile] = Field(default_factory=list, alias="hardwareVerified")
     samples: list[GenerationSample] = Field(default_factory=list)
     integrity: Optional[IntegrityAttestation] = None
 
-    model_config = {"populate_by_name": True}
+    # extra="allow" so artifact-specific result extras (fourRunProgression,
+    # lossFunctionAblation, etc. on v2-7b-coder-compensated) round-trip
+    # cleanly. The schema's named fields are the canonical surface; extras
+    # are recognized as artifact-specific provenance and preserved verbatim.
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 # ── Stages ──────────────────────────────────────────────────────────────────
@@ -204,7 +245,7 @@ class TrainStage(BaseModel):
     sequence_length: int = Field(default=2048, ge=128, le=131072, alias="sequenceLength")
     optimizations: list[str] = Field(default_factory=list)
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class LoRAStage(BaseModel):
@@ -221,7 +262,7 @@ class LoRAStage(BaseModel):
     batch_size: int = Field(default=4, ge=1, le=64, alias="batchSize")
     merge_after: bool = Field(default=False, alias="mergeAfter")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class CompactStage(BaseModel):
@@ -234,7 +275,7 @@ class CompactStage(BaseModel):
     target_size_gb: Optional[float] = Field(default=None, alias="targetSizeGb")
     enable_quantization: bool = Field(default=True, alias="enableQuantization")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class QuantStage(BaseModel):
@@ -243,7 +284,7 @@ class QuantStage(BaseModel):
     quant_types: list[str] = Field(alias="quantTypes")
     device_targets: list[str] = Field(default_factory=list, alias="deviceTargets")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class BenchmarkDef(BaseModel):
@@ -280,7 +321,7 @@ class PublishStage(BaseModel):
     private: bool = False
     card_hash: Optional[str] = Field(default=None, alias="cardHash")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class ExpertActivationProfileStage(BaseModel):
@@ -358,7 +399,7 @@ class ContextExtendStage(BaseModel):
     training_dataset: Optional[str] = Field(default=None, alias="trainingDataset")
     training_steps: Optional[int] = Field(default=None, alias="trainingSteps")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class ModalityStage(BaseModel):
@@ -372,7 +413,7 @@ class ModalityStage(BaseModel):
     training_steps: Optional[int] = Field(default=None, alias="trainingSteps")
     projection_dim: Optional[int] = Field(default=None, alias="projectionDim")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class AlloyHardware(BaseModel):
@@ -381,8 +422,13 @@ class AlloyHardware(BaseModel):
     estimated_duration_minutes: Optional[float] = Field(default=None, alias="estimatedDurationMinutes")
     supports_cpu: bool = Field(default=False, alias="supportsCPU")
     tested_on: list[str] = Field(default_factory=list, alias="testedOn")
+    # Device target list — every published continuum-ai/* alloy carries this
+    # field at hardware.deviceTargets. Caught by the regression round-trip
+    # test 2026-04-08: pydantic was silently dropping it because the schema
+    # didn't have it.
+    device_targets: list[str] = Field(default_factory=list, alias="deviceTargets")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 # ── Bookend stage types ───────────────────────────────────────────────────── ───────────────────────────────────────────────
@@ -397,7 +443,7 @@ class SourceConfigStage(BaseModel):
     target_batch_size: Optional[int] = Field(default=None, alias="targetBatchSize")
     target_devices: list[str] = Field(default_factory=list, alias="targetDevices")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class PackageStage(BaseModel):
@@ -409,7 +455,7 @@ class PackageStage(BaseModel):
     validate_on: list[str] = Field(default_factory=list, alias="validateOn")
     include_tokenizer: bool = Field(default=True, alias="includeTokenizer")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class DeployStage(BaseModel):
@@ -421,7 +467,7 @@ class DeployStage(BaseModel):
     max_concurrency: Optional[int] = Field(default=None, alias="maxConcurrency")
     auto_scale: Optional[bool] = Field(default=None, alias="autoScale")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 # Discriminated union for stages — must be after ALL stage class definitions
@@ -453,7 +499,7 @@ class AlloyTarget(BaseModel):
     benchmarks: Optional[list[str]] = None
     publish: Optional[bool] = None
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 # ── Receipt (proof of delivery) ─────────────────────────────────────────────
@@ -466,7 +512,7 @@ class Publication(BaseModel):
     published_at: str = Field(alias="publishedAt")
     downloads: Optional[int] = None
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class AlloyReceipt(BaseModel):
@@ -477,7 +523,7 @@ class AlloyReceipt(BaseModel):
     card_hash: Optional[str] = Field(default=None, alias="cardHash")
     issued_at: str = Field(alias="issuedAt")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 # ── Hardware & Outputs ──────────────────────────────────────────────────────
