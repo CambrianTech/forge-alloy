@@ -1,1 +1,7 @@
 /rust/target/
+
+# Python build / bytecode
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
