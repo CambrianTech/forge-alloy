@@ -3,20 +3,20 @@
   "type": "repo-attestation",
   "name": "forge-alloy",
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
-  "repository": "https://github.com/CambrianTech/forge-alloy.git",
+  "repository": "https://github.com/CambrianTech/forge-alloy",
   "branch": "main",
-  "chainHash": "1d3c3e474061484bb47bdf6a08c97dec51113a76944ca5efa452d3ae4b816a55",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@1d3c3e474061484b",
-  "attestedAt": "2026-04-11T16:51:28.484628+00:00",
-  "totalCommits": 92,
+  "chainHash": "77e49e657c9eaeeb850f7aeccd98ccfb4c8e6b7d74ace5c1667c09a185968174",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@77e49e657c9eaeeb",
+  "attestedAt": "2026-04-11T16:52:10.386404+00:00",
+  "totalCommits": 93,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "1d3c3e474061484bb47bdf6a08c97dec51113a76944ca5efa452d3ae4b816a55",
+    "alloyHash": "77e49e657c9eaeeb850f7aeccd98ccfb4c8e6b7d74ace5c1667c09a185968174",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "1d3c3e474061484bb47bdf6a08c97dec51113a76944ca5efa452d3ae4b816a55",
-      "commit": "915146ad22dccee85151109190126f2b0436a1a2"
+      "sourceHash": "77e49e657c9eaeeb850f7aeccd98ccfb4c8e6b7d74ace5c1667c09a185968174",
+      "commit": "d132ccc23cab1586024de353f3d4ff875be04582"
     }
   },
   "stages": [
@@ -1126,6 +1126,18 @@
       "timestamp": "2026-04-11T16:39:21Z",
       "message": "attestation: chain updated for 94ac80a",
       "chain_hash": "1d3c3e474061484bb47bdf6a08c97dec51113a76944ca5efa452d3ae4b816a55"
+    },
+    {
+      "commit": "d132ccc23cab1586024de353f3d4ff875be04582",
+      "tree": "c1b1e2f8ea287e6c8ff2ec01e633fa58f08506ee",
+      "parents": [
+        "915146ad22dccee85151109190126f2b0436a1a2"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T11:51:54-05:00",
+      "message": "fix: verify URL carries source address, not just hash",
+      "chain_hash": "77e49e657c9eaeeb850f7aeccd98ccfb4c8e6b7d74ace5c1667c09a185968174"
     }
   ]
 }
