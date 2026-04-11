@@ -457,7 +457,7 @@ async function verify() {
         const detail = statusEl.querySelector('.status-detail');
         if (detail) detail.textContent = 'Checking ' + m.modelId + '... (' + searched + ')';
         try {
-          const alloyUrl = 'https://huggingface.co/' + m.modelId + '/resolve/main/' + alloyFile.rfilename;
+          const alloyUrl = 'https://hf.co/' + m.modelId + '/resolve/main/' + alloyFile.rfilename;
           const resp = await fetchWithProxy(alloyUrl);
           if (!resp.ok) continue;
           const txt = await resp.text();
@@ -478,6 +478,8 @@ async function verify() {
   }
 
   if (url.includes('/blob/')) url = url.replace('/blob/', '/resolve/');
+  // Use hf.co (CORS-open) instead of huggingface.co (CORS-restricted to HF origin)
+  if (url.includes('huggingface.co/')) url = url.replace('huggingface.co/', 'hf.co/');
 
   try {
     // Try cache first (survives rate-limited reloads)
