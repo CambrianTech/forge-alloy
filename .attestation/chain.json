@@ -5,18 +5,18 @@
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
   "repository": "https://github.com/CambrianTech/forge-alloy",
   "branch": "main",
-  "chainHash": "3dbe6bd95118b4e13aa48c2bddc41441e0cdfdaa3a140436580186d255d2b447",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#3dbe6bd95118b4e1",
-  "attestedAt": "2026-04-11T16:36:18.463946+00:00",
-  "totalCommits": 88,
+  "chainHash": "09b8df836920c4bec9cfbf0907c62a4ae80f8e283d10a80529ef91044d1a71d0",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#09b8df836920c4be",
+  "attestedAt": "2026-04-11T16:39:20.950663+00:00",
+  "totalCommits": 91,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "3dbe6bd95118b4e13aa48c2bddc41441e0cdfdaa3a140436580186d255d2b447",
+    "alloyHash": "09b8df836920c4bec9cfbf0907c62a4ae80f8e283d10a80529ef91044d1a71d0",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "3dbe6bd95118b4e13aa48c2bddc41441e0cdfdaa3a140436580186d255d2b447",
-      "commit": "366fdaab12c01da13843e7c80294608678e98931"
+      "sourceHash": "09b8df836920c4bec9cfbf0907c62a4ae80f8e283d10a80529ef91044d1a71d0",
+      "commit": "94ac80a89a139fb51b792f18dbc2fbfb11dd6006"
     }
   },
   "stages": [
@@ -1077,6 +1077,43 @@
       "timestamp": "2026-04-11T11:36:08-05:00",
       "message": "Merge pull request #15 from CambrianTech/fix/attestation-ci-deps",
       "chain_hash": "3dbe6bd95118b4e13aa48c2bddc41441e0cdfdaa3a140436580186d255d2b447"
+    },
+    {
+      "commit": "a922d09d869336e4f0c1009ffb7d17bc884db7eb",
+      "tree": "1e2c86f450e42595fc9ebffd18f207507e7ab3f8",
+      "parents": [
+        "366fdaab12c01da13843e7c80294608678e98931"
+      ],
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "timestamp": "2026-04-11T16:36:18Z",
+      "message": "attestation: chain updated for 366fdaa",
+      "chain_hash": "6016a50110380a7e377c2a75cdfbac2be5ec15caf5ad0c4b4c30b7e73df5c6f1"
+    },
+    {
+      "commit": "2fcfccf22994f39772925b5626286691a7439356",
+      "tree": "254cc5bd26efdad1b7211bab678ef17a3f9362fe",
+      "parents": [
+        "a922d09d869336e4f0c1009ffb7d17bc884db7eb"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T11:38:57-05:00",
+      "message": "fix: add repo chain fallback to root verify page",
+      "chain_hash": "10cc299d2b75e874cfa0dd4f798582cf647834e73d4ac832bbfb738ac180e8fa"
+    },
+    {
+      "commit": "94ac80a89a139fb51b792f18dbc2fbfb11dd6006",
+      "tree": "254cc5bd26efdad1b7211bab678ef17a3f9362fe",
+      "parents": [
+        "a922d09d869336e4f0c1009ffb7d17bc884db7eb",
+        "2fcfccf22994f39772925b5626286691a7439356"
+      ],
+      "author": "Joel Teply",
+      "email": "joel@cambriantech.com",
+      "timestamp": "2026-04-11T11:39:08-05:00",
+      "message": "Merge pull request #16 from CambrianTech/fix/verify-page-root",
+      "chain_hash": "09b8df836920c4bec9cfbf0907c62a4ae80f8e283d10a80529ef91044d1a71d0"
     }
   ]
 }
