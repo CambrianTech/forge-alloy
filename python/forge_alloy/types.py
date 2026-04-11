@@ -522,6 +522,99 @@ class DeployStage(BaseModel):
     model_config = {"populate_by_name": True, "extra": "allow"}
 
 
+# ── Search Strategy (the model compiler's optimizer) ──────────────────────────
+
+
+class SearchStrategy(BaseModel):
+    """How the forge searches for the optimal configuration.
+
+    The search finds the best (prune_config, quant_level) that:
+    1. Fits all target devices (VRAM constraint)
+    2. Passes all benchmark gates (quality constraint)
+    3. Maximizes quality within constraints
+
+    Phases: size_filter (free) → estimate (free) → quick_eval (2min) → full_eval (40min).
+    Only the winner gets the expensive evaluation.
+    """
+    method: Literal[
+        "manual",       # user specifies exact config, no search
+        "binary",       # binary search on quality/size tradeoff (fast, monotonic assumption)
+        "ransac",       # random sampling + consensus (handles noisy quality landscape)
+        "bayesian",     # Gaussian process surrogate (fewest evaluations to converge)
+        "exhaustive",   # try everything (slow, guaranteed optimal)
+        "adaptive",     # per-layer expert counts from activation profile
+    ] = "manual"
+    quick_eval_chunks: int = Field(default=10, ge=1, le=50, alias="quickEvalChunks")
+    max_candidates: int = Field(default=5, ge=1, le=20, alias="maxCandidates")
+    confidence_threshold: float = Field(default=0.95, ge=0.5, le=0.999, alias="confidenceThreshold")
+    try_compensation_lora: bool = Field(default=False, alias="tryCompensationLora")
+    lora_steps_if_needed: int = Field(default=500, ge=100, le=5000, alias="loraStepsIfNeeded")
+    coverage_threshold: float = Field(default=0.85, ge=0.5, le=0.99, alias="coverageThreshold")
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+# ── Many-Worlds Stage (cross-model substrate) ────────────────────────────────
+
+
+class ManyWorldsSubstrateStage(BaseModel):
+    """§V.6.7 Many-Worlds substrate training.
+
+    Train a shared continuous Gaussian coordinate space that multiple
+    frozen pretrained models can project into and read from. The substrate
+    is the linker's symbol table for cross-family expert grafting.
+    """
+    type: Literal["many-worlds-substrate"] = "many-worlds-substrate"
+    substrate_dim: int = Field(default=256, ge=64, le=2048, alias="substrateDim")
+    num_gaussians: int = Field(default=128, ge=16, le=1024, alias="numGaussians")
+    source_models: list[str] = Field(alias="sourceModels")
+    calibration_corpus: str = Field(alias="calibrationCorpus")
+    training_steps: int = Field(default=1000, ge=100, le=50000, alias="trainingSteps")
+    learning_rate: str = Field(default="1e-4", alias="learningRate")
+    loss_type: Literal["contrastive", "round_trip", "both"] = Field(default="both", alias="lossType")
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+class ManyWorldsAdapterStage(BaseModel):
+    """Per-model Project/Read adapter training against a fixed substrate."""
+    type: Literal["many-worlds-adapter"] = "many-worlds-adapter"
+    target_model: str = Field(alias="targetModel")
+    substrate_path: str = Field(alias="substratePath")
+    adapter_rank: int = Field(default=64, ge=8, le=512, alias="adapterRank")
+    insert_layer: Optional[int] = Field(default=None, alias="insertLayer")
+    training_steps: int = Field(default=500, ge=100, le=10000, alias="trainingSteps")
+    learning_rate: str = Field(default="1e-4", alias="learningRate")
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+class CVIngestStage(BaseModel):
+    """Computer vision dataset ingestion for open-eyes pipeline evaluation."""
+    type: Literal["cv-ingest"] = "cv-ingest"
+    dataset: str
+    subset: Optional[str] = None
+    frame_format: str = Field(default="jpeg-sequence", alias="frameFormat")
+    max_sequences: Optional[int] = Field(default=None, alias="maxSequences")
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+class CVEvalStage(BaseModel):
+    """Computer vision pipeline evaluation (open-eyes triage, detection, tracking)."""
+    type: Literal["cv-eval"] = "cv-eval"
+    pipeline: str
+    pipeline_config: dict = Field(default_factory=dict, alias="pipelineConfig")
+    benchmarks: list[BenchmarkDef] = Field(default_factory=list)
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
 # Discriminated union for stages — must be after ALL stage class definitions
 AlloyStage = Annotated[
     Union[
@@ -529,6 +622,8 @@ AlloyStage = Annotated[
         QuantStage, PackageStage, EvalStage, PublishStage, DeployStage,
         ExpertPruneStage, ExpertActivationProfileStage, CompensationLoRAStage,
         ContextExtendStage, ModalityStage,
+        ManyWorldsSubstrateStage, ManyWorldsAdapterStage,
+        CVIngestStage, CVEvalStage,
     ],
     Field(discriminator="type"),
 ]
@@ -637,6 +732,7 @@ class ForgeAlloy(BaseModel):
 
     hardware: Optional[AlloyHardware] = None
     outputs: Optional[AlloyOutputs] = None
+    search: Optional[SearchStrategy] = None
 
     results: Optional[AlloyResults] = None
     receipt: Optional[AlloyReceipt] = None
