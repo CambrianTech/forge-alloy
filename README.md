@@ -376,6 +376,36 @@ Publish (Spotify + Apple + Bandcamp)        → sha256:jkl
 
 **Copyright dispute?** The chain resolves it. Who recorded what, when, mixed by whom, mastered to what spec. Timestamped and signed.
 
+### Automotive / Robotics (Every Part Attested)
+
+Every component, every firmware, every calibration — in the chain:
+
+```
+Brake pad:   supplier X, batch 2026-03, friction 0.41    → sha256:abc
+ECU firmware: v3.2.1, compiled commit def, tests passed  → sha256:def
+Servo motor: calibrated 0.01° accuracy, temp profile OK  → sha256:ghi
+```
+
+**Part fails → walk the chain → find every other instance.** Supplier X's brake batch → which other cars got it → recall JUST those. A robot arm drifts → which servo, which firmware, which calibration → fix propagates to every robot with the same config.
+
+The chain doesn't just track failures — it tracks TRENDS. Friction trending down over 6 months? Catch it BEFORE the failure. That's predictive maintenance from attestation data. Parts not yet in the chain get flagged for migration. Every uncovered component is visible technical debt.
+
+### The Economics of Attested Quality
+
+Attestation creates a new kind of market. Suppliers compete on PROVABLE quality, not CLAIMED quality. You don't trust the brochure — you verify the hash.
+
+```
+Supplier A: "Our brake pads are the best!"    → no chain → no trust
+Supplier B: friction=0.42, 10K cycle test,    → sha256:abc → verified
+            3 independent lab attestations
+```
+
+Bad actors can't hide behind marketing when every claim has a hash. The market selects for actual quality because quality is cryptographically provable. Honest error is acceptable — the chain shows what happened and why. Deception is impossible — the chain exposes it.
+
+This extends to AI itself. A model card says "pass@1 = 74%." Is that real? With forge-alloy: the eval dataset has a hash, the eval code has a commit hash, the result samples have a hash. Anyone can reproduce, verify, challenge. **AI quality becomes auditable by anyone, not just the company that trained it.**
+
+A photo says "unedited." Is that real? With forge-alloy: the camera enclave signed the raw capture. Every edit is a delta with exact parameters. AI-generated content starts with a model hash, not a camera hash. **Media authenticity becomes a checkbox, not a debate.** An AI can provide a simple confidence score: "95% likely authentic — camera enclave chain intact, no generative model in provenance."
+
 ### The Common Pattern
 
 Every case follows the same structure. Different stage types, same infrastructure:
