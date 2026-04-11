@@ -1,0 +1,47 @@
+name: Main Branch Attestation
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  attest:
+    # Don't re-attest our own attestation commits
+    if: "!startsWith(github.event.head_commit.message, 'attestation:')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history — git IS the Merkle chain
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install QR dependency
+        run: pip install qrcode
+
+      - name: Compute attestation chain + generate badge
+        run: |
+          cd python
+          python -m forge_alloy.repo_attest full --output-dir ../.attestation/
+
+      - name: Update README verify link
+        run: |
+          HASH=$(jq -r '.chainHash' .attestation/chain.json | head -c 16)
+          COMMITS=$(jq -r '.totalCommits' .attestation/chain.json)
+          # Update the verify URL in README if the badge exists
+          if grep -q 'chain-qr.svg' README.md; then
+            sed -i "s|verify/#[a-f0-9]*\"|verify/#${HASH}\"|" README.md
+          fi
+
+      - name: Commit attestation update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .attestation/ README.md
+          git diff --staged --quiet || git commit -m "attestation: chain updated for $(git rev-parse --short HEAD)"
+          git push

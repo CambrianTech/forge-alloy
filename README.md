@@ -1,5 +1,13 @@
 # ForgeAlloy — Universal Attestation Chain
 
+<div align="center">
+  <a href="https://cambriantech.github.io/forge-alloy/verify/#76654a5661006320">
+    <img src=".attestation/chain-qr.svg" alt="Verify this repo's attestation chain" width="280">
+  </a>
+  <br>
+  <sub>This repo eats its own dogfood — scan to verify its attestation chain. Git IS the Merkle chain.</sub>
+</div>
+
 > *"Zero-trust is the only path to absolute trust, proven by mathematics alone. A Merkle chain for any series of transactions — each stage cryptographically and deterministically secured — allows even AI to be part of that chain. Deepfakes and misinformation become impossible."*
 
 A **domain-agnostic chain of custody** for any data transformation. Each link in the chain is signed, hashed, and verifiable by anyone — no trusted server, no central authority. The math is the authority.

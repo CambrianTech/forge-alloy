@@ -1,0 +1,37 @@
+name: PR Attestation Chain
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history — git IS the Merkle chain
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compute PR attestation chain
+        id: chain
+        run: |
+          cd python
+          COMMENT=$(python -m forge_alloy.repo_attest pr-comment \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}")
+          # Write to file for the comment step (multiline)
+          echo "$COMMENT" > /tmp/pr-attestation.md
+
+      - name: Post attestation comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: /tmp/pr-attestation.md
+          header: forge-alloy-attestation

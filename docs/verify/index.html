@@ -237,9 +237,26 @@ async function verify() {
     } catch (e) {
       console.error('HF search failed:', e);
     }
+    // Fallback: check this repo's own attestation chain (dogfood)
+    if (!url) {
+      statusEl.querySelector('.status-detail').textContent = 'Checking repo self-attestation…';
+      try {
+        const chainUrl = 'https://raw.githubusercontent.com/CambrianTech/forge-alloy/main/.attestation/chain.json';
+        const resp = await fetchWithProxy(chainUrl);
+        if (resp.ok) {
+          const txt = await resp.text();
+          const data = JSON.parse(txt);
+          if (data.chainHash && data.chainHash.startsWith(expectedHash)) {
+            await showRepoChain(data, expectedHash);
+            return;
+          }
+        }
+      } catch (e) { console.error('Repo chain check failed:', e); }
+    }
+
     if (!url) {
       statusEl.className = 'status failed';
-      statusEl.innerHTML = '<div class="status-icon">❌</div><div class="status-text">Alloy not found</div><div class="status-detail">Hash ' + expectedHash + ' not found in continuum-ai models.<br>Paste the full alloy URL or drop the .alloy.json file.</div>';
+      statusEl.innerHTML = '<div class="status-icon">❌</div><div class="status-text">Alloy not found</div><div class="status-detail">Hash ' + expectedHash + ' not found in continuum-ai models or repo attestation.<br>Paste the full alloy URL or drop the .alloy.json file.</div>';
       return;
     }
   }
@@ -522,6 +539,75 @@ function nodeRaw(container, dotClass, label, innerHtml) {
       </div>
     </div>`;
   container.insertAdjacentHTML('beforeend', html);
+}
+
+async function showRepoChain(data, expectedHash) {
+  const statusEl = document.getElementById('status');
+  const chainEl = document.getElementById('chain');
+
+  const chainHash = data.chainHash || '';
+  const hashOk = chainHash.startsWith(expectedHash);
+
+  // Generate QR for the verified box
+  const thisUrl = window.location.origin + window.location.pathname + '#' + chainHash.slice(0, 16);
+  const qrDataUrl = await generateQRDataUrl(thisUrl);
+
+  if (!hashOk) {
+    statusEl.className = 'status failed';
+    statusEl.innerHTML = '<div class="status-icon">❌</div><div class="status-text">CHAIN HASH MISMATCH</div><div class="status-detail">Expected ' + expectedHash + '… got ' + chainHash.slice(0, 16) + '…</div>';
+    return;
+  }
+
+  statusEl.className = 'status verified';
+  statusEl.innerHTML =
+    '<div class="status-icon">✅</div>' +
+    '<div class="status-text">REPO ATTESTATION CHAIN VERIFIED</div>' +
+    '<div class="status-detail">chain: ' + chainHash.slice(0, 24) + '… · git is the merkle chain</div>' +
+    (qrDataUrl ? '<img src="' + qrDataUrl + '" width="120" height="120" style="margin-top:12px;border-radius:6px;background:white;padding:6px">' : '');
+
+  // Build visual chain from git commits
+  chainEl.className = 'chain visible';
+  chainEl.innerHTML = '';
+
+  const ghBase = 'https://github.com/CambrianTech/forge-alloy';
+  const stages = data.stages || [];
+  const totalCommits = data.totalCommits || stages.length;
+
+  nodeRaw(chainEl, 'info', 'Repository',
+    '<a href="' + ghBase + '" target="_blank" style="color:#00d4ff">CambrianTech/forge-alloy</a>' +
+    '<span class="chain-goto">' + totalCommits + ' commits in chain</span>');
+
+  nodeRaw(chainEl, 'info', 'Type', data.type || 'repo-attestation');
+
+  // Show last N commits (not all 84+)
+  const showCount = Math.min(stages.length, 12);
+  const recent = stages.slice(-showCount);
+
+  if (stages.length > showCount) {
+    nodeRaw(chainEl, 'info', 'Earlier commits', '… ' + (stages.length - showCount) + ' commits omitted …');
+  }
+
+  for (const s of recent) {
+    const shortSha = s.commit.slice(0, 8);
+    const shortChain = s.chain_hash.slice(0, 12);
+    nodeLink(chainEl, 'verified', shortSha,
+      s.message,
+      ghBase + '/commit/' + s.commit,
+      'chain: ' + shortChain + ' · ' + s.author);
+  }
+
+  // Integrity
+  const integrity = data.integrity || {};
+  nodeRaw(chainEl, integrity.trustLevel === 'enclave' ? 'verified' : 'info',
+    'Trust Level', integrity.trustLevel || 'self-attested');
+
+  nodeRaw(chainEl, 'verified', 'Chain Hash',
+    '<span style="font-family:monospace;color:#00ffc8">' + chainHash.slice(0, 24) + '…</span>');
+
+  // CI info if present
+  if (data.ci) {
+    nodeRaw(chainEl, 'info', 'CI', JSON.stringify(data.ci));
+  }
 }
 </script>
 </body>

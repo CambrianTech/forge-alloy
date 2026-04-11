@@ -1,0 +1,1032 @@
+{
+  "forgeAlloyVersion": "0.3.0",
+  "type": "repo-attestation",
+  "name": "forge-alloy",
+  "description": "Self-attestation of the forge-alloy trust infrastructure repository",
+  "repository": "https://github.com/CambrianTech/forge-alloy.git",
+  "branch": "feat/self-attestation-dogfood",
+  "chainHash": "76654a566100632045f891cbf679eda1567f36dd1a41d78cdd92bc89b2778dc4",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#76654a5661006320",
+  "attestedAt": "2026-04-11T16:30:06.061912+00:00",
+  "totalCommits": 84,
+  "integrity": {
+    "trustLevel": "self-attested",
+    "alloyHash": "76654a566100632045f891cbf679eda1567f36dd1a41d78cdd92bc89b2778dc4",
+    "code": {
+      "runner": "forge-alloy/repo_attest",
+      "version": "0.1.0",
+      "sourceHash": "76654a566100632045f891cbf679eda1567f36dd1a41d78cdd92bc89b2778dc4",
+      "commit": "28066af5bdb1a876dabacc6a95dcd1b4c92575ff"
+    }
+  },
+  "stages": [
+    {
+      "commit": "02592b1a5063d7aa21de1894e440cf7fafcdfe92",
+      "tree": "8f57a99980891ccc68701b94b94342f7ae0e02d6",
+      "parents": [],
+      "author": "Joel Teply",
+      "email": "joel@cambriantech.com",
+      "timestamp": "2026-03-30T17:54:52-05:00",
+      "message": "Initial commit",
+      "chain_hash": "d81f54a171ec22322ed0f805bfbbd93a45e7443a55dc9a4bc53e0a2d1dddad0b"
+    },
+    {
+      "commit": "2cb251319ca439d70bbde6dae278a194f648c647",
+      "tree": "f7f84adddffa78aa7954d61873163cec891802c9",
+      "parents": [
+        "02592b1a5063d7aa21de1894e440cf7fafcdfe92"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T18:02:08-05:00",
+      "message": "Initial scaffold: schema, Rust crate, Python package, TypeScript package",
+      "chain_hash": "2172444478ed8246c293c9f2f3523cf42a0dde66af55466c06f9321322f81d3a"
+    },
+    {
+      "commit": "09bb60f7d1561ee26aa45b8bbdb75a1e24131a05",
+      "tree": "16a6817581f71093bf9fae3b5535e131dd7c48af",
+      "parents": [
+        "2cb251319ca439d70bbde6dae278a194f648c647"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T18:37:50-05:00",
+      "message": "Results section: benchmarks, hardware profiles, integrity attestation",
+      "chain_hash": "fc340a74f2c3a7db741d7c94e85d599aa8be1aac49f4524b1d721e79cab8d2b7"
+    },
+    {
+      "commit": "064833c8448192283e91f8f2de6bf46c573f5b14",
+      "tree": "44dbc37848a8934629b628e79786e28dd4472349",
+      "parents": [
+        "09bb60f7d1561ee26aa45b8bbdb75a1e24131a05"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T18:45:02-05:00",
+      "message": "Attestation model: WebAuthn-inspired integrity for forge pipelines",
+      "chain_hash": "9ccfd7ef00ba5963643fddaedde4945448637902b64177dab411234c0fd82ca7"
+    },
+    {
+      "commit": "e804cd89deab077cbacab0d914d582237b64a553",
+      "tree": "725fe9357626edd5a0dd7bc60c3b7b464289a1cf",
+      "parents": [
+        "064833c8448192283e91f8f2de6bf46c573f5b14"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T18:49:48-05:00",
+      "message": "README: complete rewrite with results, attestation, three-language usage",
+      "chain_hash": "5aa636da1dcedb306d30916289b054c7e5975b9b2f630a3cfc4b412f354b60f5"
+    },
+    {
+      "commit": "165fb243eda45408490360ab52dd8dbfb96da8aa",
+      "tree": "fd31a5e8c4d5f7669809043989b8f8205234af9c",
+      "parents": [
+        "e804cd89deab077cbacab0d914d582237b64a553"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T19:04:54-05:00",
+      "message": "Security hardening: peer-reviewed attestation with honest limitations",
+      "chain_hash": "dd112d520fe59e88e975bb80595fecf3910736b1a179cd7615eeea26e90de20a"
+    },
+    {
+      "commit": "29edd44b3ebfe4a77cc5089dcbb947c8ebba4e7f",
+      "tree": "6993589fd13fd9d6f399c3fcdc6ef023e008e0cd",
+      "parents": [
+        "165fb243eda45408490360ab52dd8dbfb96da8aa"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T19:10:55-05:00",
+      "message": "Address remaining review nitpicks: Merkle domain separation, audience semantics, hardware key path",
+      "chain_hash": "f38757ffc79e47279ad74087f66ef3be3dbf7cb055c973e19e3d091f13ec391b"
+    },
+    {
+      "commit": "1f216a9ca644c4735226387ac9f77bd5b0694820",
+      "tree": "599042756de868b919b36235256bfb63643181ad",
+      "parents": [
+        "29edd44b3ebfe4a77cc5089dcbb947c8ebba4e7f"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T19:29:49-05:00",
+      "message": "NVIDIA GPU TEE integration path documented for enclave tier",
+      "chain_hash": "6c4f220b482a7b4f521881844f6db0521bc620e8723532ca2b37e7dc3c6b4425"
+    },
+    {
+      "commit": "b3bd132afd3c3f76bd11834e0bc7b797bae4935c",
+      "tree": "427312b71479532fce198a845887f3bdc566d1b6",
+      "parents": [
+        "1f216a9ca644c4735226387ac9f77bd5b0694820"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T19:37:23-05:00",
+      "message": "Trustless AI Compute \u2014 the tagline",
+      "chain_hash": "3bb00a49c475fcdf7b3daad8419bc2dbe486a806ef5769040734d5f3dfb70cfc"
+    },
+    {
+      "commit": "f0b3109e8ab8c347a0a1bcdc982c65d8ec0632f5",
+      "tree": "7337f29a017c55f08fdb1529cba728980bd99ee8",
+      "parents": [
+        "b3bd132afd3c3f76bd11834e0bc7b797bae4935c"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T19:40:02-05:00",
+      "message": "Header: ForgeAlloy \u2014 Trustless AI Compute",
+      "chain_hash": "e7deb8c7de6d5a4e97515f397ee3f5ec2dd9b4847baeab02819541228d56abc5"
+    },
+    {
+      "commit": "244befa45b1690554bc140e2508a6bfe03794ab1",
+      "tree": "6993e8648e6f7fb55a0611e599092d170bf80e88",
+      "parents": [
+        "f0b3109e8ab8c347a0a1bcdc982c65d8ec0632f5"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T19:47:29-05:00",
+      "message": "Example: qwen3.5-27b-code-full \u2014 first real alloy sent to bigmama",
+      "chain_hash": "4e0dee49d3a38c0e2ea9342e60fd17d86ac51bfe09599d3da462f769aacbfa2e"
+    },
+    {
+      "commit": "a5bb972fc3d04ccd2ab8213706f918fb91824ecf",
+      "tree": "f452b3edeb531ba0c0c6aa25bb76bddb652077d4",
+      "parents": [
+        "244befa45b1690554bc140e2508a6bfe03794ab1"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T20:28:31-05:00",
+      "message": "Card integrity + trust anchors: blockchain, Merkle, RFC 3161, IPFS",
+      "chain_hash": "16948662d12d39aded5ff488e9686980659586c23a52381a8cebc07e7eda58b9"
+    },
+    {
+      "commit": "71e117d44d4010346341f601de12f609799e9555",
+      "tree": "5fddcee057cf41412a6da29feb2a1c8f419aa332",
+      "parents": [
+        "a5bb972fc3d04ccd2ab8213706f918fb91824ecf"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T20:39:41-05:00",
+      "message": "Pipeline lifecycle: forge \u2192 attest \u2192 verify \u2192 deliver \u2192 anchor",
+      "chain_hash": "54b00b9a421571db81451fee1aef3daaa76bb29350e9e86990ce05b102d7923f"
+    },
+    {
+      "commit": "c5a556206a9adfb3d596191c17bc326f93fdc931",
+      "tree": "57ddaee55b6877da8e4801dcf5170603f694ba04",
+      "parents": [
+        "71e117d44d4010346341f601de12f609799e9555"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T20:41:55-05:00",
+      "message": "Offline & air-gapped verification: healthcare, defense, dark grid, edge",
+      "chain_hash": "94a4abfac62ea4969180154443f596c8dc1b2d9a77d157b7f12a74e0eb5cfcbf"
+    },
+    {
+      "commit": "e0742279918e6f053a6b919a45a88496e394a3c2",
+      "tree": "111d0173ada9988280b1aeada7f93629ea1eaf9e",
+      "parents": [
+        "c5a556206a9adfb3d596191c17bc326f93fdc931"
+      ],
+      "author": "Joel Teply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-30T20:42:03-05:00",
+      "message": "Change project title in README",
+      "chain_hash": "205a469caa887834a97e48ba8826e26d1167c5da0309bca5d7987e3866721fac"
+    },
+    {
+      "commit": "f8e68868c3a5d8f6b0ae5918bedd573b9691850e",
+      "tree": "4972fabb3cbec717ae5619c6ce26b5b27596bafe",
+      "parents": [
+        "e0742279918e6f053a6b919a45a88496e394a3c2"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T06:29:12-05:00",
+      "message": "Bookend stages: SourceConfig, Package, Deploy + pipeline reorganization",
+      "chain_hash": "ad9f51958a4bed801f811a2c1ee6cf2fbbf428fca94fb632f928bdbed5d7738f"
+    },
+    {
+      "commit": "5eff2690bcafd954ff674039bc7327ad54597927",
+      "tree": "c4353468a4fb2e5f8482355898ee650afabdf083",
+      "parents": [
+        "f8e68868c3a5d8f6b0ae5918bedd573b9691850e"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T06:39:46-05:00",
+      "message": "Example: full multimodal pipeline \u2014 source-config \u2192 vision \u2192 context \u2192 prune \u2192 train \u2192 quant \u2192 eval \u2192 publish \u2192 deploy",
+      "chain_hash": "76f7786e688b66ab1add82dd566321442cf9db84565f63e9cbf6b6cb871cda2e"
+    },
+    {
+      "commit": "a78602a5c8da5846b7a97ac8a3c1712847e81741",
+      "tree": "4a29203e427a23a032b3d11ca63ad1c17928f41f",
+      "parents": [
+        "5eff2690bcafd954ff674039bc7327ad54597927"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T10:13:45-05:00",
+      "message": "Ecosystem doc: compensation pattern for all work types \u2014 humans and AI both thrive",
+      "chain_hash": "80b6be2bf245990019e7b8cb6e3c997dcd242a913a44b23b13e6f4e7cd2d69f2"
+    },
+    {
+      "commit": "751cd2d348ce717aa8ad5e9e8ae96dfae4af5448",
+      "tree": "ba77e9028048c99d4eb1e831313ecfa820871297",
+      "parents": [
+        "a78602a5c8da5846b7a97ac8a3c1712847e81741"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T11:13:12-05:00",
+      "message": "README: the real tagline \u2014 end-to-end cryptographic chain of custody",
+      "chain_hash": "b74d82ecdf458ca69d6a88b00085dee50acefd33881b3ea20ca52eb29c3db22c"
+    },
+    {
+      "commit": "9a35f6c895eb5d80a94191cffe23cb93bc821c9c",
+      "tree": "42d53952eee2e9e871ca9e375155e488b250d18f",
+      "parents": [
+        "751cd2d348ce717aa8ad5e9e8ae96dfae4af5448"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T11:20:47-05:00",
+      "message": "Applications doc: content authenticity, manufacturing, pharma, creative IP, commodities",
+      "chain_hash": "f9baa7a49dc3b5146db833748b0febd5f852c876493635145dba59962e8acd87"
+    },
+    {
+      "commit": "21677b1ebafc7e47cf8e6adf45ddee45e37acbc5",
+      "tree": "a0061f4dcf2f127cff3c6d55c0289c6f1e2f4e73",
+      "parents": [
+        "9a35f6c895eb5d80a94191cffe23cb93bc821c9c"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T11:25:11-05:00",
+      "message": "README: case studies \u2014 deepfake prevention, Etsy manufacturing, pharma, creative IP, all using the same Merkle chain",
+      "chain_hash": "ebc0313702c044b58c8cece69aedebfb3a14463f438a4be361b03c2679814207"
+    },
+    {
+      "commit": "c74bac7c9211a8748e49482e54c0d9c01d697519",
+      "tree": "0bd5d8be3d1f1925fca378e2c720351050b0dbd0",
+      "parents": [
+        "21677b1ebafc7e47cf8e6adf45ddee45e37acbc5"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T12:03:35-05:00",
+      "message": "Verification page: GitHub Pages client-side alloy verification with chain of custody display",
+      "chain_hash": "10860dd3773de9a9c51308f79735b774ce3f47547e73aa4513a1c542616a7549"
+    },
+    {
+      "commit": "35632cb21da60eef2209db5d1ee0502a444ea525",
+      "tree": "5ae5aa526a75c651e59eab837c907dd7ce38eac6",
+      "parents": [
+        "c74bac7c9211a8748e49482e54c0d9c01d697519"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T12:26:44-05:00",
+      "message": "AlloyReceipt: proof of delivery \u2014 publications, QR verify URL, card hash. The receipt completes the chain.",
+      "chain_hash": "b31e40934efb169790ca61adf4e6e0cd298e0dfb456cae59929eaecbb9f7edaa"
+    },
+    {
+      "commit": "c6daf60ebaa69edda06e6fcce969bb64edb8502b",
+      "tree": "a40a5db87def9cf9f9d0db20d67a48f2f9306875",
+      "parents": [
+        "35632cb21da60eef2209db5d1ee0502a444ea525"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T12:28:41-05:00",
+      "message": "Landing page: published models, verify button, case studies, packages \u2014 the showcase",
+      "chain_hash": "a794580073c91c83db79d34e4cbf5c27c15d426962c439de3005bbac71e3a0e4"
+    },
+    {
+      "commit": "58de888980fbf19ce423c5f3104861fa0fd42527",
+      "tree": "b6d15f4666bfda0e201949b5e7a0e96b21667ab3",
+      "parents": [
+        "c6daf60ebaa69edda06e6fcce969bb64edb8502b"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T12:51:37-05:00",
+      "message": "Fix: verify page at /verify/ (root level for GitHub Pages)",
+      "chain_hash": "11c09cd4c8bf495ac60aeb24ce2cbf85b0ea6d8fafaa355004c9a1c3bea0d2e5"
+    },
+    {
+      "commit": "65cd875470589aec0ff5796d473f29e8576f884a",
+      "tree": "107c981f90d14972d9e6d214908c4b21556a123c",
+      "parents": [
+        "58de888980fbf19ce423c5f3104861fa0fd42527"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T12:53:57-05:00",
+      "message": "Verify page: auto-search known models when given bare hash from QR",
+      "chain_hash": "32d2b88af4429d11a4195642f55b75370fa02203ea7228fad110137925e6108f"
+    },
+    {
+      "commit": "0c47e385d73814267e57c55c63f2ed43bdd915b8",
+      "tree": "6ec90ad5fdddd25ee624996e07c50cb13e964760",
+      "parents": [
+        "65cd875470589aec0ff5796d473f29e8576f884a"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T12:59:35-05:00",
+      "message": "Verify page: file drop, CORS proxy fallback, receipt display, refactored",
+      "chain_hash": "98cb49a077bbffea1682f2b51c0f6edde8ebd1df1a5fffb6dfdebe9c28738985"
+    },
+    {
+      "commit": "e89389b829ff67deaf8b31f947bfdb29753afead",
+      "tree": "8adc0625d9799aebecef0e0c63ec5f2e52484328",
+      "parents": [
+        "0c47e385d73814267e57c55c63f2ed43bdd915b8"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T13:24:31-05:00",
+      "message": "Python SDK: complete parity with Rust \u2014 AlloyTarget, Receipt, SourceConfig, Package, Deploy, Publication",
+      "chain_hash": "b653d915976f087a1b4300f135647743c77030b30d8fb13336f9e69f5af679af"
+    },
+    {
+      "commit": "ca4e03b23150fd4a2aa2665a810432d52e063489",
+      "tree": "ebf0719051bc5b72bb8a35a1d8e84c8f202f7baa",
+      "parents": [
+        "e89389b829ff67deaf8b31f947bfdb29753afead"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T13:28:13-05:00",
+      "message": "Fix Python SDK: stage union after all class definitions (forward reference)",
+      "chain_hash": "a73b908d1cdfa950b5aa351ae31617d0c9d95a988b3b5910b2cd068d1a2882f4"
+    },
+    {
+      "commit": "190a305ec5d568b910768bd3f04795d103996a78",
+      "tree": "ea0f9d1e56093b22548b9507d1c385cd88403f48",
+      "parents": [
+        "ca4e03b23150fd4a2aa2665a810432d52e063489"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T13:30:08-05:00",
+      "message": "Fix Python SDK: Annotated discriminated union for Pydantic v2 compat",
+      "chain_hash": "586b11d7782fc9a1fa256dd55af2fe8df54ede12e4dd282de4d8ec931dcd9a28"
+    },
+    {
+      "commit": "4f40a583e63ac9b2d7e342ba8dbe6e1ed0bfa450",
+      "tree": "3eeaec98f3946fe02ce66eabe5e51dc91ff659d9",
+      "parents": [
+        "190a305ec5d568b910768bd3f04795d103996a78"
+      ],
+      "author": "Joel Teply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T14:14:59-05:00",
+      "message": "Update project title in README.md",
+      "chain_hash": "8b898637fbc75518840c718e035e7b0a5411bd89439ae5ea0cad186ca3b0f713"
+    },
+    {
+      "commit": "aa1178f50c850fa8428476ffac4a2378b3f24886",
+      "tree": "99cf7ab1923fc6815e7726b7a51182cb1592b69b",
+      "parents": [
+        "4f40a583e63ac9b2d7e342ba8dbe6e1ed0bfa450"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T14:16:57-05:00",
+      "message": "Verify page: visual chain of custody timeline with dot nodes, publications, hash citations",
+      "chain_hash": "e7020195c47b19e1396a041e4ad7d26b4db8095616d17a8df1d37a5dcfa66c13"
+    },
+    {
+      "commit": "458cc9bbe56a6efa8cd005161ec7a4be9bf71e68",
+      "tree": "d9131b4612c6764445f83f85b160b2094d194285",
+      "parents": [
+        "aa1178f50c850fa8428476ffac4a2378b3f24886"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T14:19:47-05:00",
+      "message": "README: link forge-alloy HF tag to filtered model list",
+      "chain_hash": "119fa7f3c15bba5b24acd90af2fe471ae545f60826bbce38cb3a153b3a476c9f"
+    },
+    {
+      "commit": "4b3230253050416dea7f5132327e47caa841640b",
+      "tree": "ef0bc41d7d2eb422e6de12bb97173ec688fca838",
+      "parents": [
+        "458cc9bbe56a6efa8cd005161ec7a4be9bf71e68"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T14:21:31-05:00",
+      "message": "README: this repo IS the trust infrastructure \u2014 git Merkle chain secures the spec itself",
+      "chain_hash": "6cfbe7132bff76b4cc55126aa878ac7c2fa59a4de4fc10315fc48da8f8044d4e"
+    },
+    {
+      "commit": "2a8eddd8937d7739804b86ba3708278f1abf0031",
+      "tree": "2c343e66f4d048fea7d4db9d52c108e4b71863ba",
+      "parents": [
+        "4b3230253050416dea7f5132327e47caa841640b"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T14:24:05-05:00",
+      "message": "Verify page: hyperlinked chain \u2014 source model, runner, spec, publications all clickable. Verifier commit hash in footer.",
+      "chain_hash": "0a6aa65326a0e89fd356f4700b47d1554db927674cc8cffa332a482e67ab1fac"
+    },
+    {
+      "commit": "a3b1712f9dde904f3cb39be231a88376c76d140a",
+      "tree": "d1bd4cf4817b24da8e1f60c8e10cbd6d8242ddfa",
+      "parents": [
+        "2a8eddd8937d7739804b86ba3708278f1abf0031"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T14:31:48-05:00",
+      "message": "Verify page: EVERY line item is a hyperlink \u2014 source, arch, benchmarks, hardware, hashes, tags, all clickable",
+      "chain_hash": "0bba0b80ab075f733c3bee94132e5cf80ea6ddece2d8cf38b56dbf5fa68590dd"
+    },
+    {
+      "commit": "d6c3055836eacd36d92815620960fe69ede2a639",
+      "tree": "3d88352c47281ac9567de9eb0f639ea1105eca70",
+      "parents": [
+        "a3b1712f9dde904f3cb39be231a88376c76d140a"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T14:45:24-05:00",
+      "message": "Verify: code hash links to exact git commit, not just main. Git commit is a chain node.",
+      "chain_hash": "014d49a39f436b7884e853109ef177a257d676cb157096df08f84e68ded2551a"
+    },
+    {
+      "commit": "8e66f70b6f4d77669bfd76a789d11e241bbbf819",
+      "tree": "ce0ff3cd46011267efcd3291e23d57e722fb07c1",
+      "parents": [
+        "d6c3055836eacd36d92815620960fe69ede2a639"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T14:47:09-05:00",
+      "message": "Verify: QR code rendered inside verified box \u2014 the proof shows its own QR",
+      "chain_hash": "a72ab3dcac3cc5a6c3144749d646f174b6ddc9f6f6d3cc60429213d7e51961ad"
+    },
+    {
+      "commit": "16021333058688ed1075bbcca38be15a3d6db56b",
+      "tree": "2c1a572ec61b28974dbb0a045e3e1137d0133a98",
+      "parents": [
+        "8e66f70b6f4d77669bfd76a789d11e241bbbf819"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T14:47:31-05:00",
+      "message": "Verify: Enter key triggers verification",
+      "chain_hash": "bc1b15aa54a8b7a75f983f4f42ae1f51f237731ca0c7e5dc6d15133a0aa2e135"
+    },
+    {
+      "commit": "c1d2505b2314795674e4c6155b36cdf029329ef1",
+      "tree": "47c1523225798cedf16f53955a93f04c36c67c6c",
+      "parents": [
+        "16021333058688ed1075bbcca38be15a3d6db56b"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T14:48:52-05:00",
+      "message": "CHAIN OF CUSTODY (MERKLE) VERIFIED \u2014 hyperlinked to attestation docs",
+      "chain_hash": "b40b332608860becc086ee7a32487a64f4a8fe9bcf67250239eb59443f6130a1"
+    },
+    {
+      "commit": "3013b54a63251ca674c49448ddbfd565358413a0",
+      "tree": "b8f490008901a97fafeddd3b9ff944a09617d1b2",
+      "parents": [
+        "c1d2505b2314795674e4c6155b36cdf029329ef1"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T14:51:08-05:00",
+      "message": "Landing: tell the story concisely \u2014 trust where there was none, Merkle + WebAuthn + enclaves",
+      "chain_hash": "94238de8dd321cd99a56c132408c73906bc8f6c653b2caf5b4a444b2e82a4e9b"
+    },
+    {
+      "commit": "b50f9a0c4b59329583dbaa1d002b8ce839f6abbd",
+      "tree": "00f04dbdf1f7910ae938b8f9e8ceaea9d207961d",
+      "parents": [
+        "3013b54a63251ca674c49448ddbfd565358413a0"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T15:03:48-05:00",
+      "message": "Verify: QR centered below text bigger. Chain nodes with goto destination hints.",
+      "chain_hash": "386e60044ccb63cfa19a684d496623151eaf5a6784fd3d2662ee3f9580a2b6ab"
+    },
+    {
+      "commit": "7e583c05238e0320f679658216eeabed317e88ff",
+      "tree": "858dddacd0848b6aa37497a911c9e9446e8f59dd",
+      "parents": [
+        "b50f9a0c4b59329583dbaa1d002b8ce839f6abbd"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T15:05:14-05:00",
+      "message": "Verify: hardware links to NVIDIA product pages, not Google search",
+      "chain_hash": "74bb8948d449cbfbfa93e1173d7cd349d18b6cbec6c87617d8b9c091d4b91c6b"
+    },
+    {
+      "commit": "750ec2866cafa1fa5933f567e1e0cc5f120937b6",
+      "tree": "87cf0e7f008cb67f936a1cb948ca6d11176f54ed",
+      "parents": [
+        "7e583c05238e0320f679658216eeabed317e88ff"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T15:06:36-05:00",
+      "message": "Verify: rich context \u2014 quality rating on results, trust level explanation, contextual hints on every node",
+      "chain_hash": "b27e0d07f0a3e05376c8cc2a5090d8097fa04a9af7dda7c95f8a3049f5e514f3"
+    },
+    {
+      "commit": "b7ec6d73b67006c72e502f7ea3ea162cc2754c2a",
+      "tree": "b908beedd988ff79cde82138b233ff40c14de48f",
+      "parents": [
+        "750ec2866cafa1fa5933f567e1e0cc5f120937b6"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T16:50:45-05:00",
+      "message": "AdapterAttestation: independent certifications for every chain element",
+      "chain_hash": "82bd7bd53d7c81d9c821eee05a59c591a17d658732f04f8abaec0af823611b71"
+    },
+    {
+      "commit": "c475df92bd060dcf3f5e5d2726d75d7e1223f152",
+      "tree": "5c3e1a7e63ec29b4a714c058138c9ea3c554f84b",
+      "parents": [
+        "b7ec6d73b67006c72e502f7ea3ea162cc2754c2a"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T16:54:37-05:00",
+      "message": "Verify: QR inside status banner, article-style layout \u2014 image left, info right",
+      "chain_hash": "58a73e427d06fef949ecd8e4913e3b6852caff86382b719965dc8ce7947bfc7c"
+    },
+    {
+      "commit": "42bc70f7e88987819347fefa6e25d0a3563ab83f",
+      "tree": "560c4d37e3c3ebf75621600c670647a36fcaa953",
+      "parents": [
+        "c475df92bd060dcf3f5e5d2726d75d7e1223f152"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T16:56:43-05:00",
+      "message": "Fix: variable declarations before status rendering, QR inside status div works now",
+      "chain_hash": "77c143d829fd5d8999577e13a0a94621578662129e355ee808e6fb8d49ba6071"
+    },
+    {
+      "commit": "3a2d4daab5febff965026cb19db2b03726e4f20a",
+      "tree": "5e8003be4e0fb54ca82cddc0bb72da40685ba07d",
+      "parents": [
+        "42bc70f7e88987819347fefa6e25d0a3563ab83f"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T16:58:59-05:00",
+      "message": "Fix: CORS proxy fallback \u2014 corsproxy.io requires paid plan, use allorigins.win",
+      "chain_hash": "c9f19d6e7da21dd423e300867a4e497e1d1aff6bef2e8dcc711942a2c8007d73"
+    },
+    {
+      "commit": "679d2d0869554ea4b7c136015085c8a0d2727241",
+      "tree": "490229a747abf7c6899bdbf4a3d7625e1929861f",
+      "parents": [
+        "3a2d4daab5febff965026cb19db2b03726e4f20a"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T17:00:58-05:00",
+      "message": "Fix: remove cached alloys (spec repo != model data), improve CORS error message",
+      "chain_hash": "3ab9e999c4ab1cbbe0f0cc0bbdc3e8e1bfb2ebabedc607d2e3cd134ea44b5557"
+    },
+    {
+      "commit": "1c05417a81280885bcf7d7e970d9428c5fbfc570",
+      "tree": "a9e3a69d32676ffe99373f87c5d990992294058e",
+      "parents": [
+        "679d2d0869554ea4b7c136015085c8a0d2727241"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T17:05:45-05:00",
+      "message": "Decouple verify page from continuum \u2014 use sourceRepo from alloy data, no hardcoded org guessing",
+      "chain_hash": "48958ec3d5aa9d2fe804458e40f9b5cfd4ab3fd7102baa34100e961dea63fb46"
+    },
+    {
+      "commit": "f8348e6266b259caa8f7b1d6160319942868e038",
+      "tree": "06c0817b47a5f878607150ba7446bb479f92dca7",
+      "parents": [
+        "1c05417a81280885bcf7d7e970d9428c5fbfc570"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T17:08:49-05:00",
+      "message": "Restore KNOWN_ALLOYS \u2014 hash lookup from QR codes needs it",
+      "chain_hash": "8147d958bc464bfd1dd39602f43c25740e77d644fd402311fa7261a087d07cfa"
+    },
+    {
+      "commit": "8a284f2088c8a4670f2b891ac36b250f08eca00f",
+      "tree": "a283a3f3ae4c61ce0970786ccc4d492fe94f582a",
+      "parents": [
+        "f8348e6266b259caa8f7b1d6160319942868e038"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T17:11:19-05:00",
+      "message": "Fix: QR encodes full alloy URL, no lookup table, works for any publisher",
+      "chain_hash": "154c5b79d3711aee300f8e8238fe33f18b6dcea3ab0a00e516fe681e56fab0e2"
+    },
+    {
+      "commit": "14f3013342426b3af507f169d30ef720c83812a1",
+      "tree": "6a87cc7fb7b3fb4fad2bce172019a53df9b9e544",
+      "parents": [
+        "8a284f2088c8a4670f2b891ac36b250f08eca00f"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T17:13:43-05:00",
+      "message": "Registry-based hash lookup for legacy QR codes, full URL for new ones",
+      "chain_hash": "771a894a86c84d7084a755ce7e269ed5fd84040b2b0d240277862bca35a1212f"
+    },
+    {
+      "commit": "7fd63886d185d740f1685d23be5902ff0f98b7dd",
+      "tree": "1f2dfa6fb3a4930a6be26062ca23afd47e44cbf8",
+      "parents": [
+        "14f3013342426b3af507f169d30ef720c83812a1"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T17:37:50-05:00",
+      "message": "Cache fetched alloys in sessionStorage, move trust summary above chain",
+      "chain_hash": "5097955333aface84605bb131e3360c76b338c719ed657b5d128804f0f11ef55"
+    },
+    {
+      "commit": "e77bbd41181ec52aaca452b51f586c71a9f13e12",
+      "tree": "e9d6005ebd5cd54477d94373869bc9daba501e6f",
+      "parents": [
+        "7fd63886d185d740f1685d23be5902ff0f98b7dd"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-03-31T17:59:21-05:00",
+      "message": "Fix: extract benchmark scores from nested metrics instead of JSON.stringify",
+      "chain_hash": "d8103ef74868a5f31a876429ba149a250c9650214e24034e9a8c335f5b64bbf9"
+    },
+    {
+      "commit": "05d508e5178aef6c79cf6054d9cdf41908ed21e5",
+      "tree": "b587eb24a7cd13de09cd59b661897a0f8c298967",
+      "parents": [
+        "e77bbd41181ec52aaca452b51f586c71a9f13e12"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-01T10:30:26-05:00",
+      "message": "README: stage types are domain-extensible, not LLM-only (#7)",
+      "chain_hash": "671cf1562373ba8c53e79be97f184528de66b731a00fdfb7d7cdc9d6ef36dcce"
+    },
+    {
+      "commit": "73d315f4b73058810a0ee435d444388628aef737",
+      "tree": "c5f0e0ff18f664058ace6486b5c708c66c497633",
+      "parents": [
+        "05d508e5178aef6c79cf6054d9cdf41908ed21e5"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-01T11:13:53-05:00",
+      "message": "README: generic pipeline structure, domain-agnostic framing, delivery not auto-publish",
+      "chain_hash": "5fe9a6b802e2e35dc79c8242c7467f194fefb26e9b6cae8da1cf0aa711afd02e"
+    },
+    {
+      "commit": "819233c9d81bde3dd0ca697edd22d83f5a026939",
+      "tree": "f2c3560251dd286c0e045a8331f1042c3a3b8e5e",
+      "parents": [
+        "73d315f4b73058810a0ee435d444388628aef737"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-01T23:28:27-05:00",
+      "message": "README: universal attestation chain \u2014 typed stages, linked hashes, client-side verification",
+      "chain_hash": "60c6db49b9e5dcfe985bdb3d37a7a1b052cbc3a4655943b2b78e2274e9b16cb3"
+    },
+    {
+      "commit": "05e2a803b26d85c8a141a9a8ee4a87ebca3ebcf6",
+      "tree": "74e03d0c009e2b29df1dc5910f8ba4cc9749f6df",
+      "parents": [
+        "819233c9d81bde3dd0ca697edd22d83f5a026939"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-02T04:31:58-05:00",
+      "message": "Verify page: dynamic HF search replaces hardcoded registry",
+      "chain_hash": "e06d4e542a53ad6fc72f91751bf3010655f0060323af26676197edddfd049662"
+    },
+    {
+      "commit": "cfa5a0399f9d71b784021206531f47d1b93aff7f",
+      "tree": "b209323c3afed24fe1bdac94ec72c0eac3c1388b",
+      "parents": [
+        "05e2a803b26d85c8a141a9a8ee4a87ebca3ebcf6"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-02T04:37:17-05:00",
+      "message": "Add 128k alloy examples, update docs/verify to dynamic search",
+      "chain_hash": "89c5ec2eaf35bc6f0a739b6dc08e2929c0b7ee115e75c610f210171eec2dbf56"
+    },
+    {
+      "commit": "fbcd0cbd3cbd79b31303c982405b336150605519",
+      "tree": "d801cd2ab9a35330a9caf2267a495c1f458c1bb4",
+      "parents": [
+        "cfa5a0399f9d71b784021206531f47d1b93aff7f"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-02T04:52:03-05:00",
+      "message": "Add prune recipe for 128K model (25% entropy pruning, 3 cycles)",
+      "chain_hash": "120b5c07ef86723e86a259151c0376b24d447f298d0a6a9baf22057e2902f541"
+    },
+    {
+      "commit": "234de0e9596c2cc98cd089d492a9dbe6a339dcef",
+      "tree": "5d6607138ac338750c5fb0050f69bd88e94f3c07",
+      "parents": [
+        "fbcd0cbd3cbd79b31303c982405b336150605519"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-02T05:06:29-05:00",
+      "message": "Add forge target strategy and alloy queue (5 models, priority ordered)",
+      "chain_hash": "87fb52ca847224d34e0d0bfda4f192926fc94015d875bf3c0bed3f14acf33c93"
+    },
+    {
+      "commit": "ea7f7a0d4c5e024b83a39e8e57916f9756040fab",
+      "tree": "dd48a4aa28373319b8179ce2abfb7439f579fe54",
+      "parents": [
+        "234de0e9596c2cc98cd089d492a9dbe6a339dcef"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-03T15:19:08-05:00",
+      "message": "Add deterministic inference attestation and RANSAC recovery stage to alloy spec",
+      "chain_hash": "49b8ee5fc573e63af4c5638c2497fcd6e07c1b9c608cae1a62a5819b2a6fa487"
+    },
+    {
+      "commit": "9650c86a1f4da9e9fea3cbda9fffb2e0af23724f",
+      "tree": "08be2d8710e737bf749c8cbd3e3c606d0bd6efd8",
+      "parents": [
+        "ea7f7a0d4c5e024b83a39e8e57916f9756040fab"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-03T15:22:54-05:00",
+      "message": "Add git-as-trust-infrastructure, deterministic inference attestation, mathematical proof of contracts, zero trust IS trust",
+      "chain_hash": "766e44d691c08ae42440b777117d446746ef741bcf07ad0a7fb82a7620e457f2"
+    },
+    {
+      "commit": "7fc487df99db4e10820d1d2ceb569983932db510",
+      "tree": "f7632ef1cb0741fe534d37f7d00b7a96487014c5",
+      "parents": [
+        "9650c86a1f4da9e9fea3cbda9fffb2e0af23724f"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-03T15:27:59-05:00",
+      "message": "Add opening quote: zero-trust is the only path to absolute trust",
+      "chain_hash": "9528d620a96e76077d1a10d8a880ad4d60e447f9d19ea20886d01a6263be2356"
+    },
+    {
+      "commit": "301232dc15a1f301738371f53a3f632ffaa891c6",
+      "tree": "ebfe0bfbbe7a7e17fc890bb81ddc63e06fd80e7f",
+      "parents": [
+        "7fc487df99db4e10820d1d2ceb569983932db510"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-03T15:31:33-05:00",
+      "message": "API as verification gate: replay enforcement, longevity guarantee, compliant code = proven code",
+      "chain_hash": "e4e6a591e54fb1ddc914cbd7847a7a9116fe697bc1e5a563cead06dfcb3a18c6"
+    },
+    {
+      "commit": "28831b8b6894384a5e611337539ce5c2238502b9",
+      "tree": "aa169d309794c7009b2eae77eea19d9b0845c328",
+      "parents": [
+        "301232dc15a1f301738371f53a3f632ffaa891c6"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-03T15:32:19-05:00",
+      "message": "Add retention duration (IRS 7-year model) and amendment protocol for honest gaps in chain",
+      "chain_hash": "a1124e43d1f2129eb0c0034cfa986cc5ceaa091e022e8fc5ba29d453c3f90d68"
+    },
+    {
+      "commit": "617002cf68eaf1ef80e0d3ecd814c176583885ff",
+      "tree": "0bec3b94e4e07fba17d5d7d26c7668b5c3bce149",
+      "parents": [
+        "28831b8b6894384a5e611337539ce5c2238502b9"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-03T15:36:58-05:00",
+      "message": "Add Zero Overhead section: attestation isn't a burden, you're already doing this",
+      "chain_hash": "4745565fe69e13cb00d13db859614ae21973e1ddbda2abe055bcdeba868cfd33"
+    },
+    {
+      "commit": "605bcbdf8b800ca268a72983f929ef6f9578d2a7",
+      "tree": "0f600b8b55f4169b612d45ee596c0d8c9c72d25b",
+      "parents": [
+        "617002cf68eaf1ef80e0d3ecd814c176583885ff"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-03T15:39:22-05:00",
+      "message": "Reputation IS verification rate: no voting, no stars, just math. eBay seller model for grid nodes",
+      "chain_hash": "ef6b61778f8fd81391dccd8663d33cacfc36439d042895d6a7192ac88f1315e9"
+    },
+    {
+      "commit": "bd4349d52dd42a538b452577066e39c8fe29487a",
+      "tree": "106935c79b7a70787823fd5bc33851be45af459d",
+      "parents": [
+        "605bcbdf8b800ca268a72983f929ef6f9578d2a7"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-08T12:54:08-05:00",
+      "message": "types: temporary additive checkpoint so published continuum-ai alloys parse",
+      "chain_hash": "884c8fe3a75474a9ece156cffc1cc4dc02008c3d0b50f9b808ca6b812d8e4b05"
+    },
+    {
+      "commit": "4fd715ea36c9f47cb82c2112d84b717c8eafa1cc",
+      "tree": "ccabe8d67e9fc9750ab250234e6fefe7b5369314",
+      "parents": [
+        "bd4349d52dd42a538b452577066e39c8fe29487a"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-08T22:55:21-05:00",
+      "message": "domains: forge_alloy.domains package + llm-forge extension + stubs (TDD)",
+      "chain_hash": "489c5e9af9411b31c006b0f2393a01f6bfef0b17311e0395c760ed7245a8e20f"
+    },
+    {
+      "commit": "edc728a9b8174b8f21388c8177eead315020d6c4",
+      "tree": "3c0ed50c22d02df39782022c530d4ebc19a658bd",
+      "parents": [
+        "4fd715ea36c9f47cb82c2112d84b717c8eafa1cc"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-09T08:13:41-05:00",
+      "message": "schema: AcceptanceCriteria \u2014 the part spec, gate-as-alloy-field (TDD)",
+      "chain_hash": "2bef6724bdeaf7f5cc5f0045d63fbaf021f3f5ba43e5bf719282ad97b6d1b396"
+    },
+    {
+      "commit": "be4e6c03cb25ce2ef95d8e02c8f7a98c08b31e35",
+      "tree": "01ac474f539c195b5e7cf7ed969fbf5b3c7e0ab0",
+      "parents": [
+        "edc728a9b8174b8f21388c8177eead315020d6c4"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-09T12:53:19-05:00",
+      "message": "schema: TrainStage domain/steps/learningRate now Optional (adapter-driven)",
+      "chain_hash": "ebcb61b4706c2ac95d39c02d0750a0e4050b8d189e97579ddb26785feb0c7942"
+    },
+    {
+      "commit": "1aa413c6d11ea003d0ab4fa799a73b68a23f8f3a",
+      "tree": "01ac474f539c195b5e7cf7ed969fbf5b3c7e0ab0",
+      "parents": [
+        "605bcbdf8b800ca268a72983f929ef6f9578d2a7",
+        "be4e6c03cb25ce2ef95d8e02c8f7a98c08b31e35"
+      ],
+      "author": "Joel Teply",
+      "email": "joel@cambriantech.com",
+      "timestamp": "2026-04-10T07:42:08-05:00",
+      "message": "Merge: AcceptanceCriteria + ExpertActivationProfileStage + Optional TrainStage fields",
+      "chain_hash": "d1150c47db85f2860f7f98130c4627180dea91a5ae8c6978a664f5fc37deeabb"
+    },
+    {
+      "commit": "e7dca8e1c805581266bcc2f2550e939973c697d4",
+      "tree": "4b66df11e22b43453e7ee4378f62ccbc248dfa65",
+      "parents": [
+        "1aa413c6d11ea003d0ab4fa799a73b68a23f8f3a"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-10T20:52:37-05:00",
+      "message": "docs: grid transport interfaces \u2014 the literal contracts",
+      "chain_hash": "437bfcdd647524a2ce14c136184c3cfefe13d93b80cbdd08540a5f73d5de1204"
+    },
+    {
+      "commit": "d8464bb00a5272413ecbef9cbf2ff23bf2e902dd",
+      "tree": "12db1973729efd03ce0daa3b1df172e7f7a0829c",
+      "parents": [
+        "e7dca8e1c805581266bcc2f2550e939973c697d4"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-10T21:57:15-05:00",
+      "message": "docs: forge search algorithm \u2014 automated model optimization",
+      "chain_hash": "65b03d06ee5c7df37d8975279859c606de416ddc27e639b77e9e72fc3c4fc677"
+    },
+    {
+      "commit": "de3ce288452c294c33ed0e0e6ad174e0dc92af89",
+      "tree": "5e98c309727a82ca9c6d53ef0b2799cd114ab1df",
+      "parents": [
+        "d8464bb00a5272413ecbef9cbf2ff23bf2e902dd"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T09:59:06-05:00",
+      "message": "docs: The Model Compiler \u2014 forge-alloy as a programming language for neural network optimization",
+      "chain_hash": "fa5a2025089125a01d47f2ce427dc4b802833bc37ff54279674599abf378bbfd"
+    },
+    {
+      "commit": "aecec10baa6bd487848f30c6053819f9f25512b3",
+      "tree": "3125de8c5510fbc433c2ff313c2723a3fa92f557",
+      "parents": [
+        "de3ce288452c294c33ed0e0e6ad174e0dc92af89"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T10:04:37-05:00",
+      "message": "README: The Model Compiler \u2014 gcc for neural networks",
+      "chain_hash": "3380a7d056e0d8d0db02186ef2531c0b1df2dfda8abe1d65e9780762ec53c2e6"
+    },
+    {
+      "commit": "196b7f6e804ec296ed3d07b2d87ef5e09dbdf95f",
+      "tree": "4c1009f0f400ed08aa92a8381b1d4ceec8a2bb08",
+      "parents": [
+        "aecec10baa6bd487848f30c6053819f9f25512b3"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T10:08:56-05:00",
+      "message": "feat: SearchStrategy + ManyWorlds + CV stage types in forge-alloy schema",
+      "chain_hash": "01dca04422f2290a88506a7981c1d6b0c4ca5a43d05e03a81ef7df317c772fe6"
+    },
+    {
+      "commit": "eca9716e58a09fe5fe06a3039e498a73ae822df6",
+      "tree": "3c74b3880cf1fd86b85a081f655884668edc8fc4",
+      "parents": [
+        "196b7f6e804ec296ed3d07b2d87ef5e09dbdf95f"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T10:57:54-05:00",
+      "message": "README: automotive/robotics attestation + economics of provable quality",
+      "chain_hash": "b5f70e61dea563b9f8726529bb5776948975bb18ae14d3bcaaeeb8168c7d15da"
+    },
+    {
+      "commit": "5f26d028f1e48d0027ae19456d70aa3a910fe7ff",
+      "tree": "e4314fe51faf194d2e4b2fba648820b030a2be7d",
+      "parents": [
+        "eca9716e58a09fe5fe06a3039e498a73ae822df6"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T10:59:37-05:00",
+      "message": "README: attestation coverage score \u2014 the QR rates products by proven quality",
+      "chain_hash": "862915a3d8282d461cc22c3f2e7cdc40ac1b6da9b8fcbc8cba451676d5745b84"
+    },
+    {
+      "commit": "81d245491b901765bb64d5d28c95319dc8ce1340",
+      "tree": "5eb1f604edf7d7284880a0a440e7fba26e9215a8",
+      "parents": [
+        "5f26d028f1e48d0027ae19456d70aa3a910fe7ff"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T11:01:45-05:00",
+      "message": "README: actionable chains \u2014 bug routing, supply chain protection, dependency attestation",
+      "chain_hash": "4c631b8054efed1d79d5b1f0f6467ada1105a0043ed8350b8aaf69655904d871"
+    },
+    {
+      "commit": "fac71052938157bcf7a56f224cb191d1160d6fbb",
+      "tree": "ecd880a6b7e8d48ca513aad8bb41fe52b63c1bee",
+      "parents": [
+        "81d245491b901765bb64d5d28c95319dc8ce1340"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T11:23:53-05:00",
+      "message": "README: live CVE propagation, safety-critical systems, Merkle-as-contract",
+      "chain_hash": "d0280700e6e2b823005f25688c172b4533110d49ce2db139fff8a4dbbde38aa9"
+    },
+    {
+      "commit": "28066af5bdb1a876dabacc6a95dcd1b4c92575ff",
+      "tree": "ecd880a6b7e8d48ca513aad8bb41fe52b63c1bee",
+      "parents": [
+        "81d245491b901765bb64d5d28c95319dc8ce1340",
+        "fac71052938157bcf7a56f224cb191d1160d6fbb"
+      ],
+      "author": "Joel Teply",
+      "email": "joel@cambriantech.com",
+      "timestamp": "2026-04-11T11:24:14-05:00",
+      "message": "Merge pull request #13 from CambrianTech/domain-extensibility-refactor",
+      "chain_hash": "76654a566100632045f891cbf679eda1567f36dd1a41d78cdd92bc89b2778dc4"
+    }
+  ]
+}
