@@ -3,20 +3,20 @@
   "type": "repo-attestation",
   "name": "forge-alloy",
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
-  "repository": "https://github.com/CambrianTech/forge-alloy",
+  "repository": "https://github.com/CambrianTech/forge-alloy.git",
   "branch": "main",
-  "chainHash": "09b8df836920c4bec9cfbf0907c62a4ae80f8e283d10a80529ef91044d1a71d0",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#09b8df836920c4be",
-  "attestedAt": "2026-04-11T16:39:20.950663+00:00",
-  "totalCommits": 91,
+  "chainHash": "1d3c3e474061484bb47bdf6a08c97dec51113a76944ca5efa452d3ae4b816a55",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@1d3c3e474061484b",
+  "attestedAt": "2026-04-11T16:51:28.484628+00:00",
+  "totalCommits": 92,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "09b8df836920c4bec9cfbf0907c62a4ae80f8e283d10a80529ef91044d1a71d0",
+    "alloyHash": "1d3c3e474061484bb47bdf6a08c97dec51113a76944ca5efa452d3ae4b816a55",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "09b8df836920c4bec9cfbf0907c62a4ae80f8e283d10a80529ef91044d1a71d0",
-      "commit": "94ac80a89a139fb51b792f18dbc2fbfb11dd6006"
+      "sourceHash": "1d3c3e474061484bb47bdf6a08c97dec51113a76944ca5efa452d3ae4b816a55",
+      "commit": "915146ad22dccee85151109190126f2b0436a1a2"
     }
   },
   "stages": [
@@ -1114,6 +1114,18 @@
       "timestamp": "2026-04-11T11:39:08-05:00",
       "message": "Merge pull request #16 from CambrianTech/fix/verify-page-root",
       "chain_hash": "09b8df836920c4bec9cfbf0907c62a4ae80f8e283d10a80529ef91044d1a71d0"
+    },
+    {
+      "commit": "915146ad22dccee85151109190126f2b0436a1a2",
+      "tree": "1119b9e97c2a561770233574e12ba50ef2dc7df7",
+      "parents": [
+        "94ac80a89a139fb51b792f18dbc2fbfb11dd6006"
+      ],
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "timestamp": "2026-04-11T16:39:21Z",
+      "message": "attestation: chain updated for 94ac80a",
+      "chain_hash": "1d3c3e474061484bb47bdf6a08c97dec51113a76944ca5efa452d3ae4b816a55"
     }
   ]
 }

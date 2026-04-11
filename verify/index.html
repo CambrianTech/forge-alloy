@@ -398,16 +398,52 @@ async function verify() {
   let url = null;
   let expectedHash = null;
 
-  if (input.startsWith('http')) {
-    // Full URL — fetch directly (may include hash fragment)
+  // URL format: source@hash (the QR carries WHERE the data lives + hash to verify)
+  // Examples:
+  //   huggingface.co/continuum-ai/model/resolve/main/model.alloy.json@821f1562
+  //   github:forge-alloy@09b8df83  (shorthand for repo self-attestation)
+  //   https://full-url-to-alloy.json@hash
+  //   https://full-url-to-alloy.json  (no hash — just display, no verification)
+  //   821f1562  (legacy hash-only — falls back to HF search for backwards compat)
+
+  if (input.includes('@')) {
+    // New format: source@hash — direct fetch + verify
+    const atIdx = input.lastIndexOf('@');
+    const source = input.slice(0, atIdx);
+    expectedHash = input.slice(atIdx + 1);
+
+    if (source === 'github:forge-alloy') {
+      // Repo self-attestation shorthand
+      statusEl.innerHTML = '<div class="status-icon">&#x23F3;</div><div class="status-text">Fetching repo attestation…</div>';
+      try {
+        const resp = await fetch('https://raw.githubusercontent.com/CambrianTech/forge-alloy/main/.attestation/chain.json');
+        if (resp.ok) {
+          const data = JSON.parse(await resp.text());
+          if (data.chainHash && data.chainHash.startsWith(expectedHash)) {
+            await showRepoChain(data, expectedHash);
+            return;
+          }
+        }
+      } catch (e) { console.error('Repo chain fetch failed:', e); }
+      statusEl.className = 'status failed';
+      statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Chain hash mismatch</div><div class="status-detail">Repo chain no longer matches ' + expectedHash + '. The chain advances on every commit.</div>';
+      return;
+    }
+
+    // Direct URL source — add https if missing
+    url = source.startsWith('http') ? source : 'https://' + source;
+
+  } else if (input.startsWith('http')) {
+    // Full URL without hash — fetch and display
     if (input.includes('#')) {
       url = input.split('#')[0];
       expectedHash = input.split('#').pop();
     } else {
       url = input;
     }
+
   } else if (/^[0-9a-f]{8,64}$/.test(input)) {
-    // Hash from QR code — search HuggingFace dynamically
+    // Legacy: hash-only — search HuggingFace for backwards compat with old cards
     expectedHash = input;
     statusEl.innerHTML = '<div class="status-icon">&#x23F3;</div><div class="status-text">Searching HuggingFace...</div><div class="status-detail">Scanning continuum-ai models for hash ' + input + '&hellip;</div>';
     try {
@@ -430,25 +466,9 @@ async function verify() {
         } catch { continue; }
       }
     } catch (e) { console.error('HF search failed:', e); }
-    // Fallback: check this repo's own attestation chain (dogfood)
-    if (!url) {
-      statusEl.innerHTML = '<div class="status-icon">⏳</div><div class="status-text">Checking repo self-attestation…</div><div class="status-detail">Fetching chain from GitHub…</div>';
-      try {
-        const chainUrl = 'https://raw.githubusercontent.com/CambrianTech/forge-alloy/main/.attestation/chain.json';
-        const resp = await fetch(chainUrl);
-        if (resp.ok) {
-          const txt = await resp.text();
-          const data = JSON.parse(txt);
-          if (data.chainHash && data.chainHash.startsWith(input)) {
-            await showRepoChain(data, input);
-            return;
-          }
-        }
-      } catch (e) { console.error('Repo chain check failed:', e); }
-    }
     if (!url) {
       statusEl.className = 'status failed';
-      statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Alloy not found</div><div class="status-detail">Hash ' + input + ' not found in continuum-ai models or repo attestation.<br>Paste the full alloy URL or drop the .alloy.json file.</div>';
+      statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Alloy not found</div><div class="status-detail">Hash ' + input + ' not found. Use source@hash format for direct verification.</div>';
       return;
     }
   } else {

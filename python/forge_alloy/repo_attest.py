@@ -99,7 +99,7 @@ def build_attestation(
     applied to the repo that defines the schema.
     """
     repo_url = "https://github.com/CambrianTech/forge-alloy"
-    verify_url = f"https://cambriantech.github.io/forge-alloy/verify/#{chain_hash[:16]}"
+    verify_url = f"https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@{chain_hash[:16]}"
 
     # Get current repo info
     try:
@@ -242,7 +242,7 @@ def pr_comment_markdown(
 ) -> str:
     """Generate markdown for a PR attestation comment."""
     short_hash = chain_hash[:16]
-    verify_url = f"https://cambriantech.github.io/forge-alloy/verify/#{short_hash}"
+    verify_url = f"https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@{short_hash}"
 
     lines = [
         "## Attestation Chain",
@@ -310,7 +310,7 @@ def main():
         print(json.dumps(attestation, indent=indent))
 
     elif args.command == "qr":
-        verify_url = f"https://cambriantech.github.io/forge-alloy/verify/#{args.hash[:16]}"
+        verify_url = f"https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@{args.hash[:16]}"
         svg = generate_qr_svg(verify_url)
         if args.output == "-":
             print(svg)
@@ -330,7 +330,7 @@ def main():
         chain_path.write_text(json.dumps(attestation, indent=2))
 
         # Write badge SVG
-        verify_url = f"https://cambriantech.github.io/forge-alloy/verify/#{chain_hash[:16]}"
+        verify_url = f"https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@{chain_hash[:16]}"
         badge_svg = generate_badge_svg(chain_hash, verify_url, len(stages))
         badge_path = out / "chain-qr.svg"
         badge_path.write_text(badge_svg)
