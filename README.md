@@ -54,6 +54,34 @@ forge-alloy verify model.alloy.json --model-dir ./weights/
 
 In browser: client-side JS does the same. The verification page is a convenience — the math runs locally.
 
+## The Model Compiler
+
+**`gcc` turns C into binaries. forge-alloy turns neural networks into models that run on YOUR hardware.**
+
+A recipe is source code. The search algorithm is the optimizer. The benchmark is the test suite. The GGUF is the compiled binary. The attestation is the build manifest. This isn't a metaphor — it's the same architecture:
+
+- **Dead code elimination** = dead expert elimination (remove experts that don't activate)
+- **Profile-guided optimization** = calibration-aware pruning (profile on a corpus, optimize hot paths)
+- **Target architecture** = your GPU (32GB, 24GB, 16GB — the compiler fits the binary to your hardware)
+- **Optimization level** = search strategy (binary search, RANSAC, adaptive per-layer)
+- **Link-time optimization** = compensation LoRA (post-prune quality recovery)
+
+The search finds the optimal model FAST — size filter (instant) → quality estimate (instant) → quick eval (2 min, ±0.4) → full eval (40 min, ±0.09). Only the winner gets the expensive eval. 95% of candidates die for free.
+
+```
+forge mixtral-8x22b-coding {
+    source: "mistralai/Mixtral-8x22B-Instruct-v0.1"
+    target {
+        devices: [rtx-5090-32gb]
+        domain: coding
+        benchmark: humaneval >= 0.65
+    }
+    search: auto
+}
+```
+
+You specify WHAT you want. The compiler finds HOW. One command, optimal model, attested, published. See [MODEL-COMPILER.md](docs/MODEL-COMPILER.md) for the full architecture.
+
 ## Quick Example
 
 ```json
