@@ -3,20 +3,20 @@
   "type": "repo-attestation",
   "name": "forge-alloy",
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
-  "repository": "https://github.com/CambrianTech/forge-alloy.git",
-  "branch": "feat/self-attestation-dogfood",
-  "chainHash": "76654a566100632045f891cbf679eda1567f36dd1a41d78cdd92bc89b2778dc4",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#76654a5661006320",
-  "attestedAt": "2026-04-11T16:30:06.061912+00:00",
-  "totalCommits": 84,
+  "repository": "https://github.com/CambrianTech/forge-alloy",
+  "branch": "main",
+  "chainHash": "3dbe6bd95118b4e13aa48c2bddc41441e0cdfdaa3a140436580186d255d2b447",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#3dbe6bd95118b4e1",
+  "attestedAt": "2026-04-11T16:36:18.463946+00:00",
+  "totalCommits": 88,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "76654a566100632045f891cbf679eda1567f36dd1a41d78cdd92bc89b2778dc4",
+    "alloyHash": "3dbe6bd95118b4e13aa48c2bddc41441e0cdfdaa3a140436580186d255d2b447",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "76654a566100632045f891cbf679eda1567f36dd1a41d78cdd92bc89b2778dc4",
-      "commit": "28066af5bdb1a876dabacc6a95dcd1b4c92575ff"
+      "sourceHash": "3dbe6bd95118b4e13aa48c2bddc41441e0cdfdaa3a140436580186d255d2b447",
+      "commit": "366fdaab12c01da13843e7c80294608678e98931"
     }
   },
   "stages": [
@@ -1027,6 +1027,56 @@
       "timestamp": "2026-04-11T11:24:14-05:00",
       "message": "Merge pull request #13 from CambrianTech/domain-extensibility-refactor",
       "chain_hash": "76654a566100632045f891cbf679eda1567f36dd1a41d78cdd92bc89b2778dc4"
+    },
+    {
+      "commit": "ac720364c635511b9ee354027424fa3412434659",
+      "tree": "16a685241593b60b9b572d1986736aa783f6de6e",
+      "parents": [
+        "28066af5bdb1a876dabacc6a95dcd1b4c92575ff"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T11:31:42-05:00",
+      "message": "feat: self-attestation dogfood \u2014 repo eats its own Merkle chain",
+      "chain_hash": "7b7388d7941fa19c2dc8f5f59d9d3096c734a51d2e7abd0184e2f3766dceff77"
+    },
+    {
+      "commit": "de183bb43284eff12df4d4e9a93c9afac89fe6d3",
+      "tree": "16a685241593b60b9b572d1986736aa783f6de6e",
+      "parents": [
+        "28066af5bdb1a876dabacc6a95dcd1b4c92575ff",
+        "ac720364c635511b9ee354027424fa3412434659"
+      ],
+      "author": "Joel Teply",
+      "email": "joel@cambriantech.com",
+      "timestamp": "2026-04-11T11:32:05-05:00",
+      "message": "Merge pull request #14 from CambrianTech/feat/self-attestation-dogfood",
+      "chain_hash": "6c1e7b4c2005e5a283357bb8b2cac9e75e23ca61e94565c918e93114ab929267"
+    },
+    {
+      "commit": "117315a55e35cafce4a85d00a88d9ff696f9e8ff",
+      "tree": "05a79c130a8976e76533b0872df10c0def367133",
+      "parents": [
+        "de183bb43284eff12df4d4e9a93c9afac89fe6d3"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T11:35:50-05:00",
+      "message": "fix: attestation CI deps + verify page fallback",
+      "chain_hash": "c83a797f3540afd3cc071f016367bae668a9b333b8dc1904768a2305f8f711c8"
+    },
+    {
+      "commit": "366fdaab12c01da13843e7c80294608678e98931",
+      "tree": "05a79c130a8976e76533b0872df10c0def367133",
+      "parents": [
+        "de183bb43284eff12df4d4e9a93c9afac89fe6d3",
+        "117315a55e35cafce4a85d00a88d9ff696f9e8ff"
+      ],
+      "author": "Joel Teply",
+      "email": "joel@cambriantech.com",
+      "timestamp": "2026-04-11T11:36:08-05:00",
+      "message": "Merge pull request #15 from CambrianTech/fix/attestation-ci-deps",
+      "chain_hash": "3dbe6bd95118b4e13aa48c2bddc41441e0cdfdaa3a140436580186d255d2b447"
     }
   ]
 }
