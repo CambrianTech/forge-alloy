@@ -406,6 +406,38 @@ This extends to AI itself. A model card says "pass@1 = 74%." Is that real? With 
 
 A photo says "unedited." Is that real? With forge-alloy: the camera enclave signed the raw capture. Every edit is a delta with exact parameters. AI-generated content starts with a model hash, not a camera hash. **Media authenticity becomes a checkbox, not a debate.** An AI can provide a simple confidence score: "95% likely authentic — camera enclave chain intact, no generative model in provenance."
 
+### Attestation Coverage Score — What the QR Tells You
+
+When you scan the QR on a model card, a product, or a photo, you don't just see "verified." You see a **coverage score** — how much of the chain is attested, and where the gaps are.
+
+```
+┌─────────────────────────────────────────────┐
+│  Mixtral 8x22B Compacted                    │
+│  Coverage: ████████░░ 80%                   │
+│                                              │
+│  ✅ Source model (hash verified)             │
+│  ✅ Calibration corpus (hash verified)       │
+│  ✅ Profiling (148K tokens, hash verified)   │
+│  ✅ Expert pruning (28 shards, all hashed)   │
+│  ⚠️ Quantization (self-attested, no enclave)│
+│  ✅ Perplexity eval (PPL 8.18 ± 0.24)       │
+│  ❌ HumanEval (not yet run)                 │
+│  ❌ Inference verification (not yet tested)  │
+│                                              │
+│  Trust: self-attested │ 6/8 stages covered  │
+└─────────────────────────────────────────────┘
+```
+
+**The gaps ARE the rating.** 80% coverage means 20% is unverified. Each uncovered stage is a known weakness — either untested (HumanEval not run) or unattested (quantization without hardware enclave). The coverage score rates the product by what's PROVEN, not what's CLAIMED.
+
+**For defenders:** the gaps tell you where to invest. Run HumanEval → coverage goes to 87%. Add enclave attestation to quantization → 100%. Each improvement is visible immediately in the score.
+
+**For adversaries:** the gaps tell you where to attack. An un-attested quantization stage is where you'd inject a backdoored GGUF. An un-tested inference path is where subtle model corruption hides. The chain's gaps are the threat map.
+
+**For consumers:** the score is a simple trust signal. Two models on HuggingFace — one at 95% coverage, one at 40%. Which do you download? The coverage score makes quality VISIBLE without understanding cryptography.
+
+The QR code on every model card, every product, every photo resolves to this coverage view. Scan → see what's proven, what's missing, what's the risk. Trust becomes a number, not a feeling.
+
 ### The Common Pattern
 
 Every case follows the same structure. Different stage types, same infrastructure:
@@ -414,7 +446,7 @@ Every case follows the same structure. Different stage types, same infrastructur
 Source → Delta → Stages → Attest → Deliver → Verify (QR)
 ```
 
-The Merkle chain secures it. The attestation proves it. The QR makes it accessible. The blockchain anchors it in time. [Full applications doc →](docs/APPLICATIONS.md)
+The Merkle chain secures it. The attestation proves it. The QR makes it accessible. The coverage score rates it. [Full applications doc →](docs/APPLICATIONS.md)
 
 ## Hardware Trust Integration
 
