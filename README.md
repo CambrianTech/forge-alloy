@@ -4,6 +4,8 @@
 
 A **domain-agnostic chain of custody** for any data transformation. Each link in the chain is signed, hashed, and verifiable by anyone — no trusted server, no central authority. The math is the authority.
 
+**The fundamental principle: attested Merkle chains are the contract amongst any node.** Not a legal contract argued by lawyers. Not a smart contract requiring a blockchain network. The chain itself is a self-verifying bilateral agreement — "I attest that I did X to this data; you verify that I did X; if the chain breaks, the contract is violated." Works between two cameras, a GPU and its operator, an airplane and Boeing, a medical device and its manufacturer, two grid nodes sharing compute, a developer and every user running their code. The nodes don't matter. The math is the universal primitive.
+
 Built for AI model forging. Extends to any domain: datasets, adapters, compute receipts, grid transactions, package delivery, document signing — anything where you need to prove who did what to which data.
 
 A `.alloy.json` is a **Dockerfile for models** AND a **shipping manifest** AND a **signed receipt**. It's the recipe (before), the report card (after), and the cryptographic proof (always). Verify it client-side, offline, with no network. Scan a QR code and see the entire chain.
@@ -489,6 +491,123 @@ Every dependency carries its attestation. Coverage gaps in deep dependencies bub
 
 This works across repos, across organizations, across the entire open source ecosystem. Each repo attests its own stage. The chain connects them. A vulnerability in ANY stage is visible to EVERYONE downstream. No more "we didn't know our dependency was compromised." **The chain told you. The coverage score showed the gap. The API gave you the owner to notify.**
 
+### Live CVE Propagation — The Chain as a Notification Bus
+
+Today when a CVE drops, the process is: NVD publishes → scanner crawls → advisory email sent → human reads it → human decides what to do → manual patch cycle. Weeks pass. Millions of devices remain exposed.
+
+With forge-alloy on the chain, the alloy IS the subscription. Every device running attested software already has the chain. When a stage is compromised:
+
+```
+CVE-2026-XXXX published for follow-redirects@1.15.6
+  │
+  ├─ Attestation service marks stage as COMPROMISED
+  │    └─ coverage score: 40% → 0% (chain broken)
+  │
+  ├─ Every downstream alloy that includes this stage:
+  │    ├─ App store: flags app for review, warns users at install
+  │    ├─ Device: OS-level notification to user's AI assistant
+  │    └─ Running app: runtime check detects broken chain
+  │
+  └─ Device-local AI receives CVE context:
+       ├─ What the exploit does (code execution via redirect manipulation)
+       ├─ What user behavior triggers it (clicking redirected links)
+       ├─ Risk-adjusted recommendation based on user profile:
+       │    ├─ Casual user: "Update when convenient, avoid financial sites"
+       │    ├─ Technical user (banking/security): "Here's what the exploit
+       │    │    does mechanically — redirect manipulation allows code execution.
+       │    │    You can still use the app safely if you avoid clicking links
+       │    │    within it. The vulnerability only triggers on HTTP 3xx chains."
+       │    ├─ High-value target: "Stop using this app until patched"
+       │    └─ Security professional: "Here's the exploit path, mitigate at proxy"
+       └─ Automated action (if user authorizes): disable affected feature
+```
+
+**The key insight:** the device already has the attestation chain. It already knows every dependency, every stage owner, every coverage score. When a CVE fires, the device doesn't need a scanner — it has the bill of materials. The chain IS the SBOM (Software Bill of Materials), and it's already verified.
+
+**For high-value targets** — banking, security applications, critical infrastructure — the device AI becomes a real-time security advisor. Not a dumb "update your app" notification. The AI understands both the exploit's mechanics and the user's technical literacy:
+
+```
+User's AI: "The redirect library in your banking app has a code execution 
+vulnerability (CVE-2026-XXXX). The exploit works by chaining HTTP 3xx 
+redirects to inject code during the redirect handler. I've disabled 
+automatic redirects in that app. You can still use it safely for account 
+viewing and transfers — just don't click any links within the app itself. 
+The vulnerability only triggers on redirect chains, not direct API calls. 
+The fix is in review — ETA 48 hours based on the maintainer's patch 
+history. Want me to notify you when the patched version ships?"
+```
+
+The user who understands the engineering can make an informed risk decision — continue using the app while avoiding the specific behavior that triggers the exploit, rather than losing access entirely. The user who doesn't understand can get the simpler "avoid this app" version. **The AI mediates between a raw CVE and human behavior at the right level of abstraction for each user.**
+
+This isn't theoretical — it's what happens when you combine:
+1. **Attestation chains** that already map every dependency
+2. **Coverage scores** that already quantify trust gaps
+3. **Stage owner routing** that already knows who to notify
+4. **Device-local AI** that already understands the user's risk profile
+
+The chain doesn't just prove the past. It **protects the future.** Every CVE becomes immediately actionable at every point in the graph — from the app store to the device to the user's AI to the stage owner who needs to patch.
+
+**API extensions for live CVE propagation:**
+
+```
+POST /api/v1/stage/{hash}/compromise     → mark stage as compromised (CVE issuer)
+GET  /api/v1/alloy/{hash}/health         → live chain health (are all stages clean?)
+WS   /api/v1/alloy/{hash}/subscribe      → real-time CVE notifications for this chain
+GET  /api/v1/alloy/{hash}/mitigations    → risk-adjusted actions for affected users
+```
+
+### Safety-Critical Systems — When CVE Propagation Saves Lives
+
+Software supply chain attacks are annoying in consumer apps. In safety-critical systems they kill people.
+
+**Boeing 737 MAX MCAS** — the case study that makes this concrete:
+
+```
+October 2018: Lion Air 610 crashes. 189 dead.
+  Investigation reveals: MCAS software trusts a SINGLE angle-of-attack 
+  sensor. Sensor disagrees with its pair by >10°. MCAS pushes nose down.
+  Pilots can't override. Aircraft hits water.
+
+March 2019: Ethiopian Airlines 302 crashes. 157 dead. Same root cause.
+  5 MONTHS between crashes. Every 737 MAX in service had the same 
+  vulnerability the entire time. The FAA grounded the fleet AFTER 
+  the second crash. 157 people died waiting for bureaucracy.
+```
+
+With attestation-chain CVE propagation on the MCAS software:
+
+```
+October 2018: Lion Air 610 crashes.
+  │
+  ├─ Investigation flags MCAS single-AoA-sensor dependency
+  │    └─ CVE issued for MCAS attestation stage
+  │
+  ├─ Every 737 MAX in service receives the CVE in milliseconds:
+  │    └─ Aircraft AI knows the exact tolerances:
+  │         "MCAS trusts single AoA sensor. If sensors disagree 
+  │          by >10°, MCAS will command nose-down trim."
+  │
+  ├─ Aircraft AI applies mitigation:
+  │    ├─ Alerts crew: "MCAS authority limited — AoA sensor 
+  │    │   disagreement detected, manual trim recommended"
+  │    ├─ Reduces MCAS trim authority automatically
+  │    └─ Logs the mitigation for maintenance review
+  │
+  └─ Ethiopian Airlines 302 (March 2019):
+       Aircraft AI already knows about the MCAS vulnerability.
+       Crew is alerted. MCAS authority is limited.
+       157 people go home to their families.
+```
+
+This isn't hypothetical engineering. The attestation chain already maps every software component. The CVE propagation already reaches every device. The AI already understands the tolerances. **The only missing piece is having the chain in place.** The technology exists — the 737 MAX fleet just didn't have it.
+
+The same pattern applies to:
+- **Automotive recalls** — Tesla OTA vs traditional mail-a-letter recalls. But even Tesla's OTA is push-from-manufacturer, not pull-from-chain. Attestation makes every vehicle aware of every vulnerability in every component, from any vendor, instantly.
+- **Medical devices** — pacemakers, insulin pumps, infusion pumps. The device AI knows its own tolerances and can adjust behavior within safe limits while a patch ships.
+- **Industrial control** — SCADA systems, power grid controllers, water treatment. The Stuxnet attack exploited software that had no attestation chain. With one, the centrifuges would have known their firmware was compromised before it spun them apart.
+
+**The economics:** app stores that verify attestation chains can offer "attested" badges. Insurance underwriters can price cyber risk based on coverage scores. The incentive structure rewards maintaining attestation — not just at publish time, but continuously. Break your chain, lose your badge, lose your insurance rate, lose your users. The market enforces security without regulation.
+
 [Full applications doc →](docs/APPLICATIONS.md)
 
 ## Hardware Trust Integration
@@ -497,11 +616,78 @@ Every device that touches the chain can prove its involvement. The trust ladder 
 
 ### The Trust Ladder
 
-| Level | Authority | How It Proves | Example |
-|-------|-----------|--------------|---------|
-| **Repository** | GitHub | Commit hash = Merkle root of repo state. GitHub vouches for content at that hash. | `sourceRepo` + `commit` in `CodeAttestation` |
-| **Passkey** | Device Secure Enclave | ES256 keypair bound to hardware. Non-exportable. Proves *this device* signed. | macOS `SecKeyCreateSignature`, Android StrongBox, Windows TPM |
-| **GPU TEE** | NVIDIA silicon | Blackwell/Hopper TEE-I/O. Hardware attestation report from SEC2 security component. NRAS remote attestation. | `certificateChain` carries NVIDIA attestation cert |
+| Level | Authority | How It Proves | What It Stops |
+|-------|-----------|--------------|---------------|
+| **Git commit** | Repository | Commit hash = Merkle root | Code tampering |
+| **Passkey (FIDO2)** | Device Secure Enclave | Hardware-bound keypair, non-exportable | Identity theft, shared credentials, North Korean fake employees |
+| **Device enclave** | TPM / Secure Enclave | Platform attestation report | Device spoofing, VM-based attacks |
+| **GPU TEE** | NVIDIA SEC2 silicon | Hardware attestation with serial number | Forge result tampering, fake benchmarks |
+| **Continuous attestation** | Biometric + behavioral | Ongoing verification throughout session | Session hijacking, credential handoff |
+| **Location attestation** | GPS + network proof | Geolocation bound to session | VPN masking, remote impersonation |
+
+Each level makes impersonation harder:
+
+```
+Password:                 → shared trivially (North Korean teams do this)
+SSH key:                  → copied to their servers
+FIDO2 passkey:            → can't export from hardware
+Passkey + device enclave: → can't fake the device
+Passkey + enclave + GPS:  → can't fake the location
+Full continuous chain:    → can't fake anything, checked continuously
+```
+
+### NVIDIA GPU Enclaves — Hardware-Attested Compute
+
+NVIDIA's Blackwell/Hopper GPUs have TEE-I/O with SEC2 security components. Each GPU has a unique serial number and can generate hardware attestation reports via NRAS (NVIDIA Remote Attestation Service). This means:
+
+```
+Forge runs on GPU serial: NV-5090-0x7F3A2B
+  → GPU generates attestation: "I computed this result"
+  → Attestation includes: serial number, driver version, 
+     firmware hash, compute configuration
+  → Signed by NVIDIA's certificate chain
+  → Verifiable by ANYONE without trusting the forge operator
+
+The forge operator can't lie about what hardware ran the forge.
+The GPU itself vouches for the computation.
+```
+
+This is NVIDIA's "factory of the future" vision — every computation attested by silicon, traceable to a specific physical GPU. forge-alloy integrates this natively:
+
+```json
+{
+  "integrity": {
+    "trustLevel": "enclave",
+    "code": { "runner": "sentinel-ai", "commit": "abc123" },
+    "hardware": {
+      "gpu": "NVIDIA GeForce RTX 5090",
+      "serial": "NV-5090-0x7F3A2B",
+      "attestationReport": "base64:...",
+      "nrasVerified": true
+    },
+    "signature": {
+      "algorithm": "ES256",
+      "certificateChain": ["nvidia-root-ca", "gpu-attestation-cert", "..."]
+    }
+  }
+}
+```
+
+| Without GPU enclave | With GPU enclave |
+|---|---|
+| "We ran this on an RTX 5090" → trust us | The RTX 5090 serial NV-0x7F3A SIGNED this result → verify the cert chain |
+| Operator could lie about hardware | Hardware can't lie about itself |
+| Benchmarks could be fabricated | Benchmarks are silicon-attested |
+| "PPL 8.18" → maybe | "PPL 8.18" → GPU proves it computed this |
+
+The trust level upgrades from `self-attested` (take my word) to `enclave` (silicon proves it). The coverage score jumps. The model card goes from "trust the publisher" to "trust the math + the silicon."
+
+This connects the entire chain: **FIDO2 passkey** proves the developer → **git commit** proves the code → **GPU enclave** proves the computation → **attestation chain** connects them all → **QR code** makes it scannable → **coverage score** makes it understandable.
+
+### Additional Enclave Types
+
+| Level | Authority | How It Proves | Use In Chain |
+|-------|-----------|--------------|--------------|
 | **Cloud Enclave** | AWS Nitro / Azure SGX | Isolated execution environment. Hypervisor cannot read enclave memory. | Nitro attestation document in `anchor` |
 | **Mobile Enclave** | Apple / Android | Secure Enclave (iPhone/Mac) or StrongBox (Android). Biometric-gated signing. | Touch ID / Face ID protects forge signing key |
 | **Sensor** | Camera / microphone / IoT | Hardware-signed capture at the source. Proves content was captured, not generated. | Camera enclave signs raw image → root of trust for content authenticity |
