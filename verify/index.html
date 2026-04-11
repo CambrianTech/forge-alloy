@@ -430,9 +430,25 @@ async function verify() {
         } catch { continue; }
       }
     } catch (e) { console.error('HF search failed:', e); }
+    // Fallback: check this repo's own attestation chain (dogfood)
+    if (!url) {
+      statusEl.innerHTML = '<div class="status-icon">⏳</div><div class="status-text">Checking repo self-attestation…</div><div class="status-detail">Fetching chain from GitHub…</div>';
+      try {
+        const chainUrl = 'https://raw.githubusercontent.com/CambrianTech/forge-alloy/main/.attestation/chain.json';
+        const resp = await fetch(chainUrl);
+        if (resp.ok) {
+          const txt = await resp.text();
+          const data = JSON.parse(txt);
+          if (data.chainHash && data.chainHash.startsWith(input)) {
+            await showRepoChain(data, input);
+            return;
+          }
+        }
+      } catch (e) { console.error('Repo chain check failed:', e); }
+    }
     if (!url) {
       statusEl.className = 'status failed';
-      statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Alloy not found</div><div class="status-detail">Hash ' + input + ' not found in continuum-ai models.<br>Paste the full alloy URL or drop the .alloy.json file.</div>';
+      statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">Alloy not found</div><div class="status-detail">Hash ' + input + ' not found in continuum-ai models or repo attestation.<br>Paste the full alloy URL or drop the .alloy.json file.</div>';
       return;
     }
   } else {
@@ -1046,6 +1062,50 @@ function nodeRaw(container, dotClass, label, innerHtml) {
       </div>
     </div>`;
   container.insertAdjacentHTML('beforeend', html);
+}
+
+async function showRepoChain(data, expectedHash) {
+  const statusEl = document.getElementById('status');
+  const chainEl = document.getElementById('chain');
+  const chainHash = data.chainHash || '';
+  const hashOk = chainHash.startsWith(expectedHash);
+  const thisUrl = window.location.origin + window.location.pathname + '#' + chainHash.slice(0, 16);
+  const qrDataUrl = await generateQRDataUrl(thisUrl);
+
+  if (!hashOk) {
+    statusEl.className = 'status failed';
+    statusEl.innerHTML = '<div class="status-icon">&#x274C;</div><div class="status-text">CHAIN HASH MISMATCH</div><div class="status-detail">Expected ' + expectedHash + '… got ' + chainHash.slice(0, 16) + '…</div>';
+    return;
+  }
+
+  statusEl.className = 'status verified has-qr';
+  statusEl.innerHTML =
+    (qrDataUrl ? '<div class="status-qr"><img src="' + qrDataUrl + '" width="120" height="120"><div class="qr-caption">scan to share</div></div>' : '') +
+    '<div class="status-info">' +
+    '<div class="status-icon">&#x2705;</div>' +
+    '<div class="status-text">REPO ATTESTATION CHAIN VERIFIED</div>' +
+    '<div class="status-detail">chain: ' + chainHash.slice(0, 24) + '…</div>' +
+    '<div class="status-meta">git is the merkle chain &mdash; ' + (data.totalCommits || 0) + ' commits</div>' +
+    '</div>';
+
+  chainEl.className = 'chain visible';
+  chainEl.innerHTML = '';
+  const ghBase = 'https://github.com/CambrianTech/forge-alloy';
+  const stages = data.stages || [];
+
+  nodeLink(chainEl, 'verified', 'Repository', 'CambrianTech/forge-alloy', ghBase, (data.totalCommits || stages.length) + ' commits in chain');
+  node(chainEl, 'info', 'Type', data.type || 'repo-attestation');
+  node(chainEl, 'info', 'Trust Level', (data.integrity || {}).trustLevel || 'self-attested');
+
+  const showCount = Math.min(stages.length, 10);
+  const recent = stages.slice(-showCount);
+  if (stages.length > showCount) {
+    node(chainEl, 'info', 'Earlier', '… ' + (stages.length - showCount) + ' commits omitted …');
+  }
+  for (const s of recent) {
+    nodeLink(chainEl, 'verified', s.commit.slice(0, 8), s.message, ghBase + '/commit/' + s.commit, 'chain: ' + s.chain_hash.slice(0, 12) + ' · ' + s.author);
+  }
+  nodeRaw(chainEl, 'verified', 'Chain Hash', '<span style="font-family:monospace;color:#00ffc8">' + chainHash.slice(0, 24) + '…</span>');
 }
 </script>
 </body>
