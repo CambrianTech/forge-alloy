@@ -446,7 +446,50 @@ Every case follows the same structure. Different stage types, same infrastructur
 Source → Delta → Stages → Attest → Deliver → Verify (QR)
 ```
 
-The Merkle chain secures it. The attestation proves it. The QR makes it accessible. The coverage score rates it. [Full applications doc →](docs/APPLICATIONS.md)
+The Merkle chain secures it. The attestation proves it. The QR makes it accessible. The coverage score rates it.
+
+### Actionable Chains — Bug Routing + Supply Chain Accountability
+
+Each stage in the chain has an **owner**, an **issue tracker**, and a **fix path**. When something breaks, walk the chain to find who's responsible:
+
+```
+User: "This model generates bad Python"
+  → Scan QR → walk chain
+  → HumanEval stage: ❌ NOT RUN
+  → Owner: forge-operator
+  → Fix: run eval_runners/humaneval.py (30 min)
+  → File issue: github.com/CambrianTech/sentinel-ai/issues
+```
+
+The chain routes bugs to the RIGHT owner. Not "email support and wait." Find the stage, find the owner, file directly.
+
+**API for programmatic access:**
+
+```
+GET /api/v1/alloy/{hash}/coverage → { score: 0.80, stages: [...] }
+GET /api/v1/alloy/{hash}/stage/{name}/owner → { owner, issueTracker, fixCommand }
+POST /api/v1/alloy/{hash}/stage/{name}/report → file issue to stage owner
+```
+
+**Software supply chain protection.** The Axios hack affected 40% of npm projects because dependencies are trusted blindly. With forge-alloy on the dependency chain:
+
+```
+your-app
+  └─ axios@1.7.2  ← attested: hash=abc, npm audit=clean, 
+                     maintainer=verified, no post-install scripts
+      └─ follow-redirects@1.15.6  ← ⚠️ coverage: 40%
+                                      post-install script: YES
+                                      maintainer: single individual
+                                      last security audit: 8 months ago
+                                      
+Coverage score surfaces the risk BEFORE the hack.
+```
+
+Every dependency carries its attestation. Coverage gaps in deep dependencies bubble up to YOUR score. A dependency with low coverage lowers YOUR product's trust. The market pressure flows backward through the chain — maintain your attestation or downstream consumers drop you.
+
+This works across repos, across organizations, across the entire open source ecosystem. Each repo attests its own stage. The chain connects them. A vulnerability in ANY stage is visible to EVERYONE downstream. No more "we didn't know our dependency was compromised." **The chain told you. The coverage score showed the gap. The API gave you the owner to notify.**
+
+[Full applications doc →](docs/APPLICATIONS.md)
 
 ## Hardware Trust Integration
 
