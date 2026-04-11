@@ -5,18 +5,18 @@
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
   "repository": "https://github.com/CambrianTech/forge-alloy",
   "branch": "main",
-  "chainHash": "77e49e657c9eaeeb850f7aeccd98ccfb4c8e6b7d74ace5c1667c09a185968174",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@77e49e657c9eaeeb",
-  "attestedAt": "2026-04-11T16:52:10.386404+00:00",
-  "totalCommits": 93,
+  "chainHash": "6ed39352c6c17fd21ea5a4dfa8f377137ad81a7293079293bc4a3952ce4cd0b1",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@6ed39352c6c17fd2",
+  "attestedAt": "2026-04-11T17:00:16.404854+00:00",
+  "totalCommits": 95,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "77e49e657c9eaeeb850f7aeccd98ccfb4c8e6b7d74ace5c1667c09a185968174",
+    "alloyHash": "6ed39352c6c17fd21ea5a4dfa8f377137ad81a7293079293bc4a3952ce4cd0b1",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "77e49e657c9eaeeb850f7aeccd98ccfb4c8e6b7d74ace5c1667c09a185968174",
-      "commit": "d132ccc23cab1586024de353f3d4ff875be04582"
+      "sourceHash": "6ed39352c6c17fd21ea5a4dfa8f377137ad81a7293079293bc4a3952ce4cd0b1",
+      "commit": "01b80a71582a4e650b994f32494692aa69f05ca0"
     }
   },
   "stages": [
@@ -1138,6 +1138,30 @@
       "timestamp": "2026-04-11T11:51:54-05:00",
       "message": "fix: verify URL carries source address, not just hash",
       "chain_hash": "77e49e657c9eaeeb850f7aeccd98ccfb4c8e6b7d74ace5c1667c09a185968174"
+    },
+    {
+      "commit": "9b3f4ad86d9575034f4f3e2368dcc1cd1664b3f8",
+      "tree": "095d28722b88cf7eb7f4c3d3c31d145ff5637d43",
+      "parents": [
+        "d132ccc23cab1586024de353f3d4ff875be04582"
+      ],
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "timestamp": "2026-04-11T16:52:10Z",
+      "message": "attestation: chain updated for d132ccc",
+      "chain_hash": "510de62c93d2e2cba7767d8d732bb0a3ede856b1b14cbfdafe24ce72ec83a844"
+    },
+    {
+      "commit": "01b80a71582a4e650b994f32494692aa69f05ca0",
+      "tree": "f2ff79bf7588d2cd478cc38ed321807b53d82f07",
+      "parents": [
+        "9b3f4ad86d9575034f4f3e2368dcc1cd1664b3f8"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T11:59:58-05:00",
+      "message": "feat: PR comments get QR stamp + linked commit table",
+      "chain_hash": "6ed39352c6c17fd21ea5a4dfa8f377137ad81a7293079293bc4a3952ce4cd0b1"
     }
   ]
 }
