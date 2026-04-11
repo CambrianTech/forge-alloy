@@ -5,18 +5,18 @@
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
   "repository": "https://github.com/CambrianTech/forge-alloy",
   "branch": "main",
-  "chainHash": "6ed39352c6c17fd21ea5a4dfa8f377137ad81a7293079293bc4a3952ce4cd0b1",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@6ed39352c6c17fd2",
-  "attestedAt": "2026-04-11T17:00:16.404854+00:00",
-  "totalCommits": 95,
+  "chainHash": "9ea5773c5d81ec6a68a781347122e47804297c610a2f4c44ca47d01c5e9fbc6b",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@9ea5773c5d81ec6a",
+  "attestedAt": "2026-04-11T17:17:13.891626+00:00",
+  "totalCommits": 97,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "6ed39352c6c17fd21ea5a4dfa8f377137ad81a7293079293bc4a3952ce4cd0b1",
+    "alloyHash": "9ea5773c5d81ec6a68a781347122e47804297c610a2f4c44ca47d01c5e9fbc6b",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "6ed39352c6c17fd21ea5a4dfa8f377137ad81a7293079293bc4a3952ce4cd0b1",
-      "commit": "01b80a71582a4e650b994f32494692aa69f05ca0"
+      "sourceHash": "9ea5773c5d81ec6a68a781347122e47804297c610a2f4c44ca47d01c5e9fbc6b",
+      "commit": "32b68bf3068279f3b8dc91e04a62d097783b0356"
     }
   },
   "stages": [
@@ -1162,6 +1162,30 @@
       "timestamp": "2026-04-11T11:59:58-05:00",
       "message": "feat: PR comments get QR stamp + linked commit table",
       "chain_hash": "6ed39352c6c17fd21ea5a4dfa8f377137ad81a7293079293bc4a3952ce4cd0b1"
+    },
+    {
+      "commit": "fa5db490b2eabc11f6fc13e143fb72693067b6fc",
+      "tree": "ec6dec96ab63255c446625a6e422565036afbe4c",
+      "parents": [
+        "01b80a71582a4e650b994f32494692aa69f05ca0"
+      ],
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "timestamp": "2026-04-11T17:00:16Z",
+      "message": "attestation: chain updated for 01b80a7",
+      "chain_hash": "5ce0adf765a15b5ee5895e3a15828b8c0a0de449ee7dceb65fdb306b842b6fd8"
+    },
+    {
+      "commit": "32b68bf3068279f3b8dc91e04a62d097783b0356",
+      "tree": "0e866a8d66a5023b8ded4bb42e4887181c5bf169",
+      "parents": [
+        "fa5db490b2eabc11f6fc13e143fb72693067b6fc"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T12:17:02-05:00",
+      "message": "fix: use hf.co for CORS-open fetches, drop broken corsproxy",
+      "chain_hash": "9ea5773c5d81ec6a68a781347122e47804297c610a2f4c44ca47d01c5e9fbc6b"
     }
   ]
 }
