@@ -240,18 +240,30 @@ def pr_comment_markdown(
     base_ref: str,
     head_ref: str,
 ) -> str:
-    """Generate markdown for a PR attestation comment."""
+    """Generate markdown for a PR attestation comment — the PR's own dogfood.
+
+    Each PR gets a QR stamp and chain table, just like the README badge.
+    The QR encodes the verify URL so anyone can scan and verify.
+    """
     short_hash = chain_hash[:16]
     verify_url = f"https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@{short_hash}"
+    qr_img = f"https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={verify_url}"
 
     lines = [
-        "## Attestation Chain",
-        "",
-        f"**Chain hash:** `{short_hash}`  ",
-        f"**Commits:** {len(stages)}  ",
-        f"**Range:** `{base_ref[:8]}..{head_ref[:8]}`  ",
-        f"**[Verify chain]({verify_url})**",
-        "",
+        '<table><tr><td>',
+        f'<a href="{verify_url}">',
+        f'<img src="{qr_img}" width="120" height="120" alt="Verify chain">',
+        '</a>',
+        '</td><td>',
+        '',
+        f'**Attestation Chain** · `{short_hash}`',
+        '',
+        f'{len(stages)} commits · `{base_ref[:8]}..{head_ref[:8]}`',
+        '',
+        f'[Verify →]({verify_url})',
+        '',
+        '</td></tr></table>',
+        '',
         "| # | Commit | Author | Chain Hash | Message |",
         "|---|--------|--------|------------|---------|",
     ]
@@ -261,12 +273,12 @@ def pr_comment_markdown(
         chain_short = s["chain_hash"][:12]
         msg = s["message"][:50]
         author = s["author"]
-        lines.append(f"| {i+1} | `{commit_short}` | {author} | `{chain_short}` | {msg} |")
+        lines.append(f"| {i+1} | [`{commit_short}`](https://github.com/CambrianTech/forge-alloy/commit/{s['commit']}) | {author} | `{chain_short}` | {msg} |")
 
     lines.extend([
         "",
         "---",
-        f"*forge-alloy self-attestation — git is the Merkle chain*",
+        "*forge-alloy self-attestation · git is the Merkle chain*",
     ])
 
     return "\n".join(lines)
