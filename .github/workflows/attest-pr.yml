@@ -20,6 +20,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install dependencies
+        run: pip install pydantic
+
       - name: Compute PR attestation chain
         id: chain
         run: |
