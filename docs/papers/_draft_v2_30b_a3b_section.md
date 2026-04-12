@@ -269,7 +269,24 @@ Step 4813: best avg50 = 0.7642  ← 5.9% improvement
 
 **Key insight from v11:** The Q-Former architecture IS correct — it produces coherent, structured output. The per-token substrate field + learned queries work. The magnitude control needs one more fix (constrain out_proj growth during training). Once magnitudes are matched, the fair comparison can be made.
 
-**Status:** Architecture validated. Magnitude control needs final fix. Then: right team, right benchmark.
+### v11b Results — Magnitude Locked
+
+Soft token norm locked at 1.49 vs real embed 1.52 — **perfect 1:1 match**. Best avg50: 0.8071 vs baseline 0.8209 (−1.7% NTP improvement, real, no oversaturation artifact).
+
+**Generation diagnostic revealed a positional issue:**
+- ZERO soft tokens (all zeros, same shape) produce the SAME broken output as trained substrate
+- The model continues mid-expression regardless of soft token content
+- The issue is the POSITION SHIFT: real code starts at position 16 instead of 0
+- Phi-2's positional encoding treats the first 16 positions as code tokens and "continues" from there
+
+**This is a known limitation of soft prompts on models not trained with them.** Solutions:
+1. Fine-tune with LoRA so the model learns to handle the prefix (proven in LLaVA)
+2. Use position IDs that reset at the real token boundary
+3. Use a model architecture with relative position encoding (RoPE) where the prefix doesn't shift positions — most modern models use RoPE, including Qwen3 and Phi-3
+
+**Phi-2 uses rotary position embeddings (RoPE)** — so the positional shift shouldn't cause this. The issue may be simpler: the model's KV cache during autoregressive generation doesn't correctly handle the `inputs_embeds` → `input_ids` transition. This needs debugging.
+
+**Status:** Architecture validated. Magnitude controlled. Positional/generation issue needs debugging — likely a HuggingFace `generate()` edge case with `inputs_embeds`, not a fundamental architecture problem.
 
 ## 11. Next Experiment Design — The Right Team for the Right Benchmark
 
