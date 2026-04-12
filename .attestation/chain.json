@@ -5,18 +5,18 @@
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
   "repository": "https://github.com/CambrianTech/forge-alloy",
   "branch": "main",
-  "chainHash": "9ea5773c5d81ec6a68a781347122e47804297c610a2f4c44ca47d01c5e9fbc6b",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@9ea5773c5d81ec6a",
-  "attestedAt": "2026-04-11T17:17:13.891626+00:00",
-  "totalCommits": 97,
+  "chainHash": "27996d4d192e8e7dc5a61247cf235abf2bbac2ce65a97806b87662768f0f5dc9",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@27996d4d192e8e7d",
+  "attestedAt": "2026-04-12T04:44:15.647158+00:00",
+  "totalCommits": 99,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "9ea5773c5d81ec6a68a781347122e47804297c610a2f4c44ca47d01c5e9fbc6b",
+    "alloyHash": "27996d4d192e8e7dc5a61247cf235abf2bbac2ce65a97806b87662768f0f5dc9",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "9ea5773c5d81ec6a68a781347122e47804297c610a2f4c44ca47d01c5e9fbc6b",
-      "commit": "32b68bf3068279f3b8dc91e04a62d097783b0356"
+      "sourceHash": "27996d4d192e8e7dc5a61247cf235abf2bbac2ce65a97806b87662768f0f5dc9",
+      "commit": "47faeb70baa1b5cc1dac7a85dd628e85d1f28934"
     }
   },
   "stages": [
@@ -1186,6 +1186,30 @@
       "timestamp": "2026-04-11T12:17:02-05:00",
       "message": "fix: use hf.co for CORS-open fetches, drop broken corsproxy",
       "chain_hash": "9ea5773c5d81ec6a68a781347122e47804297c610a2f4c44ca47d01c5e9fbc6b"
+    },
+    {
+      "commit": "ba46f7ce51fa82556c08331032a76356b1892993",
+      "tree": "35b911bb82aa5ed6910e9c90e04c1c13f81b88c4",
+      "parents": [
+        "32b68bf3068279f3b8dc91e04a62d097783b0356"
+      ],
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "timestamp": "2026-04-11T17:17:13Z",
+      "message": "attestation: chain updated for 32b68bf",
+      "chain_hash": "de6baa418d5de6d8bfbb6ac21655a277e79ce8670040c00bec9a5548c2307557"
+    },
+    {
+      "commit": "47faeb70baa1b5cc1dac7a85dd628e85d1f28934",
+      "tree": "f5e099301603cf7da757c6934751ad24f4337c25",
+      "parents": [
+        "ba46f7ce51fa82556c08331032a76356b1892993"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T23:43:45-05:00",
+      "message": "docs: Many-Worlds experimental log \u2014 10 iterations, honest results",
+      "chain_hash": "27996d4d192e8e7dc5a61247cf235abf2bbac2ce65a97806b87662768f0f5dc9"
     }
   ]
 }
