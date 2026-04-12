@@ -286,7 +286,35 @@ Soft token norm locked at 1.49 vs real embed 1.52 — **perfect 1:1 match**. Bes
 
 **Phi-2 uses rotary position embeddings (RoPE)** — so the positional shift shouldn't cause this. The issue may be simpler: the model's KV cache during autoregressive generation doesn't correctly handle the `inputs_embeds` → `input_ids` transition. This needs debugging.
 
-**Status:** Architecture validated. Magnitude controlled. Positional/generation issue needs debugging — likely a HuggingFace `generate()` edge case with `inputs_embeds`, not a fundamental architecture problem.
+**Status:** Architecture validated. Magnitude controlled. Generation issue identified and solved (see v12 below).
+
+### v12: Vocab-Grounded Q-Former — "Don't retrain, translate."
+
+**The core insight:** The target model spent millions of GPU-hours learning what every token embedding means. We can't teach it a new language in 5000 steps. We must speak ITS language. The substrate translates the source model's knowledge into the target model's vocabulary — weighted combinations of REAL token embeddings the target already understands.
+
+**The Continuum adapter principle applies:** output must be in a format the CONSUMER understands. In Continuum, different AI providers (Claude, GPT, local models) all speak through a common interface — adapters translate between the provider's native format and the system's expected format. Many-Worlds is the same pattern at the representation level: the substrate is the shared interface, the Q-Former is the adapter that translates into each model's native vocabulary.
+
+**Architecture:**
+```
+Q-Former queries (16, substrate_dim)
+  ↓ cross-attn to substrate field
+  ↓ self-attn between queries
+  ↓ vocab_proj → (16, target_embed_dim)
+  ↓
+  ↓ attention over target vocab: softmax(proj @ embed_table.T)
+  ↓ weighted sum of real token embeddings: attn_weights @ embed_table
+  ↓
+soft_tokens (16, target_embed_dim) — each is a "mixture word"
+```
+
+**Why this solves three problems at once:**
+1. **Magnitude:** convex combination of real embeddings has the same magnitude as real embeddings. No normalization needed. Impossible to oversaturate.
+2. **Interpretability:** can decode which vocabulary tokens dominate each query. The substrate's "translation" is inspectable.
+3. **Compatibility:** the target model processes the soft tokens using the same pathways it uses for all tokens. No foreign vectors, no distribution shift.
+
+**Generation fix:** HuggingFace `generate()` with `inputs_embeds` is broken for autoregressive generation (confirmed on both Phi-2 and Qwen3 — test 2 in diagnostic produces wrong output even without prefix). Fix: manual generation loop that uses `inputs_embeds` for prefill, then `embed(new_token_id)` for each subsequent step with KV cache. This works correctly with 16 zero-prefix tokens producing identical output to baseline.
+
+**The thesis in one sentence:** Don't retrain, translate. The substrate converts between models' internal representations. The Q-Former translates into each model's native vocabulary. The models do what they already know how to do. The knowledge was free. The translation is cheap.
 
 ## 11. Next Experiment Design — The Right Team for the Right Benchmark
 
