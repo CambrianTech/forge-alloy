@@ -5,18 +5,18 @@
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
   "repository": "https://github.com/CambrianTech/forge-alloy",
   "branch": "main",
-  "chainHash": "c0829c28173043d8941c11a0b0b009fb712f32ad5559572a6c80d9169c6710f3",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@c0829c28173043d8",
-  "attestedAt": "2026-04-12T05:09:45.912320+00:00",
-  "totalCommits": 103,
+  "chainHash": "25849742e6b4424272a96355719462649ab1c01ea73faafe563e0c908a815f66",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@25849742e6b44242",
+  "attestedAt": "2026-04-12T05:24:27.512122+00:00",
+  "totalCommits": 105,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "c0829c28173043d8941c11a0b0b009fb712f32ad5559572a6c80d9169c6710f3",
+    "alloyHash": "25849742e6b4424272a96355719462649ab1c01ea73faafe563e0c908a815f66",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "c0829c28173043d8941c11a0b0b009fb712f32ad5559572a6c80d9169c6710f3",
-      "commit": "8755fcbc582d473dbd13869685040fd26d875c79"
+      "sourceHash": "25849742e6b4424272a96355719462649ab1c01ea73faafe563e0c908a815f66",
+      "commit": "2252139cf01ae9ee1d0d3cca15a55e756f9dfb2a"
     }
   },
   "stages": [
@@ -1258,6 +1258,30 @@
       "timestamp": "2026-04-12T00:09:32-05:00",
       "message": "docs: v11 Q-Former results \u2014 architecture works, magnitude needs final fix",
       "chain_hash": "c0829c28173043d8941c11a0b0b009fb712f32ad5559572a6c80d9169c6710f3"
+    },
+    {
+      "commit": "4caf6ad84ed08e5cd95491d750c671c8718b7f83",
+      "tree": "b05b4beae535c1759fc53ee477b04fec9807305b",
+      "parents": [
+        "8755fcbc582d473dbd13869685040fd26d875c79"
+      ],
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "timestamp": "2026-04-12T05:09:46Z",
+      "message": "attestation: chain updated for 8755fcb",
+      "chain_hash": "f686463b80ce42a0b5c3c62dd9eb2c1103b8234969de188510dc99b21dc656ad"
+    },
+    {
+      "commit": "2252139cf01ae9ee1d0d3cca15a55e756f9dfb2a",
+      "tree": "44baffd2f33890119de6710fb77d41bc2b800531",
+      "parents": [
+        "4caf6ad84ed08e5cd95491d750c671c8718b7f83"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-12T00:24:13-05:00",
+      "message": "docs: v11b results \u2014 magnitude fixed, positional generation issue identified",
+      "chain_hash": "25849742e6b4424272a96355719462649ab1c01ea73faafe563e0c908a815f66"
     }
   ]
 }
