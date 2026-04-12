@@ -207,7 +207,49 @@ The avg50 never beat the baseline. The normalized soft tokens don't oversaturate
 
 4. **The test is wrong, not the architecture.** Qwen3-1.7B and Phi-2 don't have complementary knowledge on standard English HumanEval problems. The substrate can only transfer knowledge that the target doesn't already have.
 
-## 10. Next Experiment Design — The Right Team for the Right Benchmark
+## 10. v11 Architecture — Q-Former Bridge (the fix)
+
+Three problems with the v9/v10 linear soft prompt converter, and their fixes:
+
+### Problem 1: 16 copies of the same information
+The linear layer maps ONE pooled vector → 16 tokens. All 16 are different linear combinations of the same 256 floats. No diversity between tokens.
+
+**Fix:** Q-Former with LEARNED QUERY TOKENS. Each of the 16 queries cross-attends to the substrate field independently. Query 0 might learn to extract "data types involved," query 1 "algorithm pattern," query 2 "edge cases." The queries specialize naturally through gradient descent.
+
+### Problem 2: Mean-pooling destroys positional structure
+Averaging the source's per-token substrate projections into one vector throws away which token carried which information. "Take a list, sort it, return it" becomes one average embedding.
+
+**Fix:** Keep the per-token substrate field as K/V in the Q-Former's cross-attention. The queries select which source tokens to attend to. Token-level information is preserved and selectively accessed.
+
+### Problem 3: Final layer is vocabulary-specific
+The source model's final layer is specialized for its next-token prediction in its vocabulary space. These representations are tuned for Qwen's tokenizer, not for semantic transfer.
+
+**Fix:** Extract from 2/3 depth (layer 18/28 for Qwen3-1.7B). Middle-layer representations are semantic — they've built understanding but haven't committed to vocabulary-specific predictions yet.
+
+### v11 Architecture Diagram
+
+```
+Source model (frozen)
+  ↓ layer 18 hidden states (1, seq, 2048)  ← 2/3 depth, semantic layer
+  ↓
+Source Adapter (Project)
+  ↓ (1, seq, 256) — PER-TOKEN substrate field, NOT pooled
+  ↓ K, V
+Q-Former (16 learned queries, 2 layers)
+  ↓ Layer 1: cross-attn(queries, substrate) → self-attn(queries) → FFN
+  ↓ Layer 2: cross-attn(queries, substrate) → self-attn(queries) → FFN
+  ↓ LayerNorm → output projection (gain=0.02 → natural embed scale)
+  ↓ (1, 16, 2560) — each query carries DIFFERENT aspect
+  ↓
+[soft_tokens] + [real_tokens] → Target model (frozen) → NTP loss
+  (1, 16+seq, 2560)              no hooks, no perturbation
+```
+
+**Magnitude control:** LayerNorm before the output projection + Xavier init with gain=0.02 puts the soft tokens at approximately the same scale as real embeddings (~1.5 norm for Phi-2). No explicit normalization needed — the architecture naturally produces correctly-scaled outputs.
+
+**Trainable params:** Q-Former (~2.6M) + source adapter (~1.2M) + substrate (~33K) = ~3.9M total. Both base models frozen. Training: ~8 min on RTX 5090.
+
+## 11. Next Experiment Design — The Right Team for the Right Benchmark
 
 The thesis test requires:
 
