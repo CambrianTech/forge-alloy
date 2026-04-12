@@ -5,18 +5,18 @@
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
   "repository": "https://github.com/CambrianTech/forge-alloy",
   "branch": "main",
-  "chainHash": "a16b4540a46a0b764816f21fd82570325299986313c0444238283fbfd6b5128c",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@a16b4540a46a0b76",
-  "attestedAt": "2026-04-12T05:00:14.655036+00:00",
-  "totalCommits": 101,
+  "chainHash": "c0829c28173043d8941c11a0b0b009fb712f32ad5559572a6c80d9169c6710f3",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@c0829c28173043d8",
+  "attestedAt": "2026-04-12T05:09:45.912320+00:00",
+  "totalCommits": 103,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "a16b4540a46a0b764816f21fd82570325299986313c0444238283fbfd6b5128c",
+    "alloyHash": "c0829c28173043d8941c11a0b0b009fb712f32ad5559572a6c80d9169c6710f3",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "a16b4540a46a0b764816f21fd82570325299986313c0444238283fbfd6b5128c",
-      "commit": "806631c6657970c4246c401d3c3419b8297dc445"
+      "sourceHash": "c0829c28173043d8941c11a0b0b009fb712f32ad5559572a6c80d9169c6710f3",
+      "commit": "8755fcbc582d473dbd13869685040fd26d875c79"
     }
   },
   "stages": [
@@ -1234,6 +1234,30 @@
       "timestamp": "2026-04-11T23:59:56-05:00",
       "message": "docs: Many-Worlds v11 Q-Former architecture + v10 honest results",
       "chain_hash": "a16b4540a46a0b764816f21fd82570325299986313c0444238283fbfd6b5128c"
+    },
+    {
+      "commit": "cb4e889f6ac807d35c54e3225de720bfc37f566d",
+      "tree": "6c06f41b1b166ef54bb6b0af60d66c2674e1aa71",
+      "parents": [
+        "806631c6657970c4246c401d3c3419b8297dc445"
+      ],
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "timestamp": "2026-04-12T05:00:14Z",
+      "message": "attestation: chain updated for 806631c",
+      "chain_hash": "d5837bd584e79dce5e1dcac48aea60c7b7d0c2adb4c3ee689f657adba79d049b"
+    },
+    {
+      "commit": "8755fcbc582d473dbd13869685040fd26d875c79",
+      "tree": "159a908977f1075470131a84a963ead82cb71900",
+      "parents": [
+        "cb4e889f6ac807d35c54e3225de720bfc37f566d"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-12T00:09:32-05:00",
+      "message": "docs: v11 Q-Former results \u2014 architecture works, magnitude needs final fix",
+      "chain_hash": "c0829c28173043d8941c11a0b0b009fb712f32ad5559572a6c80d9169c6710f3"
     }
   ]
 }
