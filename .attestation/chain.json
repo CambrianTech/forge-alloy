@@ -5,18 +5,18 @@
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
   "repository": "https://github.com/CambrianTech/forge-alloy",
   "branch": "main",
-  "chainHash": "44771422302429c55c3919c1420cf1c04b3c611b3546ad23d10c69f12cf81483",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@44771422302429c5",
-  "attestedAt": "2026-04-12T06:17:01.908253+00:00",
-  "totalCommits": 109,
+  "chainHash": "3281c3fa0a33a3265bfa0b0f4a43713f541e2b9614e653f6ce9e4e2c2c271f27",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@3281c3fa0a33a326",
+  "attestedAt": "2026-04-12T06:18:14.423929+00:00",
+  "totalCommits": 111,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "44771422302429c55c3919c1420cf1c04b3c611b3546ad23d10c69f12cf81483",
+    "alloyHash": "3281c3fa0a33a3265bfa0b0f4a43713f541e2b9614e653f6ce9e4e2c2c271f27",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "44771422302429c55c3919c1420cf1c04b3c611b3546ad23d10c69f12cf81483",
-      "commit": "17d0c722fde8ba5f0c83e7dc003bd3320ccb7587"
+      "sourceHash": "3281c3fa0a33a3265bfa0b0f4a43713f541e2b9614e653f6ce9e4e2c2c271f27",
+      "commit": "23e3bfe00c5a75513c44287a4a095fe4c2955bde"
     }
   },
   "stages": [
@@ -1330,6 +1330,30 @@
       "timestamp": "2026-04-12T01:16:48-05:00",
       "message": "docs: Avengers architecture \u2014 automated team assembly, divergence search, capability routing",
       "chain_hash": "44771422302429c55c3919c1420cf1c04b3c611b3546ad23d10c69f12cf81483"
+    },
+    {
+      "commit": "0ec89b1f4a7e01a48ed104978d9a5958a9a41510",
+      "tree": "869f14ce380f3aefa93391f39be9239ca9eba5d5",
+      "parents": [
+        "17d0c722fde8ba5f0c83e7dc003bd3320ccb7587"
+      ],
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "timestamp": "2026-04-12T06:17:02Z",
+      "message": "attestation: chain updated for 17d0c72",
+      "chain_hash": "f5cfc9f4c9098f8632fcffcd1b3605367444ca9854bb86b1a4be95c426d0c420"
+    },
+    {
+      "commit": "23e3bfe00c5a75513c44287a4a095fe4c2955bde",
+      "tree": "1f89fa2ee7f9b1475308ccdf3ec92c68724d7c67",
+      "parents": [
+        "0ec89b1f4a7e01a48ed104978d9a5958a9a41510"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-12T01:18:00-05:00",
+      "message": "docs: move Many-Worlds paper to continuum/docs/papers/ where the abstract lives",
+      "chain_hash": "3281c3fa0a33a3265bfa0b0f4a43713f541e2b9614e653f6ce9e4e2c2c271f27"
     }
   ]
 }
