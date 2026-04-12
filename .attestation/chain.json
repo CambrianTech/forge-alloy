@@ -5,18 +5,18 @@
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
   "repository": "https://github.com/CambrianTech/forge-alloy",
   "branch": "main",
-  "chainHash": "a5022dad8a55b6f57928642a7f7da23eff56d7f86034277881d15c2c83f9b8d0",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@a5022dad8a55b6f5",
-  "attestedAt": "2026-04-12T05:46:27.917934+00:00",
-  "totalCommits": 107,
+  "chainHash": "44771422302429c55c3919c1420cf1c04b3c611b3546ad23d10c69f12cf81483",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@44771422302429c5",
+  "attestedAt": "2026-04-12T06:17:01.908253+00:00",
+  "totalCommits": 109,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "a5022dad8a55b6f57928642a7f7da23eff56d7f86034277881d15c2c83f9b8d0",
+    "alloyHash": "44771422302429c55c3919c1420cf1c04b3c611b3546ad23d10c69f12cf81483",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "a5022dad8a55b6f57928642a7f7da23eff56d7f86034277881d15c2c83f9b8d0",
-      "commit": "797f23ce531a2a67a58a522c35e70212ebca0a8c"
+      "sourceHash": "44771422302429c55c3919c1420cf1c04b3c611b3546ad23d10c69f12cf81483",
+      "commit": "17d0c722fde8ba5f0c83e7dc003bd3320ccb7587"
     }
   },
   "stages": [
@@ -1306,6 +1306,30 @@
       "timestamp": "2026-04-12T00:46:17-05:00",
       "message": "docs: v12 vocab-grounded Q-Former \u2014 don't retrain, translate",
       "chain_hash": "a5022dad8a55b6f57928642a7f7da23eff56d7f86034277881d15c2c83f9b8d0"
+    },
+    {
+      "commit": "5b133c808b4bb81b49edd980130f7e7b0e772a22",
+      "tree": "b4a8eb2d68d3d9f5ab0b8d877f979e8194edc426",
+      "parents": [
+        "797f23ce531a2a67a58a522c35e70212ebca0a8c"
+      ],
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "timestamp": "2026-04-12T05:46:28Z",
+      "message": "attestation: chain updated for 797f23c",
+      "chain_hash": "d8b440d393c30b322970fff272f84ef6b39a57d9d6cd0894939fd9727c954cf5"
+    },
+    {
+      "commit": "17d0c722fde8ba5f0c83e7dc003bd3320ccb7587",
+      "tree": "52ce70651762aca56f1a22ce1501cf7a6b7a1f94",
+      "parents": [
+        "5b133c808b4bb81b49edd980130f7e7b0e772a22"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-12T01:16:48-05:00",
+      "message": "docs: Avengers architecture \u2014 automated team assembly, divergence search, capability routing",
+      "chain_hash": "44771422302429c55c3919c1420cf1c04b3c611b3546ad23d10c69f12cf81483"
     }
   ]
 }
