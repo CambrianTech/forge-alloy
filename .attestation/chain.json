@@ -5,18 +5,18 @@
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
   "repository": "https://github.com/CambrianTech/forge-alloy",
   "branch": "main",
-  "chainHash": "3281c3fa0a33a3265bfa0b0f4a43713f541e2b9614e653f6ce9e4e2c2c271f27",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@3281c3fa0a33a326",
-  "attestedAt": "2026-04-12T06:18:14.423929+00:00",
-  "totalCommits": 111,
+  "chainHash": "1aed986baca183109d32a4c58a40cd8706b6d2d3d297265a1906c5ff8c8870be",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@1aed986baca18310",
+  "attestedAt": "2026-04-12T17:05:08.894296+00:00",
+  "totalCommits": 113,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "3281c3fa0a33a3265bfa0b0f4a43713f541e2b9614e653f6ce9e4e2c2c271f27",
+    "alloyHash": "1aed986baca183109d32a4c58a40cd8706b6d2d3d297265a1906c5ff8c8870be",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "3281c3fa0a33a3265bfa0b0f4a43713f541e2b9614e653f6ce9e4e2c2c271f27",
-      "commit": "23e3bfe00c5a75513c44287a4a095fe4c2955bde"
+      "sourceHash": "1aed986baca183109d32a4c58a40cd8706b6d2d3d297265a1906c5ff8c8870be",
+      "commit": "0a9946c4d744bc07de2d0566a2bc2896c776a22c"
     }
   },
   "stages": [
@@ -1354,6 +1354,30 @@
       "timestamp": "2026-04-12T01:18:00-05:00",
       "message": "docs: move Many-Worlds paper to continuum/docs/papers/ where the abstract lives",
       "chain_hash": "3281c3fa0a33a3265bfa0b0f4a43713f541e2b9614e653f6ce9e4e2c2c271f27"
+    },
+    {
+      "commit": "4eb7b1f17767fed4166a8fb7144e5682d264d3eb",
+      "tree": "acfaeee4e9d1fd5235a3e2b104d8238d23c3149f",
+      "parents": [
+        "23e3bfe00c5a75513c44287a4a095fe4c2955bde"
+      ],
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "timestamp": "2026-04-12T06:18:14Z",
+      "message": "attestation: chain updated for 23e3bfe",
+      "chain_hash": "508a4ae367cea5cd58fcd083fa9cff988b02629f22f0c88a4504af00f2c1cb8c"
+    },
+    {
+      "commit": "0a9946c4d744bc07de2d0566a2bc2896c776a22c",
+      "tree": "d4a1b002880a4364a80f655caf963b6a3dc196da",
+      "parents": [
+        "4eb7b1f17767fed4166a8fb7144e5682d264d3eb"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-12T12:04:58-05:00",
+      "message": "fix: verify page handles Many-Worlds ensemble alloys",
+      "chain_hash": "1aed986baca183109d32a4c58a40cd8706b6d2d3d297265a1906c5ff8c8870be"
     }
   ]
 }
