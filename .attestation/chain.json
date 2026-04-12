@@ -5,18 +5,18 @@
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
   "repository": "https://github.com/CambrianTech/forge-alloy",
   "branch": "main",
-  "chainHash": "27996d4d192e8e7dc5a61247cf235abf2bbac2ce65a97806b87662768f0f5dc9",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@27996d4d192e8e7d",
-  "attestedAt": "2026-04-12T04:44:15.647158+00:00",
-  "totalCommits": 99,
+  "chainHash": "a16b4540a46a0b764816f21fd82570325299986313c0444238283fbfd6b5128c",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@a16b4540a46a0b76",
+  "attestedAt": "2026-04-12T05:00:14.655036+00:00",
+  "totalCommits": 101,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "27996d4d192e8e7dc5a61247cf235abf2bbac2ce65a97806b87662768f0f5dc9",
+    "alloyHash": "a16b4540a46a0b764816f21fd82570325299986313c0444238283fbfd6b5128c",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "27996d4d192e8e7dc5a61247cf235abf2bbac2ce65a97806b87662768f0f5dc9",
-      "commit": "47faeb70baa1b5cc1dac7a85dd628e85d1f28934"
+      "sourceHash": "a16b4540a46a0b764816f21fd82570325299986313c0444238283fbfd6b5128c",
+      "commit": "806631c6657970c4246c401d3c3419b8297dc445"
     }
   },
   "stages": [
@@ -1210,6 +1210,30 @@
       "timestamp": "2026-04-11T23:43:45-05:00",
       "message": "docs: Many-Worlds experimental log \u2014 10 iterations, honest results",
       "chain_hash": "27996d4d192e8e7dc5a61247cf235abf2bbac2ce65a97806b87662768f0f5dc9"
+    },
+    {
+      "commit": "b24980a052c57c9fe4f0ec45643817291044b183",
+      "tree": "2f0b78567c2776bc65a3f6b747dcdbfd3d30bbbf",
+      "parents": [
+        "47faeb70baa1b5cc1dac7a85dd628e85d1f28934"
+      ],
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "timestamp": "2026-04-12T04:44:16Z",
+      "message": "attestation: chain updated for 47faeb7",
+      "chain_hash": "3fb2df00f268eae997c8d5d161969ae7d5b4f723b73d2b9687a7f44052588382"
+    },
+    {
+      "commit": "806631c6657970c4246c401d3c3419b8297dc445",
+      "tree": "2fd229c203e87c16a41a6f085ac0ab0075c6e0f9",
+      "parents": [
+        "b24980a052c57c9fe4f0ec45643817291044b183"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-11T23:59:56-05:00",
+      "message": "docs: Many-Worlds v11 Q-Former architecture + v10 honest results",
+      "chain_hash": "a16b4540a46a0b764816f21fd82570325299986313c0444238283fbfd6b5128c"
     }
   ]
 }
