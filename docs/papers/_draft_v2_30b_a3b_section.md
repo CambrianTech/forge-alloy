@@ -316,7 +316,102 @@ soft_tokens (16, target_embed_dim) — each is a "mixture word"
 
 **The thesis in one sentence:** Don't retrain, translate. The substrate converts between models' internal representations. The Q-Former translates into each model's native vocabulary. The models do what they already know how to do. The knowledge was free. The translation is cheap.
 
-## 11. Next Experiment Design — The Right Team for the Right Benchmark
+## 11. The Avengers Architecture — Automated Team Assembly
+
+### The Full Pipeline
+
+The Many-Worlds forge recipe automates the entire team assembly process:
+
+```json
+{
+  "type": "many-worlds",
+  "target_benchmark": "leaderboard_math",
+  "vram_budget_gb": 8,
+  "search_pool": "huggingface:Qwen/*,huggingface:microsoft/phi-*,...",
+  "max_team_size": 4,
+  "substrate_dim": 256,
+  "optimization": "maximize_complementary_coverage"
+}
+```
+
+**Steps (all automated):**
+
+1. **Goal specification** — target benchmark + VRAM budget + search pool
+2. **Divergence search** — scan candidate models, run samples from target benchmark, build divergence matrix showing which pairs disagree the most
+3. **Team selection** — algorithm picks the roster with maximum complementary coverage under the VRAM budget. The divergence matrix is the Many-Worlds equivalent of the activation profile in pruning: one tells you which experts to keep, the other tells you which models to combine.
+4. **Substrate training** — Q-Former bridge trained on calibration corpus matched to the target benchmark. Both source and target models frozen.
+5. **VRAM pruning** — if combined VRAM exceeds target, the divergence matrix identifies the most redundant member (lowest complementary contribution). Remove and retrain one adapter.
+6. **Evaluation** — full benchmark run, compare population score against best individual member
+7. **Iteration** — swap weakest member for next candidate from search pool, retrain one adapter (not the whole substrate), re-evaluate
+
+### Divergence Matrix — The Team Selection Primitive
+
+The divergence matrix measures how much each pair of models DISAGREES on the benchmark:
+
+```
+                  Qwen3-4B  Phi-3-mini  Phi-2   StableLM
+Qwen3-4B            -         11        15       18
+Phi-3-mini          11         -        12       16
+Phi-2               15        12         -       10
+StableLM            18        16        10        -
+```
+
+High divergence = high opportunity for substrate transfer. Low divergence = redundant knowledge (prune candidate).
+
+**First measured divergence (Qwen3-4B + Phi-3-mini on GSM8K 50 problems):**
+```
+Qwen3-4B:    37/50 = 74%
+Phi-3-mini:  34/50 = 68%
+Both right:  30
+Qwen only:    7  (substrate could help Phi-3)
+Phi-3 only:   4  (substrate could help Qwen)
+Complementary: 11 (22% of problems)
+Combined potential: 41/50 = 82%  (+8 points over best individual)
+```
+
+### Scaling to N Models — Router + Capability Centroids
+
+For populations >2, not all models activate for every query. A lightweight router selects the top-K most relevant experts:
+
+```
+Input text → embed in substrate space → cosine sim to model centroids
+  → select top-K (2-3 out of N) → run selected through Q-Former → soft tokens
+  → target model generates with expert knowledge
+```
+
+Each model has a **capability centroid** in substrate space — a learned vector summarizing "what this model knows." The router is a single matrix multiply (cheap). Only K models run per query, not all N.
+
+### Experiential Plasticity
+
+The capability centroids UPDATE through use:
+- Query routed to Qwen + Phi-3 → good result → strengthen both centroids in this region
+- Bad result → weaken, try different experts next time
+- New model joins → starts with default centroid, specializes through experience
+- The Foreman accumulates knowledge about which experts help on which tasks
+
+After 100 forge runs, the system knows "Phi-3 always helps on math, Qwen always helps on code, StableLM never contributes to reasoning" and uses this prior to make future team searches faster.
+
+### The Forge-Alloy for Populations
+
+The `.alloy.json` for a Many-Worlds population describes:
+- The team roster (which models, which versions, which adapters)
+- The substrate (shared coordinate space, training provenance)
+- The Q-Former bridge (per-target-model, trained against the substrate)
+- The capability centroids (per-model, updated through experience)
+- The benchmark results (per-model individual + combined population)
+- The attestation chain (every step signed and verifiable)
+
+Same attestation infrastructure, same QR codes, same verification page. The alloy proves the population's provenance just like it proves a pruned model's provenance.
+
+### The Avengers Headline
+
+"Assembled from N open-weight models, none larger than 4B, outperforms a single 70B model on the Open LLM Leaderboard."
+
+Each member brings one superpower. The substrate assembles the right team for each question. Every new open-weight release from any lab becomes a potential recruit — one adapter (4M params, 8 minutes on consumer GPU), the population gets stronger. The knowledge was free. The coordination is cheap. The diversity is the moat.
+
+Joel: *"could we make like an avengers coding model from the contributions of many experts across diverse models?"*
+
+## 12. Next Experiment Design — The Right Team for the Right Benchmark
 
 The thesis test requires:
 
