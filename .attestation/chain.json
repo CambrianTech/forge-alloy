@@ -5,18 +5,18 @@
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
   "repository": "https://github.com/CambrianTech/forge-alloy",
   "branch": "main",
-  "chainHash": "25849742e6b4424272a96355719462649ab1c01ea73faafe563e0c908a815f66",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@25849742e6b44242",
-  "attestedAt": "2026-04-12T05:24:27.512122+00:00",
-  "totalCommits": 105,
+  "chainHash": "a5022dad8a55b6f57928642a7f7da23eff56d7f86034277881d15c2c83f9b8d0",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@a5022dad8a55b6f5",
+  "attestedAt": "2026-04-12T05:46:27.917934+00:00",
+  "totalCommits": 107,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "25849742e6b4424272a96355719462649ab1c01ea73faafe563e0c908a815f66",
+    "alloyHash": "a5022dad8a55b6f57928642a7f7da23eff56d7f86034277881d15c2c83f9b8d0",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "25849742e6b4424272a96355719462649ab1c01ea73faafe563e0c908a815f66",
-      "commit": "2252139cf01ae9ee1d0d3cca15a55e756f9dfb2a"
+      "sourceHash": "a5022dad8a55b6f57928642a7f7da23eff56d7f86034277881d15c2c83f9b8d0",
+      "commit": "797f23ce531a2a67a58a522c35e70212ebca0a8c"
     }
   },
   "stages": [
@@ -1282,6 +1282,30 @@
       "timestamp": "2026-04-12T00:24:13-05:00",
       "message": "docs: v11b results \u2014 magnitude fixed, positional generation issue identified",
       "chain_hash": "25849742e6b4424272a96355719462649ab1c01ea73faafe563e0c908a815f66"
+    },
+    {
+      "commit": "974915d2febfee1514f9a84b46e679be3ffd35c4",
+      "tree": "0dfe442c045c75c66ad6eea85647adb296794b80",
+      "parents": [
+        "2252139cf01ae9ee1d0d3cca15a55e756f9dfb2a"
+      ],
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "timestamp": "2026-04-12T05:24:27Z",
+      "message": "attestation: chain updated for 2252139",
+      "chain_hash": "3b19177d8205fe633f1699018d649d1b583e63442d98900e3520928d45979d8c"
+    },
+    {
+      "commit": "797f23ce531a2a67a58a522c35e70212ebca0a8c",
+      "tree": "656341193ecf5e1114fd1a47c636a739223b71bb",
+      "parents": [
+        "974915d2febfee1514f9a84b46e679be3ffd35c4"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-12T00:46:17-05:00",
+      "message": "docs: v12 vocab-grounded Q-Former \u2014 don't retrain, translate",
+      "chain_hash": "a5022dad8a55b6f57928642a7f7da23eff56d7f86034277881d15c2c83f9b8d0"
     }
   ]
 }
