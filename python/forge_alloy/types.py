@@ -615,6 +615,71 @@ class CVEvalStage(BaseModel):
     model_config = {"populate_by_name": True, "extra": "allow"}
 
 
+class TeamSearchStage(BaseModel):
+    """Many-Worlds team search — find optimal model population via divergence analysis."""
+    type: Literal["team-search"] = "team-search"
+    search_pool: str = Field(alias="searchPool")
+    benchmark: str
+    num_problems: int = Field(default=50, alias="numProblems")
+    candidates_evaluated: Optional[int] = Field(default=None, alias="candidatesEvaluated")
+    selected_team: Optional[list[str]] = Field(default=None, alias="selectedTeam")
+    divergence_score: Optional[float] = Field(default=None, alias="divergenceScore")
+    complementary_problems: Optional[int] = Field(default=None, alias="complementaryProblems")
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+class ManyWorldsEnsembleStage(BaseModel):
+    """Many-Worlds logit ensemble — blend predictions from specialist models.
+
+    No training required. Each specialist's top-K confident predictions
+    boost the target model's logits at inference time. The blend can
+    only boost tokens, never suppress — result is always ≥ baseline.
+    """
+    type: Literal["many-worlds-ensemble"] = "many-worlds-ensemble"
+    method: Literal["logit-blend", "soft-prompt", "cross-attention"] = "logit-blend"
+    target_model: str = Field(alias="targetModel")
+    specialists: list[str]
+    alpha: float = Field(default=0.2, ge=0.0, le=1.0)
+    top_k: int = Field(default=20, ge=1, alias="topK")
+    blend_strategy: Literal["specialist-top-k-boost", "full-distribution", "weighted-average"] = Field(
+        default="specialist-top-k-boost", alias="blendStrategy")
+    vram_gb: Optional[float] = Field(default=None, alias="vramGb")
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+class GateProfileStage(BaseModel):
+    """Profile which specialists contribute on which input types.
+
+    The gate profiling data drives population-level pruning: models that
+    never contribute get removed, models that contribute selectively get
+    quantized for their non-specialty tokens.
+    """
+    type: Literal["gate-profile"] = "gate-profile"
+    benchmark: str
+    num_problems: int = Field(default=100, alias="numProblems")
+    per_specialist_contribution: Optional[dict[str, float]] = Field(
+        default=None, alias="perSpecialistContribution")
+    export_path: Optional[str] = Field(default=None, alias="exportPath")
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+class PopulationPruneStage(BaseModel):
+    """Remove specialists that don't contribute enough to justify their VRAM cost."""
+    type: Literal["population-prune"] = "population-prune"
+    min_contribution: float = Field(default=0.05, alias="minContribution")
+    removed_models: Optional[list[str]] = Field(default=None, alias="removedModels")
+    vram_saved_gb: Optional[float] = Field(default=None, alias="vramSavedGb")
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
 # Discriminated union for stages — must be after ALL stage class definitions
 AlloyStage = Annotated[
     Union[
@@ -623,6 +688,7 @@ AlloyStage = Annotated[
         ExpertPruneStage, ExpertActivationProfileStage, CompensationLoRAStage,
         ContextExtendStage, ModalityStage,
         ManyWorldsSubstrateStage, ManyWorldsAdapterStage,
+        ManyWorldsEnsembleStage, TeamSearchStage, GateProfileStage, PopulationPruneStage,
         CVIngestStage, CVEvalStage,
     ],
     Field(discriminator="type"),
