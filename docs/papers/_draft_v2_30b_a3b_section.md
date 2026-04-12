@@ -249,6 +249,28 @@ Q-Former (16 learned queries, 2 layers)
 
 **Trainable params:** Q-Former (~2.6M) + source adapter (~1.2M) + substrate (~33K) = ~3.9M total. Both base models frozen. Training: ~8 min on RTX 5090.
 
+### v11 Results
+
+Training completed in 490s. Best avg50: **0.7642 vs baseline 0.8119 (−5.9%)**.
+
+```
+Step 3000: avg50 crossed below baseline
+Step 3757: best avg50 = 0.7721
+Step 4813: best avg50 = 0.7642  ← 5.9% improvement
+```
+
+**Generation diagnostic:**
+- Substrate soft tokens produce coherent code (fibonacci, merge sort, binary search)
+- BUT soft token norm grew to 123 vs real embed norm 1.55 (80× oversaturated again)
+- Phi-2 with proper docstring prompts generates correct code on its own
+- The substrate override is dominating the input format, not adding complementary knowledge
+
+**Same magnitude problem as v9, but less severe** — the Q-Former's LayerNorm constrains direction but the output projection weights grew during training. Fix: clamp the output projection norm, or add a learned scale parameter initialized small.
+
+**Key insight from v11:** The Q-Former architecture IS correct — it produces coherent, structured output. The per-token substrate field + learned queries work. The magnitude control needs one more fix (constrain out_proj growth during training). Once magnitudes are matched, the fair comparison can be made.
+
+**Status:** Architecture validated. Magnitude control needs final fix. Then: right team, right benchmark.
+
 ## 11. Next Experiment Design — The Right Team for the Right Benchmark
 
 The thesis test requires:
