@@ -631,7 +631,8 @@ async function showChain(text, expectedHash) {
     const actualHash = await sha256hex(text);
 
     const r = alloy.results || {};
-    const i = r.integrity || {};
+    // Handle both forged (results.integrity) and ensemble (top-level integrity) alloys
+    const i = r.integrity || alloy.integrity || {};
     const code = i.code || {};
     const receipt = alloy.receipt || {};
 
@@ -688,22 +689,39 @@ async function showChain(text, expectedHash) {
     chainEl.className = 'chain visible';
     chainEl.innerHTML = '';
 
-    // --- Source Model ---
-    const baseModel = alloy.source?.baseModel || '?';
+    // --- Source Model(s) ---
+    // Handle both forged models (source.baseModel) and ensembles (source.target + source.specialists)
     const srcTrust = assessNodeTrust('source', alloy);
     tallyTrust(srcTrust);
-    nodeRaw(chainEl, 'info', 'Source Model',
-      '<a href="' + hfBase + baseModel + '" target="_blank">' + baseModel + '</a>' +
-      trustBadgeHtml(srcTrust) +
-      trustAnalysisHtml(TRUST_DEFS.source));
+    if (alloy.source?.specialists) {
+      // Many-Worlds ensemble — show target + specialists
+      const targetModel = alloy.source.target?.baseModel || '?';
+      nodeRaw(chainEl, 'info', 'Target Model',
+        '<a href="' + hfBase + targetModel + '" target="_blank">' + targetModel + '</a>' +
+        ' <span style="color:#8a92a5">(' + (alloy.source.target?.role || 'generalist') + ')</span>' +
+        trustBadgeHtml(srcTrust));
+      for (const spec of alloy.source.specialists) {
+        const specModel = spec.baseModel || '?';
+        nodeRaw(chainEl, 'info', 'Specialist',
+          '<a href="' + hfBase + specModel + '" target="_blank">' + specModel + '</a>' +
+          ' <span style="color:#00ffc8">(' + (spec.role || 'specialist') + ')</span>');
+      }
+    } else {
+      // Standard forged model
+      const baseModel = alloy.source?.baseModel || '?';
+      nodeRaw(chainEl, 'info', 'Source Model',
+        '<a href="' + hfBase + baseModel + '" target="_blank">' + baseModel + '</a>' +
+        trustBadgeHtml(srcTrust) +
+        trustAnalysisHtml(TRUST_DEFS.source));
+    }
 
     // --- Architecture ---
-    const arch = alloy.source?.architecture || '?';
+    const arch = alloy.source?.architecture || alloy.type || '?';
     nodeLink(chainEl, 'info', 'Architecture', arch,
-      hfBase + 'docs/transformers/model_doc/' + arch.replace('_', ''), 'transformers docs');
+      ghBase + 'forge-alloy#stage-types', alloy.type === 'many-worlds-ensemble' ? 'Many-Worlds logit blend' : 'transformers docs');
 
-    // --- Target ---
-    if (alloy.target) {
+    // --- Target (forged models only) ---
+    if (alloy.target && !alloy.source?.specialists) {
       const deltas = Object.entries(alloy.target).filter(([k,v]) => v != null);
       const deltaHtml = deltas.map(([k]) => '<span style="color:#00ffc8">' + k + '</span>').join(', ');
       nodeRaw(chainEl, 'info', 'Target Delta', deltaHtml);
@@ -716,8 +734,9 @@ async function showChain(text, expectedHash) {
       const stageHtml = alloy.stages.map(s =>
         '<a href="' + ghBase + 'forge-alloy#stage-types" target="_blank" style="color:#e0e6ed">' + s.type + '</a>'
       ).join(' &#x2192; ');
+      const cycleText = alloy.cycles ? ' (' + alloy.cycles + ' cycle' + (alloy.cycles > 1 ? 's' : '') + ')' : '';
       nodeRaw(chainEl, 'info', 'Pipeline',
-        stageHtml + ' (' + alloy.cycles + ' cycle' + (alloy.cycles > 1 ? 's' : '') + ')' +
+        stageHtml + cycleText +
         trustBadgeHtml(pipeTrust) +
         trustAnalysisHtml(TRUST_DEFS.pipeline));
     }
