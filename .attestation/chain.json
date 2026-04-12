@@ -5,18 +5,18 @@
   "description": "Self-attestation of the forge-alloy trust infrastructure repository",
   "repository": "https://github.com/CambrianTech/forge-alloy",
   "branch": "main",
-  "chainHash": "1aed986baca183109d32a4c58a40cd8706b6d2d3d297265a1906c5ff8c8870be",
-  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@1aed986baca18310",
-  "attestedAt": "2026-04-12T17:05:08.894296+00:00",
-  "totalCommits": 113,
+  "chainHash": "959d8f0e29bcde1dc26d1ad37eaa887b80ca5c2fdf9657e7a2becde3361013ed",
+  "verifyUrl": "https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@959d8f0e29bcde1d",
+  "attestedAt": "2026-04-12T17:11:26.411254+00:00",
+  "totalCommits": 115,
   "integrity": {
     "trustLevel": "self-attested",
-    "alloyHash": "1aed986baca183109d32a4c58a40cd8706b6d2d3d297265a1906c5ff8c8870be",
+    "alloyHash": "959d8f0e29bcde1dc26d1ad37eaa887b80ca5c2fdf9657e7a2becde3361013ed",
     "code": {
       "runner": "forge-alloy/repo_attest",
       "version": "0.1.0",
-      "sourceHash": "1aed986baca183109d32a4c58a40cd8706b6d2d3d297265a1906c5ff8c8870be",
-      "commit": "0a9946c4d744bc07de2d0566a2bc2896c776a22c"
+      "sourceHash": "959d8f0e29bcde1dc26d1ad37eaa887b80ca5c2fdf9657e7a2becde3361013ed",
+      "commit": "18c7b73ce94532f4fbfd299c1178f01b7bfeb3ef"
     }
   },
   "stages": [
@@ -1378,6 +1378,30 @@
       "timestamp": "2026-04-12T12:04:58-05:00",
       "message": "fix: verify page handles Many-Worlds ensemble alloys",
       "chain_hash": "1aed986baca183109d32a4c58a40cd8706b6d2d3d297265a1906c5ff8c8870be"
+    },
+    {
+      "commit": "1e8ea42ff9bceefb014c23143d1828744891f557",
+      "tree": "537c60c6cd0a2556b196c40f2c19cf087145a01e",
+      "parents": [
+        "0a9946c4d744bc07de2d0566a2bc2896c776a22c"
+      ],
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "timestamp": "2026-04-12T17:05:09Z",
+      "message": "attestation: chain updated for 0a9946c",
+      "chain_hash": "1d00ed69f23b0c7333c40aaeafde079f7bf51b88826ceaa3241ceaf91bd12696"
+    },
+    {
+      "commit": "18c7b73ce94532f4fbfd299c1178f01b7bfeb3ef",
+      "tree": "35a47b38de01b7ecfbdc617b1841154e814b3437",
+      "parents": [
+        "1e8ea42ff9bceefb014c23143d1828744891f557"
+      ],
+      "author": "joelteply",
+      "email": "joelteply@yahoo.com",
+      "timestamp": "2026-04-12T12:11:14-05:00",
+      "message": "feat: Many-Worlds ensemble stage types \u2014 team search, logit blend, gate profile, population prune",
+      "chain_hash": "959d8f0e29bcde1dc26d1ad37eaa887b80ca5c2fdf9657e7a2becde3361013ed"
     }
   ]
 }

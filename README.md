@@ -1,7 +1,7 @@
 # ForgeAlloy — Universal Attestation Chain
 
 <div align="center">
-  <a href="https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@1aed986baca18310">
+  <a href="https://cambriantech.github.io/forge-alloy/verify/#github:forge-alloy@959d8f0e29bcde1d">
     <img src=".attestation/chain-qr.svg" alt="Verify this repo's attestation chain" width="280">
   </a>
   <br>
