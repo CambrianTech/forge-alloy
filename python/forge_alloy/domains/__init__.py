@@ -19,6 +19,7 @@ Currently registered:
                        all declare this domain implicitly)
     photo-provenance   stub — camera enclave → edits → publish chain
     ticketing          stub — venue tickets, FedEx delivery, concerts
+    package            continuum packages named by ContentId (pack, migrate)
 
 Stubs exist as witnesses that the registry handles non-ML domains. When
 real photo-provenance or ticketing artifacts ship, the stubs get filled
@@ -60,10 +61,12 @@ def registered_domains() -> list[str]:
 from . import llm_forge          # noqa: E402,F401
 from . import photo_provenance   # noqa: E402,F401
 from . import ticketing          # noqa: E402,F401
+from . import package            # noqa: E402,F401
 
 _REGISTRY.register(llm_forge.LlmForgeDomain)
 _REGISTRY.register(photo_provenance.PhotoProvenanceDomain)
 _REGISTRY.register(ticketing.TicketingDomain)
+_REGISTRY.register(package.PackageDomain)
 
 
 __all__ = [

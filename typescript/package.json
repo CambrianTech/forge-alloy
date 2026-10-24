@@ -9,7 +9,7 @@
   "keywords": ["ai", "model", "forging", "pipeline", "quantization"],
   "scripts": {
     "build": "tsc",
-    "test": "vitest"
+    "test": "node --experimental-strip-types --test tests/*.test.ts"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

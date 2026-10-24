@@ -52,6 +52,7 @@ Each link: `prev_hash` + `input_hash` + `stage_config` + `output_hash` + `signat
 0x06  Evaluation         Benchmark scores, quality gates
 0x07  Vision encoder     Modality addition (CLIP, SigLIP)
 0x08  Audio encoder      Modality addition (Whisper)
+0x09  Package            Continuum package named by ContentId (pack, migrate)
 0xFF  Custom domain      Schema in payload
 ```
 
@@ -63,6 +64,18 @@ forge-alloy verify model.alloy.json --model-dir ./weights/
 ```
 
 In browser: client-side JS does the same. The verification page is a convenience — the math runs locally.
+
+### Canonical form: RFC 8785 (JCS)
+
+Every signed payload and every package id is computed over **RFC 8785 JSON Canonicalization Scheme**
+bytes: members sorted by UTF-16 code units, numbers as ECMAScript renders the double, minimal string
+escapes, no whitespace. An integer beyond ±2^53 is refused, never rounded. Rust (`forge_alloy::jcs`),
+Python (`forge_alloy.jcs`), TypeScript (`content-id.ts`) and the browser verifier implement it, and all
+four must reproduce [`test-vectors/jcs.json`](test-vectors/jcs.json) (RFC 8785 Appendix B and §3.2
+vectors, plus pinned package ids) byte for byte.
+
+A published alloy's `alloyHash` is the sha256 of its file bytes as published; the browser verifier
+accepts either that or the sha256 of the alloy's JCS form, so existing QR codes keep verifying.
 
 ## The Model Compiler
 
@@ -157,6 +170,30 @@ Stages are **domain-extensible**. The core contract defines the phase structure.
 | `eval` | delivery | Benchmarking (HumanEval, MMLU, GSM8K, custom) |
 | `publish` | delivery | Push to HuggingFace with generated model card |
 | `deploy` | delivery | Deploy to grid node for serving |
+
+### Package Domain (0x09)
+
+A [continuum](https://github.com/CambrianTech/continuum) package (a gene, a KV page, a persona, a
+project: anything a mind owns) is named by its **ContentId**, `sha256:<64 hex>` of its manifest's JCS
+bytes. The manifest names every part by digest, so the id commits to every byte at any depth, and an
+alloy whose chain ends in it vouches for the whole tree. The package carries that alloy as its
+provenance part (media type `application/vnd.forge-alloy+json`).
+
+| Stage | Phase | What It Does |
+|-------|-------|-------------|
+| `pack` | delivery | The chain produced package `contentId` (`kind`, `schema`), made from `inputs` (its lineage, by id) |
+| `migrate` | transform | A schema migration turned package `from` into `contentId`; `from` must be the id the chain reached |
+
+```json
+{ "type": "pack", "kind": "genome.gene", "schema": 1,
+  "contentId": "sha256:6311…57ae", "inputs": ["sha256:…base model…"] }
+{ "type": "migrate", "kind": "genome.gene", "fromSchema": 1, "toSchema": 2,
+  "from": "sha256:6311…57ae", "contentId": "sha256:…" }
+```
+
+`package_chain` / `packageChain` walks these stages (each `migrate` continues the id, kind and schema
+before it); `verify_package` / `verifyPackage` checks a manifest, in any serialization, against where the
+chain ends. `outputs.produces` may name the result as `{ "type": "package", "contentId": … }`.
 
 ### Other Domains
 

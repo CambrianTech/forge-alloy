@@ -33,7 +33,10 @@ from .types import (
     AlloyHardware,
     AlloyOutputs,
     BenchmarkDef,
+    PackStage,
+    MigrateStage,
 )
+from .jcs import canonicalize, content_id, CanonicalError
 
 __version__ = "0.1.0"
 __all__ = [
@@ -69,4 +72,9 @@ __all__ = [
     "AlloyHardware",
     "AlloyOutputs",
     "BenchmarkDef",
+    "PackStage",
+    "MigrateStage",
+    "canonicalize",
+    "content_id",
+    "CanonicalError",
 ]
