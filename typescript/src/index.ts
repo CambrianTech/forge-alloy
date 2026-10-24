@@ -5,6 +5,10 @@
  * This hand-written version is the initial scaffold.
  */
 
+import type { ContentId, MigrateStage, PackStage } from './content-id';
+
+export * from './content-id';
+
 // ── Source ──────────────────────────────────────────────────────────────────
 
 export interface AlloySource {
@@ -182,7 +186,9 @@ export type AlloyStage =
   | PublishStage
   | ExpertPruneStage
   | ContextExtendStage
-  | ModalityStage;
+  | ModalityStage
+  | PackStage
+  | MigrateStage;
 
 export interface PruneStage {
   type: 'prune';
@@ -308,8 +314,10 @@ export interface AlloyHardware {
 }
 
 export interface OutputArtifact {
-  type: 'safetensors' | 'gguf' | 'mlx' | 'lora-adapter' | 'model-card' | 'alloy';
+  type: 'safetensors' | 'gguf' | 'mlx' | 'lora-adapter' | 'model-card' | 'alloy' | 'package';
   description?: string;
+  /** For type 'package': the package's ContentId (sha256 of its manifest's JCS bytes). */
+  contentId?: ContentId;
 }
 
 export interface AlloyOutputs {

@@ -21,6 +21,11 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+pub mod jcs;
+pub mod package;
+
+pub use package::{ContentId, MigrateStage, PackStage, PackageError, PackageHead};
+
 #[cfg(feature = "typescript")]
 use ts_rs::TS;
 
@@ -619,6 +624,12 @@ pub enum AlloyStage {
     Publish(PublishStage),
     /// Deploy to grid node for serving
     Deploy(DeployStage),
+
+    // ── Package domain (0x09): the output is a continuum package ──
+    /// The chain produced a package, named by its ContentId
+    Pack(PackStage),
+    /// A schema migration turned one package id into another
+    Migrate(MigrateStage),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1013,6 +1024,10 @@ pub struct OutputArtifact {
     pub artifact_type: String,
     #[serde(default)]
     pub description: String,
+    /// For `type: "package"`: the package's ContentId (sha256 of its manifest's JCS bytes).
+    #[serde(default, rename = "contentId", skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "typescript", ts(type = "string | null"))]
+    pub content_id: Option<ContentId>,
 }
 
 // ── Validation ──────────────────────────────────────────────────────────────

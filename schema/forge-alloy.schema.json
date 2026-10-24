@@ -227,8 +227,45 @@
         { "$ref": "#/$defs/PublishStage" },
         { "$ref": "#/$defs/ExpertPruneStage" },
         { "$ref": "#/$defs/ContextExtendStage" },
-        { "$ref": "#/$defs/ModalityStage" }
+        { "$ref": "#/$defs/ModalityStage" },
+        { "$ref": "#/$defs/PackStage" },
+        { "$ref": "#/$defs/MigrateStage" }
       ]
+    },
+
+    "ContentId": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "A continuum package id: sha256 of its manifest's RFC 8785 (JCS) bytes. The manifest names every part by digest, so the id commits to every byte at any depth."
+    },
+
+    "PackStage": {
+      "type": "object",
+      "description": "Package domain (0x09): the chain produced a continuum package, named by its ContentId.",
+      "required": ["type", "kind", "schema", "contentId"],
+      "properties": {
+        "type": { "const": "pack" },
+        "kind": { "type": "string", "description": "The manifest's kind (e.g. genome.gene, persona, kv.page)" },
+        "schema": { "type": "integer", "minimum": 0, "description": "The kind's schema number the manifest was written at" },
+        "contentId": { "$ref": "#/$defs/ContentId" },
+        "inputs": { "type": "array", "items": { "$ref": "#/$defs/ContentId" }, "description": "Packages it was made from (its lineage)" },
+        "notes": { "type": "string" }
+      }
+    },
+
+    "MigrateStage": {
+      "type": "object",
+      "description": "Package domain (0x09): a schema migration turned package `from` into package `contentId`. `from` must be the id the chain reached; the original chain still verifies its own link.",
+      "required": ["type", "kind", "fromSchema", "toSchema", "from", "contentId"],
+      "properties": {
+        "type": { "const": "migrate" },
+        "kind": { "type": "string" },
+        "fromSchema": { "type": "integer", "minimum": 0 },
+        "toSchema": { "type": "integer", "minimum": 0 },
+        "from": { "$ref": "#/$defs/ContentId" },
+        "contentId": { "$ref": "#/$defs/ContentId" },
+        "notes": { "type": "string" }
+      }
     },
 
     "PruneStage": {
@@ -413,8 +450,9 @@
             "type": "object",
             "required": ["type"],
             "properties": {
-              "type": { "type": "string", "enum": ["safetensors", "gguf", "mlx", "lora-adapter", "model-card", "alloy"] },
-              "description": { "type": "string" }
+              "type": { "type": "string", "enum": ["safetensors", "gguf", "mlx", "lora-adapter", "model-card", "alloy", "package"] },
+              "description": { "type": "string" },
+              "contentId": { "$ref": "#/$defs/ContentId", "description": "For type package: the package's ContentId" }
             }
           }
         }

@@ -680,6 +680,43 @@ class PopulationPruneStage(BaseModel):
     model_config = {"populate_by_name": True, "extra": "allow"}
 
 
+# ── Package domain (type byte 0x09): the output is a continuum package ─────
+#
+# A package is named by its ContentId: sha256 of its manifest's RFC 8785 (JCS)
+# bytes. The manifest names every part by digest, so the id commits to every
+# byte at any depth. Registered as the `package` domain in
+# forge_alloy/domains/package.py, which also verifies the chain.
+
+CONTENT_ID_PATTERN = r"^sha256:[0-9a-f]{64}$"
+ContentIdStr = Annotated[str, Field(pattern=CONTENT_ID_PATTERN)]
+
+
+class PackStage(BaseModel):
+    """The chain produced a continuum package, named by its ContentId."""
+    type: Literal["pack"] = "pack"
+    kind: str
+    kind_schema: int = Field(alias="schema", ge=0)
+    content_id: ContentIdStr = Field(alias="contentId")
+    inputs: list[ContentIdStr] = Field(default_factory=list)
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
+class MigrateStage(BaseModel):
+    """A schema migration turned package `from` into package `contentId`; the
+    original chain still verifies its own link."""
+    type: Literal["migrate"] = "migrate"
+    kind: str
+    from_schema: int = Field(alias="fromSchema", ge=0)
+    to_schema: int = Field(alias="toSchema", ge=0)
+    from_id: ContentIdStr = Field(alias="from")
+    content_id: ContentIdStr = Field(alias="contentId")
+    notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+
 # Discriminated union for stages — must be after ALL stage class definitions
 AlloyStage = Annotated[
     Union[
@@ -690,6 +727,7 @@ AlloyStage = Annotated[
         ManyWorldsSubstrateStage, ManyWorldsAdapterStage,
         ManyWorldsEnsembleStage, TeamSearchStage, GateProfileStage, PopulationPruneStage,
         CVIngestStage, CVEvalStage,
+        PackStage, MigrateStage,
     ],
     Field(discriminator="type"),
 ]
@@ -745,6 +783,10 @@ class AlloyReceipt(BaseModel):
 class OutputArtifact(BaseModel):
     type: str
     description: str = ""
+    # For type "package": the package's ContentId (sha256 of its manifest's JCS bytes).
+    content_id: Optional[ContentIdStr] = Field(default=None, alias="contentId")
+
+    model_config = {"populate_by_name": True}
 
 
 class AlloyOutputs(BaseModel):

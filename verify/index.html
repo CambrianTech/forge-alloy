@@ -526,6 +526,42 @@ async function generateQRDataUrl(text) {
   } catch { return null; }
 }
 
+// JCS-BEGIN: RFC 8785 + the package domain (0x09). Same rules as typescript/src/content-id.ts,
+// checked against test-vectors/jcs.json by typescript/tests/content-id.test.ts.
+function jcsCanonicalize(v) {
+  if (v === null || typeof v === 'boolean' || typeof v === 'string') return JSON.stringify(v);
+  if (typeof v === 'number') {
+    if (!Number.isFinite(v)) throw new Error(v + ' has no JSON form');
+    return JSON.stringify(v);
+  }
+  if (Array.isArray(v)) return '[' + v.map(jcsCanonicalize).join(',') + ']';
+  if (typeof v === 'object') {
+    const keys = Object.keys(v).filter(k => v[k] !== undefined).sort();
+    return '{' + keys.map(k => JSON.stringify(k) + ':' + jcsCanonicalize(v[k])).join(',') + '}';
+  }
+  throw new Error(typeof v + ' is not a JSON value');
+}
+const CONTENT_ID_RE = /^sha256:[0-9a-f]{64}$/;
+function packageChain(stages) {
+  let head = null;
+  (stages || []).forEach((s, i) => {
+    if (s.type === 'pack') {
+      if (!CONTENT_ID_RE.test(s.contentId)) throw new Error('stage[' + i + '] contentId is malformed');
+      head = { kind: s.kind, schema: s.schema, contentId: s.contentId };
+    } else if (s.type === 'migrate') {
+      if (!CONTENT_ID_RE.test(s.contentId)) throw new Error('stage[' + i + '] contentId is malformed');
+      if (!head) throw new Error('stage[' + i + '] migrates before any pack stage');
+      if (s.from !== head.contentId) throw new Error('stage[' + i + '] migrates ' + s.from + ', but the chain is at ' + head.contentId);
+      if (s.kind !== head.kind || s.fromSchema !== head.schema || !(s.toSchema > s.fromSchema)) {
+        throw new Error('stage[' + i + ']: ' + s.kind + ' ' + s.fromSchema + '->' + s.toSchema + ' does not continue ' + head.kind + ' schema ' + head.schema);
+      }
+      head = { kind: head.kind, schema: s.toSchema, contentId: s.contentId };
+    }
+  });
+  return head;
+}
+// JCS-END
+
 async function sha256hex(text) {
   const data = new TextEncoder().encode(text);
   const buf = await crypto.subtle.digest('SHA-256', data);
@@ -629,6 +665,9 @@ async function showChain(text, expectedHash) {
   try {
     const alloy = JSON.parse(text);
     const actualHash = await sha256hex(text);
+    // Published alloys are named by the sha256 of their file bytes; an alloy may also be named
+    // by the sha256 of its RFC 8785 form (the bytes rule signatures and package ids use).
+    const jcsHash = await sha256hex(jcsCanonicalize(alloy));
 
     const r = alloy.results || {};
     // Handle both forged (results.integrity) and ensemble (top-level integrity) alloys
@@ -637,7 +676,7 @@ async function showChain(text, expectedHash) {
     const receipt = alloy.receipt || {};
 
     let hashOk = null;
-    if (expectedHash) hashOk = actualHash.startsWith(expectedHash);
+    if (expectedHash) hashOk = actualHash.startsWith(expectedHash) || jcsHash.startsWith(expectedHash);
 
     // QR code — encodes the alloy's publication URL so ANY verify page can fetch it
     const pubUrl = receipt.publications?.[0]?.url;
@@ -897,6 +936,21 @@ async function showChain(text, expectedHash) {
       '<span class="chain-value hash">sha256:' + actualHash.slice(0, 32) + '...</span> &middot; <a href="' + ghBase + 'forge-alloy" target="_blank">spec</a>' +
       trustBadgeHtml(ahTrust) +
       trustAnalysisHtml(TRUST_DEFS.alloyHash));
+
+    // --- Package (0x09): the chain's output is a continuum package, named by its ContentId ---
+    const hasPackageStage = (alloy.stages || []).some(s => s.type === 'pack' || s.type === 'migrate');
+    if (hasPackageStage) {
+      try {
+        const head = packageChain(alloy.stages);
+        const outIds = ((alloy.outputs || {}).produces || []).filter(o => o.type === 'package').map(o => o.contentId);
+        const agrees = outIds.every(id => id === head.contentId);
+        nodeRaw(chainEl, agrees ? 'verified' : 'warning', 'Package',
+          '<span class="chain-value hash">' + head.contentId + '</span> &middot; ' + head.kind + ' schema ' + head.schema +
+          (agrees ? '' : ' &middot; outputs name ' + outIds.join(', ')));
+      } catch (e) {
+        nodeRaw(chainEl, 'warning', 'Package', 'chain broken: ' + e.message);
+      }
+    }
 
     // --- Attested timestamp ---
     if (i.attestedAt) {
